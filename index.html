@@ -83,6 +83,51 @@
   .toast{position:fixed;bottom:calc(96px + var(--safe-b));left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 20px;border-radius:26px;font-size:14px;font-weight:600;z-index:200;opacity:0;transition:.3s;pointer-events:none;max-width:90%;text-align:center}
   .toast.show{opacity:1}
   .hidden{display:none!important}
+  /* login */
+  .login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:22px;background:linear-gradient(150deg,#0F0A44,#241a63)}
+  .login .box{background:#fff;border-radius:20px;max-width:380px;width:100%;padding:30px 24px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+  .login img{height:80px;margin-bottom:10px}
+  .login h1{margin:4px 0 2px;color:var(--navy);font-size:19px}
+  .login p{font-size:13px;color:#888;margin:0 0 18px}
+  .login .lock{font-size:12px;color:#9a9aa2;margin-top:14px;line-height:1.6}
+  .roletag{display:inline-block;font-size:10px;font-weight:800;padding:2px 9px;border-radius:20px;margin-inline-start:6px}
+  .roletag.admin{background:#EC5020;color:#fff}
+  .roletag.user{background:#EAF2FB;color:#0F0A44}
+  /* sidebar */
+  .drawer{position:fixed;inset:0;z-index:90;display:none}
+  .drawer.show{display:block}
+  .drawer .ov{position:absolute;inset:0;background:rgba(15,10,68,.5)}
+  .drawer .panel{position:absolute;top:0;bottom:0;inset-inline-start:0;width:84%;max-width:340px;background:#fff;box-shadow:2px 0 20px rgba(0,0,0,.25);display:flex;flex-direction:column;animation:slidein .22s ease}
+  @keyframes slidein{from{transform:translateX(-100%)}to{transform:none}}
+  .drawer .dh{background:var(--navy);color:#fff;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 14px;display:flex;align-items:center;gap:10px}
+  .drawer .dh img{height:34px;background:#fff;border-radius:6px;padding:3px}
+  .drawer .dh b{font-size:14px;display:block}.drawer .dh span{font-size:11px;opacity:.8}
+  .drawer .list{flex:1;overflow:auto;padding:10px}
+  .rep{border:1.5px solid var(--line);border-radius:12px;padding:11px 12px;margin-bottom:9px;cursor:pointer;position:relative}
+  .rep.active{border-color:var(--orange);background:#fff7f3}
+  .rep .rt{font-weight:800;font-size:14px;color:var(--navy);padding-inline-end:50px}
+  .rep .rm{font-size:11px;color:#888;margin-top:3px}
+  .rep .st{position:absolute;top:11px;inset-inline-end:11px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px}
+  .rep .st.draft{background:#FCE4D6;color:#C0392B}
+  .rep .st.done{background:#DEF3E5;color:#1B8A3A}
+  .rep .who{font-size:10px;color:#aaa;margin-top:2px}
+  .rep .del{position:absolute;bottom:8px;inset-inline-end:10px;background:none;border:0;color:#C0392B;font-size:11px;font-weight:700;cursor:pointer}
+  .rep .bar2{height:5px;background:#eee;border-radius:3px;margin-top:7px;overflow:hidden}
+  .rep .bar2 i{display:block;height:100%;background:var(--orange)}
+  .empty{text-align:center;color:#aaa;font-size:13px;padding:30px 10px}
+  /* FAB */
+  .fab{position:fixed;inset-inline-end:18px;bottom:calc(86px + env(safe-area-inset-bottom,0px));width:58px;height:58px;border-radius:50%;background:var(--orange);color:#fff;border:0;font-size:30px;box-shadow:0 8px 20px rgba(236,80,32,.45);z-index:55;cursor:pointer;display:flex;align-items:center;justify-content:center}
+  .fab:active{transform:scale(.94)}
+  /* signature */
+  .sigwrap{border:1.5px dashed var(--orange);border-radius:12px;background:#fffdfb;position:relative}
+  .sigwrap canvas{width:100%;height:160px;display:block;touch-action:none;border-radius:12px}
+  .sigwrap .clr{position:absolute;top:8px;inset-inline-end:8px;background:#fff;border:1px solid var(--line);border-radius:8px;font-size:11px;font-weight:700;padding:5px 10px;cursor:pointer;color:#C0392B}
+  .sighint{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;color:#ccc;font-size:13px;pointer-events:none}
+  /* user rows */
+  .urow{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:7px}
+  .urow .ui{flex:1;font-size:13px}.urow .ui b{color:var(--navy)}.urow .ui span{color:#999;font-size:11px;display:block}
+  .urow .udel{background:none;border:0;color:#C0392B;font-size:18px;cursor:pointer}
+  .menubtn{background:rgba(255,255,255,.12);border:0;color:#fff;font-size:20px;width:40px;height:40px;border-radius:10px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -152,46 +197,140 @@ const STAGES=[
 const SERVICE=["Preventive Maintenance","Corrective Maintenance (FIRE SYSTEM FAIL)","Full System Maintenance","System Upgrade / Modification"];
 const SYSTEMS=["Fire Fighting System","Fire Alarm System","Gas Suppression (FM-200/CO2/Inert)","Sprinkler System","Foam/Water Mist","Fire Pump","Other"];
 
+
 let MEM={};
 const KEY="etechs_qaqc";
 function load(){try{if(typeof localStorage!=='undefined')return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){}return MEM[KEY]||{}}
 function save(o){try{if(typeof localStorage!=='undefined'){localStorage.setItem(KEY,JSON.stringify(o));return}}catch(e){}MEM[KEY]=o}
-let DB=load(); DB.settings=DB.settings||{recipient:"",userEmail:""};
-let answers={}, photos=[];
+
+let DB=load();
+DB.settings=DB.settings||{recipient:""};
+DB.users=DB.users||[];            // [{name,email,pass,role}]
+DB.reports=DB.reports||{};        // id -> report object
+DB.admin=DB.admin||null;          // {name,email,pass} set on first run
+let SESSION=null;                 // {name,email,role}
+let CUR=null;                     // current report id
+let answers={}, photos=[], sig=null;
 
 function $(id){return document.getElementById(id)}
-function toast(m){var t=$('toast');if(!t)return;t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2400)}
+function toast(m){var t=$('toast');if(!t){t=document.createElement('div');t.id='toast';t.className='toast';document.body.appendChild(t)}t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2400)}
 function k(s,c,i){return s+'_'+c+'_'+i}
 function total(){let n=0;STAGES.forEach(s=>s.secs.forEach(c=>n+=c.items.length));return n}
 function counts(){let ok=0,no=0,na=0,done=0;for(const x in answers){const a=answers[x];if(a&&a.status){done++;if(a.status==='OK')ok++;else if(a.status==='Not OK')no++;else na++}}return{ok,no,na,done,total:total()}}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function uid(){return 'r'+Date.now()+Math.floor(Math.random()*1000)}
 
-function renderGate(){
- $('app').innerHTML=
- '<div class="gate"><div class="box">'+
- '<img src="'+LOGO+'" alt="ETECHS">'+
- '<h1>Maintenance QA/QC</h1>'+
- '<p>قائمة تدقيق جودة الصيانة — ETECHS</p>'+
- '<label class="fld" style="text-align:start">Your work email / إيميلك</label>'+
- '<input id="ge" type="email" inputmode="email" autocapitalize="off" autocorrect="off" placeholder="name@etechs.com" value="'+esc(DB.settings.userEmail)+'">'+
- '<p class="note">يُعرّف من نفّذ التدقيق ويظهر في التقرير. التطبيق يعمل بدون إنترنت.</p>'+
- '<button class="btn" style="width:100%;margin-top:8px" onclick="doLogin()">ابدأ / Start</button>'+
+/* ---------- AUTH ---------- */
+function renderSetup(){ // first run: create admin
+ $('app').innerHTML='<div class="login"><div class="box">'+
+ '<img src="'+LOGO+'"><h1>الإعداد الأول</h1><p>أنشئ حساب المدير (Admin)</p>'+
+ '<label class="fld" style="text-align:start">اسمك / Name</label><input id="a_name" placeholder="Almoez Alshreef">'+
+ '<label class="fld" style="text-align:start">إيميلك / Email</label><input id="a_email" type="email" inputmode="email" autocapitalize="off" placeholder="admin@etechs.com">'+
+ '<label class="fld" style="text-align:start">كلمة المرور / Password</label><input id="a_pass" type="password" placeholder="••••••">'+
+ '<button class="btn" style="width:100%;margin-top:16px" onclick="createAdmin()">إنشاء حساب المدير</button>'+
+ '<p class="lock">🔒 ملاحظة: هذا حاجز تنظيمي. الصفحة عامة على الإنترنت، لذا لا تستخدم كلمات مرور حساسة. للأمان الكامل يلزم خادم.</p>'+
  '</div></div>';
 }
-function doLogin(){const e=($('ge').value||'').trim();if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){toast('أدخل إيميلاً صحيحاً');return}DB.settings.userEmail=e;save(DB);renderApp()}
+function createAdmin(){
+ const n=($('a_name').value||'').trim(),e=($('a_email').value||'').trim(),p=$('a_pass').value||'';
+ if(!n||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)||p.length<4){toast('أكمل البيانات (كلمة مرور 4 خانات+)');return}
+ DB.admin={name:n,email:e,pass:p};
+ DB.settings.recipient=DB.settings.recipient||e;
+ save(DB);
+ SESSION={name:n,email:e,role:'admin'};
+ renderHome();
+}
+function renderLogin(){
+ $('app').innerHTML='<div class="login"><div class="box">'+
+ '<img src="'+LOGO+'"><h1>Maintenance QA/QC</h1><p>قائمة تدقيق جودة الصيانة — ETECHS</p>'+
+ '<label class="fld" style="text-align:start">الإيميل / Email</label><input id="l_email" type="email" inputmode="email" autocapitalize="off" autocorrect="off" placeholder="name@etechs.com">'+
+ '<label class="fld" style="text-align:start">كلمة المرور / Password</label><input id="l_pass" type="password" placeholder="••••••">'+
+ '<button class="btn" style="width:100%;margin-top:16px" onclick="doLogin()">دخول / Login</button>'+
+ '<p class="lock">يدخل كل مهندس ببياناته الخاصة. تظهر باسمه في تقاريره.</p>'+
+ '</div></div>';
+}
+function doLogin(){
+ const e=($('l_email').value||'').trim().toLowerCase(),p=$('l_pass').value||'';
+ if(DB.admin&&e===DB.admin.email.toLowerCase()&&p===DB.admin.pass){SESSION={name:DB.admin.name,email:DB.admin.email,role:'admin'};renderHome();return}
+ const u=DB.users.find(x=>x.email.toLowerCase()===e&&x.pass===p);
+ if(u){SESSION={name:u.name,email:u.email,role:'user'};renderHome();return}
+ toast('بيانات الدخول غير صحيحة');
+}
+function logout(){SESSION=null;CUR=null;renderLogin()}
 
-function renderApp(){
+/* ---------- visible reports for current session ---------- */
+function visibleReports(){
+ const ids=Object.keys(DB.reports);
+ const list=ids.map(id=>DB.reports[id]).filter(r=>SESSION.role==='admin'?true:(r.owner||'').toLowerCase()===SESSION.email.toLowerCase());
+ list.sort((a,b)=>(b.updated||0)-(a.updated||0));
+ return list;
+}
+
+/* ---------- HOME (drawer list lives here too) ---------- */
+function renderHome(){
+ const list=visibleReports();
+ let h='<header class="bar"><button class="menubtn" onclick="openDrawer()">☰</button>'+
+  '<img src="'+LOGO+'"><div class="t"><b>QA/QC Reports</b><span>'+esc(SESSION.name)+(SESSION.role==='admin'?' (Admin)':'')+'</span></div>'+
+  '<button class="gear" onclick="openSet()">⚙</button></header><div class="stripe"></div>';
+ h+='<div class="wrap"><div class="card"><h3>تقاريري <small>'+(SESSION.role==='admin'?'كل التقارير':'تقاريرك')+'</small></h3><div class="body" id="homeList"></div></div></div>';
+ h+='<button class="fab" onclick="newReport()">＋</button>';
+ h+=drawerHTML()+settingsHTML()+'<div class="toast" id="toast"></div>';
+ $('app').innerHTML=h;
+ $('homeList').innerHTML = list.length? list.map(r=>repCard(r,false)).join('') : '<div class="empty">لا توجد تقارير بعد.<br>اضغط زر ＋ لبدء تقرير جديد.</div>';
+}
+function repCard(r,inDrawer){
+ const c=r.counts||{done:0,total:total()};
+ const pc=c.total?Math.round(c.done/c.total*100):0;
+ const stat=r.status==='done'?'<span class="st done">مقفول</span>':'<span class="st draft">مفتوح</span>';
+ return '<div class="rep'+(r.id===CUR?' active':'')+'" onclick="openReport(\''+r.id+'\')">'+
+  '<div class="rt">'+esc(r.form&&r.form.site||'(بدون محطة)')+'</div>'+stat+
+  '<div class="rm">LOA: '+esc(r.form&&r.form.loa||'—')+' · '+esc(r.form&&r.form.date||'')+' · '+c.done+'/'+c.total+'</div>'+
+  (SESSION.role==='admin'?'<div class="who">👤 '+esc(r.ownerName||r.owner||'')+'</div>':'')+
+  '<div class="bar2"><i style="width:'+pc+'%"></i></div>'+
+  '<button class="del" onclick="event.stopPropagation();delReport(\''+r.id+'\')">حذف</button>'+
+  '</div>';
+}
+function drawerHTML(){
+ const list=visibleReports();
+ return '<div class="drawer" id="drawer"><div class="ov" onclick="closeDrawer()"></div><div class="panel">'+
+  '<div class="dh"><img src="'+LOGO+'"><div><b>التقارير المفتوحة</b><span>'+esc(SESSION.name)+'</span></div></div>'+
+  '<div class="list" id="drawerList">'+(list.length?list.map(r=>repCard(r,true)).join(''):'<div class="empty">لا توجد تقارير</div>')+'</div>'+
+  '<div style="padding:12px;border-top:1px solid var(--line)"><button class="btn" style="width:100%" onclick="newReport()">＋ تقرير جديد</button>'+
+  '<button class="btn ghost" style="width:100%;margin-top:8px;flex:1" onclick="logout()">خروج / Logout</button></div>'+
+  '</div></div>';
+}
+function openDrawer(){const d=$('drawer');if(d){$('drawerList').innerHTML=(visibleReports().length?visibleReports().map(r=>repCard(r,true)).join(''):'<div class="empty">لا توجد تقارير</div>');d.classList.add('show')}}
+function closeDrawer(){const d=$('drawer');if(d)d.classList.remove('show')}
+
+/* ---------- REPORT CRUD ---------- */
+function newReport(){
+ const id=uid();
+ DB.reports[id]={id,owner:SESSION.email,ownerName:SESSION.name,status:'draft',created:Date.now(),updated:Date.now(),form:{},answers:{},photos:[],sig:null,counts:{done:0,total:total()}};
+ save(DB);CUR=id;closeDrawer();renderReport();
+}
+function openReport(id){const r=DB.reports[id];if(!r)return;if(SESSION.role!=='admin'&&(r.owner||'').toLowerCase()!==SESSION.email.toLowerCase()){toast('لا تملك صلاحية هذا التقرير');return}CUR=id;closeDrawer();renderReport()}
+function delReport(id){if(!confirm('حذف هذا التقرير نهائياً؟'))return;delete DB.reports[id];if(CUR===id)CUR=null;save(DB);if($('homeList'))renderHome();else openDrawer()}
+function curRep(){return DB.reports[CUR]}
+
+/* ---------- REPORT EDIT VIEW ---------- */
+function renderReport(){
+ const r=curRep();if(!r){renderHome();return}
+ answers=r.answers||{};photos=r.photos||[];sig=r.sig||null;
  const today=new Date().toISOString().slice(0,10);
- let h='<header class="bar"><img src="'+LOGO+'"><div class="t"><b>Maintenance QA/QC</b><span>قائمة تدقيق جودة الصيانة</span></div><button class="gear" onclick="openSet()">⚙</button></header><div class="stripe"></div><div class="wrap">';
+ const f=r.form||{};
+ const ro=(r.status==='done');
+ let h='<header class="bar"><button class="menubtn" onclick="goHome()">‹</button>'+
+  '<img src="'+LOGO+'"><div class="t"><b>'+(ro?'تقرير مقفول':'تقرير مفتوح')+'</b><span>'+esc(f.site||'محطة جديدة')+'</span></div>'+
+  '<button class="menubtn" onclick="openDrawer()">☰</button></header><div class="stripe"></div><div class="wrap">';
  h+='<div class="card"><h3>Work Order Information <small>بيانات أمر العمل</small></h3><div class="body"><div class="grid2">'+
-   fld('f_contract','Contract No. / رقم العقد','4400022056')+
-   fld('f_site','Substation / Site — المحطة','')+
-   fld('f_loa','Work Order / LOA No. — رقم LOA','')+
-   sel('f_service','Service Type / نوع الخدمة',SERVICE)+
-   sel('f_system','System / النظام',SYSTEMS)+
-   fld('f_team','Team / Engineer — الفريق','')+
-   fld('f_date','Date / التاريخ','',today,'date')+
-   fld('f_by','Performed by / نفّذ بواسطة',DB.settings.userEmail||'')+
+   fld('f_contract','Contract No. / رقم العقد','4400022056',f.contract)+
+   fld('f_site','Substation / Site — المحطة','',f.site)+
+   fld('f_loa','Work Order / LOA No. — رقم LOA','',f.loa)+
+   sel('f_service','Service Type / نوع الخدمة',SERVICE,f.service)+
+   sel('f_system','System / النظام',SYSTEMS,f.system)+
+   fld('f_team','Team / Engineer — الفريق','',f.team)+
+   fld('f_date','Date / التاريخ','',f.date||today,'date')+
+   fld('f_by','Performed by / نفّذ بواسطة',SESSION.email,f.by||SESSION.name)+
    '</div></div></div>';
  STAGES.forEach((st,si)=>{
    h+='<div class="stage">'+st.en+' — '+st.ar+'</div>';
@@ -205,65 +344,106 @@ function renderApp(){
      });
    });
  });
+ h+='<div class="card"><h3>Work Done <small>وصف العمل المنفّذ</small></h3><div class="body"><textarea id="f_workdone" rows="3" placeholder="اكتب وصف ما تم عمله اليوم">'+esc(f.workdone||'')+'</textarea></div></div>';
  h+='<div class="card"><h3>Photos <small>صور مختومة بالموقع والوقت</small></h3><div class="body"><div class="photos" id="ph"></div><p class="note">الكاميرا تطلب إذن الموقع لختم الإحداثيات والتاريخ والوقت على الصورة.</p></div></div>';
- h+='<div class="card"><h3>Site Notes <small>ملاحظات عامة</small></h3><div class="body"><textarea id="f_notes" rows="3" placeholder="ملاحظات عامة على العمل"></textarea></div></div>';
+ h+='<div class="card"><h3>Site Notes <small>ملاحظات عامة</small></h3><div class="body"><textarea id="f_notes" rows="2" placeholder="ملاحظات عامة">'+esc(f.notes||'')+'</textarea></div></div>';
+ h+='<div class="card"><h3>Signature <small>توقيع المنفّذ</small></h3><div class="body"><div class="sigwrap"><canvas id="sig"></canvas><button class="clr" onclick="clearSig()">مسح</button><div class="sighint" id="sighint">وقّع هنا بإصبعك</div></div></div></div>';
  h+='</div>';
- h+='<footer class="sb"><span class="pct" id="pct">0/'+total()+'</span><button class="btn ghost" onclick="saveDraft()">حفظ</button><button class="btn" id="sub" onclick="doSubmit()">إرسال التقرير</button></footer>';
- h+='<div class="toast" id="toast"></div>';
+ h+='<footer class="sb"><span class="pct" id="pct">0/'+total()+'</span><button class="btn ghost" onclick="saveCur(true)">حفظ</button><button class="btn" id="sub" onclick="doSubmit()">إقفال وإصدار PDF</button></footer>';
+ h+=drawerHTML()+settingsHTML()+'<div class="toast" id="toast"></div>';
  h+='<input id="cam" type="file" accept="image/*" capture="environment" class="hidden" onchange="onPhoto(event)">';
- h+='<div class="modal" id="setm"><div class="sheet"><h3>الإعدادات / Settings</h3><div class="c">'+
-   '<label class="fld">إيميل استلام التقارير / Reports email</label>'+
-   '<input id="s_rec" type="email" inputmode="email" autocapitalize="off" placeholder="you@etechs.com" value="'+esc(DB.settings.recipient)+'">'+
-   '<p class="note">عند الإرسال يُفتح بريد المهندس وهذا الإيميل جاهز كمستلم، مع تقرير الطباعة/PDF.</p>'+
-   '<label class="fld">إيميل المستخدم / Your email</label>'+
-   '<input id="s_usr" type="email" inputmode="email" autocapitalize="off" value="'+esc(DB.settings.userEmail)+'">'+
-   '<button class="btn" style="width:100%;margin-top:16px" onclick="saveSet()">حفظ / Save</button>'+
-   '<button class="btn ghost" style="width:100%;margin-top:8px;flex:1" onclick="closeSet()">إغلاق</button>'+
-   '</div></div></div>';
  $('app').innerHTML=h;
- restore(); renderPhotos(); upd();
+ // restore answers UI
+ for(const key in answers){const seg=document.querySelector('.seg[data-k="'+key+'"]');if(seg&&answers[key].status){const bt=seg.querySelector('[data-v="'+answers[key].status+'"]');if(bt)bt.classList.add('on');if(answers[key].remark){const ta=seg.parentNode.querySelector('.rmk');if(ta)ta.value=answers[key].remark}}}
+ renderPhotos();initSig();upd();
 }
+function goHome(){saveCur(false);CUR=null;renderHome()}
 function fld(id,label,ph,val,type){return '<div><label class="fld">'+label+'</label><input id="'+id+'" type="'+(type||'text')+'" placeholder="'+(ph||'')+'" value="'+esc(val||'')+'"></div>'}
-function sel(id,label,arr){return '<div><label class="fld">'+label+'</label><select id="'+id+'">'+arr.map(o=>'<option>'+o+'</option>').join('')+'</select></div>'}
+function sel(id,label,arr,val){return '<div><label class="fld">'+label+'</label><select id="'+id+'">'+arr.map(o=>'<option'+(o===val?' selected':'')+'>'+o+'</option>').join('')+'</select></div>'}
 
 function setA(key,v,btn){answers[key]=answers[key]||{};answers[key].status=(answers[key].status===v?null:v);const seg=btn.parentNode;seg.querySelectorAll('button').forEach(b=>b.classList.remove('on'));if(answers[key].status)btn.classList.add('on');const it=$('it_'+key);if(it)it.classList.remove('flag');upd()}
 function setR(key,v){answers[key]=answers[key]||{};answers[key].remark=v}
 function upd(){const c=counts();const e=$('pct');if(e){e.innerHTML=c.done+'/'+c.total+' · 📷'+photos.length;e.style.color=(c.done===c.total&&photos.length>0)?'#1B8A3A':'#777'}}
 
+/* ---------- photos ---------- */
 function addPhoto(){$('cam').click()}
 function onPhoto(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const fin=(la,ln)=>stamp(e.target.result,la,ln);if(navigator.geolocation){navigator.geolocation.getCurrentPosition(p=>fin(p.coords.latitude,p.coords.longitude),()=>fin(null,null),{enableHighAccuracy:true,timeout:6000,maximumAge:0})}else fin(null,null)};r.readAsDataURL(f);ev.target.value=''}
 function stamp(dataUrl,lat,lng){const img=new Image();img.onload=()=>{const mx=1280,sc=Math.min(1,mx/img.width),w=Math.round(img.width*sc),hh=Math.round(img.height*sc);const cv=document.createElement('canvas');cv.width=w;cv.height=hh;const x=cv.getContext('2d');x.drawImage(img,0,0,w,hh);const n=new Date(),d=n.toLocaleDateString('en-GB'),t=n.toLocaleTimeString('en-GB');const loc=(lat!=null)?('Lat '+lat.toFixed(5)+', Lng '+lng.toFixed(5)):'Location unavailable';const lines=['📍 '+loc,'🕒 '+d+'  '+t,'ETECHS'];const pad=10,fs=Math.max(15,Math.round(w*0.028));x.font='bold '+fs+'px Arial';const bh=fs*lines.length+pad*2;x.fillStyle='rgba(15,10,68,0.74)';x.fillRect(0,hh-bh,w,bh);x.fillStyle='#EC5020';x.fillRect(0,hh-bh,5,bh);x.fillStyle='#fff';x.textBaseline='top';lines.forEach((l,i)=>x.fillText(l,pad+4,hh-bh+pad+i*fs));photos.push({dataUrl:cv.toDataURL('image/jpeg',0.82),loc:loc,time:d+' '+t});renderPhotos()};img.src=dataUrl}
 function renderPhotos(){const b=$('ph');if(!b)return;b.innerHTML=photos.map((p,i)=>'<div class="ph"><img src="'+p.dataUrl+'"><button class="x" onclick="delP('+i+')">×</button><div class="stamp">'+esc(p.time)+'</div></div>').join('')+'<button class="addph" onclick="addPhoto()"><span>＋</span>صورة<br>Photo</button>';upd()}
 function delP(i){photos.splice(i,1);renderPhotos()}
 
+/* ---------- signature pad ---------- */
+let sigCtx,sigDrawing=false,sigEmpty=true;
+function initSig(){const cv=$('sig');if(!cv)return;const rect=cv.getBoundingClientRect();const dpr=window.devicePixelRatio||1;cv.width=rect.width*dpr;cv.height=160*dpr;sigCtx=cv.getContext('2d');sigCtx.scale(dpr,dpr);sigCtx.lineWidth=2.2;sigCtx.lineCap='round';sigCtx.strokeStyle='#0F0A44';
+ if(sig){const im=new Image();im.onload=()=>{sigCtx.drawImage(im,0,0,rect.width,160);sigEmpty=false;const hint=$('sighint');if(hint)hint.style.display='none'};im.src=sig}
+ const pos=ev=>{const r=cv.getBoundingClientRect();const tp=ev.touches?ev.touches[0]:ev;return{x:tp.clientX-r.left,y:tp.clientY-r.top}};
+ const start=ev=>{ev.preventDefault();sigDrawing=true;const hint=$('sighint');if(hint)hint.style.display='none';const p=pos(ev);sigCtx.beginPath();sigCtx.moveTo(p.x,p.y)};
+ const move=ev=>{if(!sigDrawing)return;ev.preventDefault();const p=pos(ev);sigCtx.lineTo(p.x,p.y);sigCtx.stroke();sigEmpty=false};
+ const end=()=>{if(!sigDrawing)return;sigDrawing=false;sig=cv.toDataURL('image/png')};
+ cv.addEventListener('mousedown',start);cv.addEventListener('mousemove',move);window.addEventListener('mouseup',end);
+ cv.addEventListener('touchstart',start,{passive:false});cv.addEventListener('touchmove',move,{passive:false});cv.addEventListener('touchend',end);
+}
+function clearSig(){const cv=$('sig');if(!cv)return;sigCtx.clearRect(0,0,cv.width,cv.height);sig=null;sigEmpty=true;const hint=$('sighint');if(hint)hint.style.display='block'}
+
+/* ---------- collect + save ---------- */
+function form(){const g=id=>{const e=$(id);return e?e.value:''};return{contract:g('f_contract'),site:g('f_site'),loa:g('f_loa'),service:g('f_service'),system:g('f_system'),team:g('f_team'),date:g('f_date'),by:g('f_by'),workdone:g('f_workdone'),notes:g('f_notes')}}
+function saveCur(notify){const r=curRep();if(!r)return;r.form=form();r.answers=answers;r.photos=photos;r.sig=sig;r.counts=counts();r.updated=Date.now();save(DB);if(notify)toast('تم الحفظ')}
+
+/* ---------- settings + users ---------- */
+function settingsHTML(){
+ let users='';
+ if(SESSION&&SESSION.role==='admin'){
+   users='<label class="fld">المستخدمون / Users</label>'+
+     '<div id="userList">'+userRows()+'</div>'+
+     '<div style="border:1px dashed var(--line);border-radius:10px;padding:10px;margin-top:8px">'+
+     '<input id="u_name" placeholder="اسم المهندس" style="margin-bottom:6px">'+
+     '<input id="u_email" type="email" inputmode="email" autocapitalize="off" placeholder="email@etechs.com" style="margin-bottom:6px">'+
+     '<input id="u_pass" placeholder="كلمة المرور">'+
+     '<button class="btn" style="width:100%;margin-top:8px" onclick="addUser()">＋ إضافة مستخدم</button></div>';
+ }
+ return '<div class="modal" id="setm"><div class="sheet"><h3>الإعدادات / Settings</h3><div class="c">'+
+   '<label class="fld">إيميل استلام التقارير / Reports email</label>'+
+   '<input id="s_rec" type="email" inputmode="email" autocapitalize="off" placeholder="you@etechs.com" value="'+esc(DB.settings.recipient)+'">'+
+   '<p class="note">عند الإقفال يُفتح بريد المهندس وهذا الإيميل جاهز كمستلم، مع تقرير الطباعة/PDF.</p>'+
+   users+
+   '<button class="btn" style="width:100%;margin-top:16px" onclick="saveSet()">حفظ / Save</button>'+
+   '<button class="btn ghost" style="width:100%;margin-top:8px;flex:1" onclick="closeSet()">إغلاق</button>'+
+   '</div></div></div>';
+}
+function userRows(){if(!DB.users.length)return '<div class="note">لا يوجد مستخدمون بعد.</div>';return DB.users.map((u,i)=>'<div class="urow"><div class="ui"><b>'+esc(u.name)+'</b><span>'+esc(u.email)+'</span></div><button class="udel" onclick="delUser('+i+')">🗑</button></div>').join('')}
+function addUser(){const n=($('u_name').value||'').trim(),e=($('u_email').value||'').trim(),p=($('u_pass').value||'').trim();if(!n||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)||p.length<4){toast('أكمل بيانات المستخدم (مرور 4+)');return}if(DB.users.find(x=>x.email.toLowerCase()===e.toLowerCase())||(DB.admin&&DB.admin.email.toLowerCase()===e.toLowerCase())){toast('الإيميل مستخدم');return}DB.users.push({name:n,email:e,pass:p,role:'user'});save(DB);$('userList').innerHTML=userRows();$('u_name').value='';$('u_email').value='';$('u_pass').value='';toast('تمت إضافة المستخدم')}
+function delUser(i){if(!confirm('حذف هذا المستخدم؟'))return;DB.users.splice(i,1);save(DB);$('userList').innerHTML=userRows()}
 function openSet(){$('setm').classList.add('show')}
 function closeSet(){$('setm').classList.remove('show')}
-function saveSet(){DB.settings.recipient=($('s_rec').value||'').trim();DB.settings.userEmail=($('s_usr').value||'').trim();save(DB);closeSet();toast('تم حفظ الإعدادات')}
+function saveSet(){DB.settings.recipient=($('s_rec').value||'').trim();save(DB);closeSet();toast('تم حفظ الإعدادات')}
 
-function form(){const g=id=>{const e=$(id);return e?e.value:''};return{contract:g('f_contract'),site:g('f_site'),loa:g('f_loa'),service:g('f_service'),system:g('f_system'),team:g('f_team'),date:g('f_date'),by:g('f_by'),notes:g('f_notes')}}
-function saveDraft(){DB.draft={form:form(),answers,photos};save(DB);toast('تم حفظ المسودة')}
-function restore(){if(!DB.draft)return;const d=DB.draft;if(d.form){const map={f_contract:'contract',f_site:'site',f_loa:'loa',f_service:'service',f_system:'system',f_team:'team',f_date:'date',f_by:'by',f_notes:'notes'};for(const el in map){if($(el)&&d.form[map[el]]!=null)$(el).value=d.form[map[el]]}}answers=d.answers||{};photos=d.photos||[];for(const key in answers){const seg=document.querySelector('.seg[data-k="'+key+'"]');if(seg&&answers[key].status){const bt=seg.querySelector('[data-v="'+answers[key].status+'"]');if(bt)bt.classList.add('on');if(answers[key].remark){const ta=seg.parentNode.querySelector('.rmk');if(ta)ta.value=answers[key].remark}}}}
-
+/* ---------- submit/close ---------- */
 function doSubmit(){
+ saveCur(false);
  const f=form();
  if(!f.site||!f.loa){toast('أكمل المحطة ورقم LOA');return}
  const c=counts();
- if(c.done<c.total){
-   toast('أجب على كل البنود — متبقٍّ '+(c.total-c.done));
-   for(let s=0;s<STAGES.length;s++)for(let ci=0;ci<STAGES[s].secs.length;ci++)for(let ii=0;ii<STAGES[s].secs[ci].items.length;ii++){const key=k(s,ci,ii);if(!answers[key]||!answers[key].status){const it=$('it_'+key);if(it){it.classList.add('flag');it.scrollIntoView({behavior:'smooth',block:'center'})}return}}
-   return;
- }
+ if(c.done<c.total){toast('أجب على كل البنود — متبقٍّ '+(c.total-c.done));for(let s=0;s<STAGES.length;s++)for(let ci=0;ci<STAGES[s].secs.length;ci++)for(let ii=0;ii<STAGES[s].secs[ci].items.length;ii++){const key=k(s,ci,ii);if(!answers[key]||!answers[key].status){const it=$('it_'+key);if(it){it.classList.add('flag');it.scrollIntoView({behavior:'smooth',block:'center'})}return}}return}
  if(photos.length===0){toast('أضف صورة واحدة على الأقل');$('ph').scrollIntoView({behavior:'smooth',block:'center'});return}
+ if(!sig){toast('وقّع في خانة التوقيع');$('sig').scrollIntoView({behavior:'smooth',block:'center'});return}
  if(!DB.settings.recipient){openSet();toast('أضف إيميل المستلم في الإعدادات');return}
- saveDraft();
+ const r=curRep();r.status='done';r.updated=Date.now();save(DB);
  buildReport(f);
 }
+
+/* ---------- boot ---------- */
+function boot(){try{
+  if(!DB.admin){renderSetup();return}
+  if(!SESSION){renderLogin();return}
+  if(CUR)renderReport();else renderHome();
+}catch(e){var a=$('app');if(a)a.innerHTML='<div style="padding:22px;font-family:Arial;direction:rtl">خطأ: '+e.message+'</div>'}}
+boot();
+setTimeout(function(){var a=$('app');if(a&&a.textContent.trim()==='…')boot()},250);
 
 function buildReport(f){
  const c=counts();
  const pct=c.done?Math.round(c.ok/c.done*100):0;
  const rec=DB.settings.recipient;
- // build print-ready HTML report (native Save as PDF; no library)
  let rows='';
  STAGES.forEach((st,si)=>{
    rows+='<tr><td colspan="3" class="stg">'+st.en+'</td></tr>';
@@ -274,9 +454,10 @@ function buildReport(f){
      });
    });
  });
- let pics=photos.map(p=>'<div class="pc"><img src="'+p.dataUrl+'"></div>').join('');
+ let pics=photos.map(p=>'<div class="pc"><img src="'+p.dataUrl+'"><div class="pcap">'+esc(p.time)+'</div></div>').join('');
  const dash='<div class="dash"><div class="donut" style="background:conic-gradient('+ORANGE+' 0 '+pct+'%, #e6e6ee '+pct+'% 100%)"><div class="hole"><b>'+pct+'%</b><span>Compliance</span></div></div>'+
    '<div class="bars">'+bar('OK',c.ok,c.total,'#1B8A3A')+bar('Not OK',c.no,c.total,'#C0392B')+bar('N/A',c.na,c.total,'#8a8a93')+'</div></div>';
+ const sigBlock=sig?'<img src="'+sig+'" style="height:70px;max-width:240px;border-bottom:1px solid #333">':'______________________';
  const rep=
  '<!DOCTYPE html><html lang="ar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QAQC Report</title><style>'+
  '*{box-sizing:border-box}body{font-family:Arial,Tahoma,sans-serif;margin:0;color:#1c1c28;font-size:13px}'+
@@ -296,8 +477,9 @@ function buildReport(f){
  '.secr{background:#FCE4D6;color:'+NAVY+';font-weight:800;font-size:11.5px}'+
  '.ar{color:#666;font-size:11px}.rm{color:#777;font-size:11px;margin-top:3px}.cr{color:#999;font-size:11px;white-space:nowrap;width:70px}'+
  '.pill{font-weight:800;text-align:center;width:64px;color:#888}.pill.ok{color:#1B8A3A}.pill.no{color:#C0392B}.pill.na{color:#8a8a93}'+
- '.pics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}.pc img{width:100%;border:1px solid #ddd;border-radius:6px}'+
- '.sign{margin-top:18px;border-top:2px solid #eee;padding-top:10px;font-size:12.5px}.sign p{margin:8px 0}'+
+ '.wd{background:#f7f7fb;border-inline-start:4px solid '+ORANGE+';padding:10px 12px;border-radius:6px;font-size:12.5px;white-space:pre-wrap}'+
+ '.pics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}.pc img{width:100%;border:1px solid #ddd;border-radius:6px}.pcap{font-size:10px;color:#888;margin-top:2px}'+
+ '.sign{margin-top:18px;border-top:2px solid #eee;padding-top:12px;font-size:12.5px}.sign p{margin:6px 0}.sigbox{margin-top:6px}'+
  '.toolbar{position:sticky;top:0;background:#fff;padding:10px;display:flex;gap:8px;border-bottom:1px solid #eee;z-index:9}'+
  '.toolbar button{flex:1;padding:13px;border:0;border-radius:10px;font-size:15px;font-weight:800;color:#fff;cursor:pointer}'+
  '.tp{background:'+ORANGE+'}.te{background:'+NAVY+'}'+
@@ -310,28 +492,26 @@ function buildReport(f){
  '<div class="info"><div><b>Contract:</b> '+esc(f.contract)+'</div><div><b>Site:</b> '+esc(f.site)+'</div>'+
  '<div><b>LOA:</b> '+esc(f.loa)+'</div><div><b>Service:</b> '+esc(f.service)+'</div>'+
  '<div><b>System:</b> '+esc(f.system)+'</div><div><b>Team:</b> '+esc(f.team)+'</div>'+
- '<div><b>Date:</b> '+esc(f.date)+'</div><div><b>By:</b> '+esc(f.by||DB.settings.userEmail)+'</div></div>'+
+ '<div><b>Date:</b> '+esc(f.date)+'</div><div><b>By:</b> '+esc(f.by||SESSION.name)+'</div></div>'+
  '<div class="h2">Inspection Summary / ملخص التدقيق</div>'+dash+
+ (f.workdone?'<div class="h2">Work Done / وصف العمل المنفّذ</div><div class="wd">'+esc(f.workdone)+'</div>':'')+
  '<div class="h2">Detailed Results / النتائج التفصيلية</div><table>'+rows+'</table>'+
  (f.notes?'<div class="h2">Site Notes / ملاحظات</div><div>'+esc(f.notes)+'</div>':'')+
  (pics?'<div class="h2">Site Photos / الصور</div><div class="pics">'+pics+'</div>':'')+
- '<div class="sign"><p><b>Performed by / نفّذ:</b> '+esc(f.by||DB.settings.userEmail)+'</p>'+
- '<p><b>Checked by (Engineer/QA):</b> ______________________</p>'+
- '<p style="color:#888;font-size:11px">Generated: '+new Date().toLocaleString('en-GB')+'</p></div>'+
+ '<div class="sign"><div class="h2">Sign-off / الاعتماد</div>'+
+ '<p><b>Performed by / نفّذ بواسطة:</b> '+esc(f.by||SESSION.name)+' ('+esc(SESSION.email)+')</p>'+
+ '<div class="sigbox"><b>التوقيع / Signature:</b><br>'+sigBlock+'</div>'+
+ '<p style="color:#888;font-size:11px;margin-top:10px">Generated: '+new Date().toLocaleString('en-GB')+'</p></div>'+
  '</div>'+
- '<script>function sendMail(){var s=encodeURIComponent("Maintenance QA\\/QC Report - '+esc(f.site)+' - '+esc(f.date)+'");var b=encodeURIComponent("Maintenance QA\\/QC Report\\nSite: '+esc(f.site)+'\\nLOA: '+esc(f.loa)+'\\nContract: '+esc(f.contract)+'\\nService: '+esc(f.service)+'\\nSystem: '+esc(f.system)+'\\nBy: '+esc(f.by||DB.settings.userEmail)+'\\nCompliance: '+pct+'% (OK '+c.ok+' \\/ Not OK '+c.no+' \\/ NA '+c.na+')\\n\\nالرجاء إرفاق ملف الـPDF بعد حفظه من زر الطباعة.");location.href="mailto:'+rec+'?subject="+s+"&body="+b;}<\/script>'+
+ '<script>function sendMail(){var s=encodeURIComponent("Maintenance QA\\/QC Report - '+esc(f.site)+' - '+esc(f.date)+'");var b=encodeURIComponent("Maintenance QA\\/QC Report\\nSite: '+esc(f.site)+'\\nLOA: '+esc(f.loa)+'\\nContract: '+esc(f.contract)+'\\nService: '+esc(f.service)+'\\nSystem: '+esc(f.system)+'\\nBy: '+esc(f.by||SESSION.name)+'\\nWork done: '+esc((f.workdone||"").replace(/\\n/g," "))+'\\nCompliance: '+pct+'% (OK '+c.ok+' \\/ Not OK '+c.no+' \\/ NA '+c.na+')\\n\\nالرجاء إرفاق ملف الـPDF بعد حفظه من زر الطباعة.");location.href="mailto:'+rec+'?subject="+s+"&body="+b;}<\/script>'+
  '</body></html>';
  const w=window.open('','_blank');
- if(w){w.document.open();w.document.write(rep);w.document.close();toast('افتح زر «حفظ PDF» في أعلى التقرير')}
- else{ // popup blocked: write to a blob and navigate
-   const blob=new Blob([rep],{type:'text/html'});location.href=URL.createObjectURL(blob);
- }
+ if(w){w.document.open();w.document.write(rep);w.document.close();toast('افتح «حفظ PDF» في أعلى التقرير')}
+ else{const blob=new Blob([rep],{type:'text/html'});location.href=URL.createObjectURL(blob)}
+ setTimeout(()=>{CUR=null;if($('homeList')||true)renderHome()},1200);
 }
 function bar(lb,v,tot,col){const w=tot?Math.max(4,Math.round(v/tot*100)):0;return '<div class="brow"><span class="lb">'+lb+'</span><div class="track"><div class="fillb" style="width:'+w+'%;background:'+col+'"></div></div><b>'+v+'</b></div>'}
 
-function boot(){try{if(!DB.settings.userEmail)renderGate();else renderApp()}catch(e){var a=$('app');if(a)a.innerHTML='<div style="padding:22px;font-family:Arial;direction:rtl">خطأ: '+e.message+'</div>'}}
-boot();
-setTimeout(function(){var a=$('app');if(a&&a.textContent.trim()==='…')boot()},250);
 </script>
 <script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
 </body>
