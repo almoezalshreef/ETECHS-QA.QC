@@ -327,6 +327,7 @@ function authMsg(code){
 window.logout=function(){ signOut(auth); };
 
 // ===== HOME + reports list (realtime) =====
+window.renderHome=renderHome;
 function renderHome(){
   let h='<header class="bar"><img src="'+LOGO+'"><div class="t"><b>QA/QC Reports</b><span>'+esc(SESSION.name)+(SESSION.role==='admin'?' (Admin)':'')+'</span></div>'+
    '<button class="gear" onclick="openDashboard()" title="لوحة المعلومات">📊</button>'+
