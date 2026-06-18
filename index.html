@@ -273,11 +273,16 @@ onAuthStateChanged(auth, async (user)=>{
     const uref=doc(db,'users',user.uid);
     let usnap=await getDoc(uref);
     if(!usnap.exists()){
-      // first ever user becomes admin; otherwise check pending provisioning
-      const usersSnap=await getDocs(collection(db,'users'));
       let role='user', name=user.email.split('@')[0];
-      if(usersSnap.empty){ role='admin'; }
-      else {
+      // determine if this is the first user via a single meta doc (avoids listing all users)
+      const metaRef=doc(db,'meta','bootstrap');
+      let isFirst=false;
+      try{ const meta=await getDoc(metaRef); if(!meta.exists()) isFirst=true; }catch(e){ isFirst=true; }
+      if(isFirst){
+        role='admin';
+        try{ await setDoc(metaRef,{adminUid:user.uid,adminEmail:user.email,created:serverTimestamp()}); }catch(e){}
+      } else {
+        // check pending provisioning for assigned name/role
         try{ const pend=await getDoc(doc(db,'pending',user.email.toLowerCase())); if(pend.exists()){ const pd=pend.data(); role=pd.role||'user'; name=pd.name||name; } }catch(e){}
       }
       await setDoc(uref,{email:user.email,name,role,created:serverTimestamp()});
