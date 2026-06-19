@@ -203,6 +203,7 @@
   .sev{font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px}
   .sev-h{background:#C0392B;color:#fff}.sev-m{background:#F0A500;color:#fff}.sev-l{background:#8a8a93;color:#fff}
   .srcTag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#EAF2FB;color:var(--navy)}
+  .tplBadge{display:inline-block;font-size:10px;font-weight:800;padding:2px 9px;border-radius:10px;background:#EAF2FB;color:var(--navy);margin:4px 0}
 </style></head><body>
 <div id="app"><div class="loadwrap"><div class="spinner"></div>Loading...</div></div>
 <script>window.onerror=function(m,s,l,c){var a=document.getElementById('app');if(a)a.innerHTML='<div style="padding:22px;text-align:left"><h3 style="color:#EC5020">Error</h3><pre style="background:#f4f4f4;padding:12px;white-space:pre-wrap">'+m+'\n'+l+':'+c+'</pre></div>';};</script>
@@ -369,16 +370,35 @@ function loading(msg){$('app').innerHTML='<div class="loadwrap"><div class="spin
 async function loadConfig(){
   const ref=doc(db,'config','app');
   const snap=await getDoc(ref);
-  if(snap.exists()){ CFG=snap.data(); CFG.template=tplFromStore(CFG.template)||DEFAULT_STAGES; }
+  if(snap.exists()){ CFG=snap.data(); }
   else {
-    CFG={template:DEFAULT_STAGES, projects:[], rules:{allItems:true,photo:true,signature:true}, recipient:SESSION.email};
-    if(SESSION.role==='admin'){ try{await setDoc(ref,Object.assign({},CFG,{template:tplToStore(DEFAULT_STAGES)}));}catch(e){} }
+    CFG={projects:[], rules:{allItems:true,photo:true,signature:true}, recipient:SESSION.email};
   }
-  if(!CFG.template) CFG.template=DEFAULT_STAGES;
   if(!CFG.rules) CFG.rules={allItems:true,photo:true,signature:true};
   if(!CFG.projects) CFG.projects=[];
+  // ---- migrate to multi-template model ----
+  // New model: CFG.templates = [{id,name,stages:[...arrays...]}]
+  if(!Array.isArray(CFG.templates) || !CFG.templates.length){
+    // build from legacy single template if present, else default
+    let baseStages = CFG.template ? tplFromStore(CFG.template) : DEFAULT_STAGES;
+    if(!baseStages) baseStages = DEFAULT_STAGES;
+    CFG.templates=[{id:'default', name:'صيانة الحريق / Fire Maintenance', stages:baseStages}];
+  } else {
+    // deserialize each template's stages
+    CFG.templates=CFG.templates.map(tp=>({id:tp.id,name:tp.name,stages:tplFromStore(tp.stages)||DEFAULT_STAGES}));
+  }
+  delete CFG.template; // drop legacy field from memory
+  // persist migration once (admin only)
+  if(SESSION.role==='admin'){ try{ await saveConfig(); }catch(e){} }
 }
-async function saveConfig(){ if(SESSION.role!=='admin')return; const out=Object.assign({},CFG,{template:tplToStore(CFG.template)}); await setDoc(doc(db,'config','app'),out); }
+function templateById(id){ return (CFG.templates||[]).find(t=>t.id===id) || CFG.templates[0]; }
+async function saveConfig(){
+  if(SESSION.role!=='admin')return;
+  const out=Object.assign({},CFG);
+  out.templates=(CFG.templates||[]).map(tp=>({id:tp.id,name:tp.name,stages:tplToStore(tp.stages)}));
+  delete out.template;
+  await setDoc(doc(db,'config','app'),out);
+}
 
 // Firestore rejects nested arrays. Items are [en,ar,crit,meta]; store as objects.
 function tplToStore(tpl){
@@ -387,7 +407,6 @@ function tplToStore(tpl){
 }
 function tplFromStore(tpl){
   if(!tpl||!tpl.length) return null;
-  // already in array form? (legacy/default) detect by first item being array
   try{ if(Array.isArray(tpl[0].secs[0].items[0])) return tpl; }catch(e){}
   return tpl.map(st=>({en:st.en,ar:st.ar,secs:(st.secs||[]).map(sec=>({en:sec.en,ar:sec.ar,
     items:(sec.items||[]).map(o=>[o.en||'',o.ar||'',o.crit||'',o.meta||{type:'okna'}])}))}));
@@ -539,23 +558,39 @@ function repCard(r){
   const stat=r.status==='done'?'<span class="st done">'+t('closed')+'</span>':'<span class="st draft">'+t('open')+'</span>';
   return '<div class="rep" onclick="openReport(\''+r.id+'\')">'+
     '<div class="rt">'+esc((r.form&&r.form.site)||'(بدون محطة)')+'</div>'+stat+
+    (r.templateName?'<div class="tplBadge">'+esc(r.templateName)+'</div>':'')+
     '<div class="rm">LOA: '+esc((r.form&&r.form.loa)||'—')+' · '+esc((r.form&&r.form.date)||'')+' · '+c.done+'/'+c.total+'</div>'+
     (SESSION.role==='admin'?'<div class="who">👤 '+esc(r.ownerName||'')+'</div>':'')+
     '<div class="bar2"><i style="width:'+pc+'%"></i></div>'+
-    '<button class="del" onclick="event.stopPropagation();delReport(\''+r.id+'\')">حذف</button></div>';
+    '<button class="del" onclick="event.stopPropagation();delReport(\''+r.id+'\')">'+t('delete')+'</button></div>';
 }
 
 // ===== report CRUD (Firestore) =====
-window.newReport=async function(){
+window.newReport=function(){
+  const tps=CFG.templates||[];
+  if(tps.length<=1){ createReportFromTemplate(tps[0]?tps[0].id:'default'); return; }
+  // show template chooser
+  const modal=document.createElement('div'); modal.className='modal show'; modal.id='tplPick';
+  modal.innerHTML='<div class="sheet"><h3>'+(LANG==='ar'?'اختر نوع التقرير':'Choose report type')+'</h3><div class="c">'+
+    tps.map(tp=>'<button class="btn ghost" style="width:100%;margin-bottom:8px;flex:1;justify-content:center" onclick="pickTemplate(\''+tp.id+'\')">'+esc(tp.name)+'</button>').join('')+
+    '<button class="btn ghost" style="width:100%;margin-top:6px;flex:1;color:#888" onclick="closeTplPick()">'+t('cancel')+'</button>'+
+    '</div></div>';
+  document.body.appendChild(modal);
+};
+window.closeTplPick=function(){const m=$('tplPick');if(m)m.remove();};
+window.pickTemplate=function(id){ closeTplPick(); createReportFromTemplate(id); };
+async function createReportFromTemplate(templateId){
+  const tp=templateById(templateId);
   const id=uid();
   const rep={id,owner:SESSION.uid,ownerName:SESSION.name,ownerEmail:SESSION.email,status:'draft',
+    templateId:tp.id, templateName:tp.name,
     createdMs:Date.now(),updatedMs:Date.now(),updated:serverTimestamp(),
     form:{},answers:{},photos:[],sig:null,counts:{done:0,total:0},
-    tpl:tplToStore(CFG.template), rules:CFG.rules};
+    tpl:tplToStore(tp.stages), rules:CFG.rules};
   loading('جاري الإنشاء...');
   try{ await setDoc(doc(db,'reports',id),rep); CUR=rep; openReportObj(rep); }
   catch(e){ toast('تعذّر الإنشاء: '+e.message); renderHome(); }
-};
+}
 window.openReport=async function(id){
   loading();
   try{ const s=await getDoc(doc(db,'reports',id)); if(!s.exists()){toast('غير موجود');renderHome();return;} openReportObj(Object.assign({id},s.data())); }
@@ -574,7 +609,7 @@ async function saveCur(notify){
 
 // ===== REPORT EDITOR =====
 function openReportObj(rep){
-  CUR=rep; TPL=tplFromStore(rep.tpl)||CFG.template; answers=rep.answers||{}; photos=rep.photos||[]; sig=rep.sig||null;
+  CUR=rep; TPL=tplFromStore(rep.tpl)||(CFG.templates[0]&&CFG.templates[0].stages)||DEFAULT_STAGES; answers=rep.answers||{}; photos=rep.photos||[]; sig=rep.sig||null;
   renderReport();
 }
 function renderReport(){
@@ -1001,7 +1036,7 @@ window.addUser=async function(){
 
 // ===== ADMIN CONTROL PANEL =====
 let ADMIN_TAB='projects';
-window.openAdmin=function(){ADMIN_TAB='projects';renderAdmin();};
+window.openAdmin=function(){ADMIN_TAB='projects';EDIT_TPL=-1;renderAdmin();};
 function renderAdmin(){
   let h='<header class="bar"><button class="menubtn" onclick="renderHome()">‹</button>'+
    '<img src="'+LOGO+'"><div class="t"><b>لوحة التحكّم</b><span>Admin Panel</span></div></header><div class="stripe"></div>';
@@ -1026,43 +1061,96 @@ function projectsPanel(){
 window.addProj=async function(){const n=($('p_name').value||'').trim();if(!n){toast('اكتب اسم المشروع');return;}CFG.projects.push({name:n,client:($('p_client').value||'').trim(),contract:($('p_contract').value||'').trim(),city:$('p_city').value});try{await saveConfig();renderAdminBody();toast('تمت الإضافة');}catch(e){toast('تعذّر الحفظ');}};
 window.delProj=async function(i){if(!confirm('حذف المشروع؟'))return;CFG.projects.splice(i,1);await saveConfig();renderAdminBody();};
 
-// questions editor with type
+// questions editor with multiple templates
+let EDIT_TPL=-1; // index of template being edited; -1 = list view
 function questionsPanel(){
-  let h='<div class="note" style="margin-bottom:10px">التعديلات تُطبَّق على التقارير الجديدة فقط. لكل بند: نوع الإجابة، صورة مطلوبة، إجباري/اختياري.</div>';
-  CFG.template.forEach((st,si)=>{
+  if(EDIT_TPL<0 || !CFG.templates[EDIT_TPL]) return templateListPanel();
+  return templateEditPanel();
+}
+function templateListPanel(){
+  let h='<div class="note" style="margin-bottom:10px">'+(LANG==='ar'?'القوالب = أنواع التقارير. أنشئ قالباً لكل نوع تقرير، وكل قالب له أسئلته.':'Templates = report types. Create a template per report type; each has its own questions.')+'</div>';
+  h+='<div class="card"><h3>'+(LANG==='ar'?'القوالب':'Templates')+' <small>Report Templates</small></h3><div class="body">';
+  (CFG.templates||[]).forEach((tp,i)=>{
+    const count=(tp.stages||[]).reduce((n,st)=>n+(st.secs||[]).reduce((m,s)=>m+(s.items||[]).length,0),0);
+    h+='<div class="urow"><div class="ui"><b>'+esc(tp.name)+'</b><span>'+count+' '+(LANG==='ar'?'بند':'items')+'</span></div>'+
+      '<div style="display:flex;gap:6px">'+
+      '<button class="miniBtn" onclick="editTemplate('+i+')">'+(LANG==='ar'?'تعديل':'Edit')+'</button>'+
+      '<button class="miniBtn" onclick="copyTemplate('+i+')">'+(LANG==='ar'?'نسخ':'Copy')+'</button>'+
+      (tp.id==='default'?'':'<button class="udel" onclick="delTemplate('+i+')">🗑</button>')+
+      '</div></div>';
+  });
+  h+='<div style="border:1px dashed var(--line);border-radius:10px;padding:10px;margin-top:10px">'+
+     '<label class="fld">'+(LANG==='ar'?'اسم القالب الجديد':'New template name')+'</label>'+
+     '<input id="newTplName" placeholder="'+(LANG==='ar'?'مثال: فحص أنظمة الإنذار':'e.g. Fire Alarm Inspection')+'">'+
+     '<button class="btn" style="width:100%;margin-top:10px" onclick="addTemplate()">＋ '+(LANG==='ar'?'قالب جديد (فارغ)':'New template (empty)')+'</button>'+
+     '</div></div></div>';
+  return h;
+}
+function templateEditPanel(){
+  const tp=CFG.templates[EDIT_TPL];
+  let h='<div class="card"><div class="body" style="display:flex;gap:8px;align-items:center">'+
+    '<button class="miniBtn" onclick="backToTemplates()">‹ '+(LANG==='ar'?'القوالب':'Templates')+'</button>'+
+    '<input value="'+esc(tp.name)+'" onchange="renameTemplate(this.value)" style="flex:1;font-weight:800">'+
+    '</div></div>';
+  h+='<div class="note" style="margin-bottom:10px">'+(LANG==='ar'?'التعديلات تُطبَّق على التقارير الجديدة فقط.':'Changes apply to new reports only.')+'</div>';
+  tp.stages.forEach((st,si)=>{
     h+='<div class="card"><h3>'+esc(st.en)+' <small>'+esc(st.ar)+'</small></h3><div class="body">';
     st.secs.forEach((sec,ci)=>{
       h+='<div class="sec" style="margin-top:6px">'+esc(sec.en)+'</div>';
       sec.items.forEach((it,ii)=>{
-        const m=it[3]||{}; const tp=m.type||'okna';
+        const m=it[3]||{}; const tpe=m.type||'okna';
         h+='<div class="qedit">'+
           '<input value="'+esc(it[0])+'" placeholder="English" onchange="editQ('+si+','+ci+','+ii+',0,this.value)">'+
           '<input value="'+esc(it[1])+'" placeholder="عربي" onchange="editQ('+si+','+ci+','+ii+',1,this.value)">'+
-          '<input value="'+esc(it[2])+'" placeholder="المعيار" onchange="editQ('+si+','+ci+','+ii+',2,this.value)">'+
-          '<select class="sel-type" onchange="editType('+si+','+ci+','+ii+',this.value)">'+ATYPES.map(a=>'<option value="'+a.id+'"'+(tp===a.id?' selected':'')+'>'+a.label+'</option>').join('')+'</select>'+
-          (tp==='measure'?'<input value="'+esc(m.unit||'')+'" placeholder="الوحدة (بار، كغ، dBA)" onchange="editMeta('+si+','+ci+','+ii+',\'unit\',this.value)">':'')+
-          (tp==='choice'?'<input value="'+esc((m.options||[]).join(', '))+'" placeholder="الخيارات مفصولة بفاصلة" onchange="editOptions('+si+','+ci+','+ii+',this.value)">':'')+
+          '<input value="'+esc(it[2])+'" placeholder="'+(LANG==='ar'?'المعيار':'Criterion')+'" onchange="editQ('+si+','+ci+','+ii+',2,this.value)">'+
+          '<select class="sel-type" onchange="editType('+si+','+ci+','+ii+',this.value)">'+ATYPES.map(a=>'<option value="'+a.id+'"'+(tpe===a.id?' selected':'')+'>'+a.label+'</option>').join('')+'</select>'+
+          (tpe==='measure'?'<input value="'+esc(m.unit||'')+'" placeholder="'+(LANG==='ar'?'الوحدة':'Unit')+'" onchange="editMeta('+si+','+ci+','+ii+',\'unit\',this.value)">':'')+
+          (tpe==='choice'?'<input value="'+esc((m.options||[]).join(', '))+'" placeholder="'+(LANG==='ar'?'الخيارات مفصولة بفاصلة':'Options, comma-separated')+'" onchange="editOptions('+si+','+ci+','+ii+',this.value)">':'')+
           '<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">'+
-            '<label style="font-size:12px;display:flex;align-items:center;gap:5px"><input type="checkbox" style="width:auto" '+(m.photo?'checked':'')+' onchange="editMeta('+si+','+ci+','+ii+',\'photo\',this.checked)"> صورة مطلوبة</label>'+
-            '<label style="font-size:12px;display:flex;align-items:center;gap:5px"><input type="checkbox" style="width:auto" '+(m.required!==false?'checked':'')+' onchange="editMeta('+si+','+ci+','+ii+',\'required\',this.checked)"> إجباري</label>'+
+            '<label style="font-size:12px;display:flex;align-items:center;gap:5px"><input type="checkbox" style="width:auto" '+(m.photo?'checked':'')+' onchange="editMeta('+si+','+ci+','+ii+',\'photo\',this.checked)"> '+(LANG==='ar'?'صورة مطلوبة':'Photo required')+'</label>'+
+            '<label style="font-size:12px;display:flex;align-items:center;gap:5px"><input type="checkbox" style="width:auto" '+(m.required!==false?'checked':'')+' onchange="editMeta('+si+','+ci+','+ii+',\'required\',this.checked)"> '+(LANG==='ar'?'إجباري':'Required')+'</label>'+
             '<button class="udel" style="margin-inline-start:auto" onclick="delQ('+si+','+ci+','+ii+')">🗑</button>'+
           '</div></div>';
       });
-      h+='<button class="btn ghost" style="width:100%;margin-top:6px;flex:1" onclick="addQ('+si+','+ci+')">＋ سؤال</button>';
+      h+='<button class="btn ghost" style="width:100%;margin-top:6px;flex:1" onclick="addQ('+si+','+ci+')">＋ '+(LANG==='ar'?'سؤال':'Question')+'</button>';
     });
+    h+='<button class="btn ghost" style="width:100%;margin-top:6px;flex:1" onclick="addSection('+si+')">＋ '+(LANG==='ar'?'قسم فرعي':'Sub-section')+'</button>';
     h+='</div></div>';
   });
-  h+='<button class="btn ghost" style="width:100%;flex:1" onclick="resetTpl()">استعادة الافتراضي</button>';
+  h+='<button class="btn ghost" style="width:100%;flex:1" onclick="addStage()">＋ '+(LANG==='ar'?'مرحلة جديدة':'New stage')+'</button>';
   return h;
 }
-function ensureMeta(si,ci,ii){const it=CFG.template[si].secs[ci].items[ii];if(!it[3])it[3]={type:'okna'};return it[3];}
-window.editQ=async function(si,ci,ii,col,val){CFG.template[si].secs[ci].items[ii][col]=val;await saveConfig();};
+function curStages(){ return CFG.templates[EDIT_TPL].stages; }
+window.editTemplate=function(i){EDIT_TPL=i;renderAdminBody();};
+window.backToTemplates=function(){EDIT_TPL=-1;renderAdminBody();};
+window.renameTemplate=async function(name){CFG.templates[EDIT_TPL].name=name||CFG.templates[EDIT_TPL].name;await saveConfig();toast(t('saved'));};
+window.addTemplate=async function(){
+  const n=($('newTplName').value||'').trim(); if(!n){toast(LANG==='ar'?'اكتب اسم القالب':'Enter template name');return;}
+  const id='tpl'+Date.now();
+  CFG.templates.push({id,name:n,stages:[{en:'SECTION 1',ar:'القسم 1',secs:[{en:'Items',ar:'البنود',items:[["New item","بند جديد","",{type:'okna',required:true}]]}]}]});
+  await saveConfig(); toast(LANG==='ar'?'تم إنشاء القالب':'Template created'); renderAdminBody();
+};
+window.copyTemplate=async function(i){
+  const src=CFG.templates[i]; const id='tpl'+Date.now();
+  const copy=JSON.parse(JSON.stringify(src.stages));
+  CFG.templates.push({id,name:src.name+(LANG==='ar'?' (نسخة)':' (copy)'),stages:copy});
+  await saveConfig(); toast(LANG==='ar'?'تم النسخ':'Copied'); renderAdminBody();
+};
+window.delTemplate=async function(i){
+  if(CFG.templates[i].id==='default'){toast(LANG==='ar'?'لا يمكن حذف القالب الافتراضي':'Cannot delete default');return;}
+  if(!confirm(LANG==='ar'?'حذف هذا القالب؟':'Delete this template?'))return;
+  CFG.templates.splice(i,1); await saveConfig(); renderAdminBody();
+};
+function ensureMeta(si,ci,ii){const it=curStages()[si].secs[ci].items[ii];if(!it[3])it[3]={type:'okna'};return it[3];}
+window.editQ=async function(si,ci,ii,col,val){curStages()[si].secs[ci].items[ii][col]=val;await saveConfig();};
 window.editType=async function(si,ci,ii,val){const m=ensureMeta(si,ci,ii);m.type=val;await saveConfig();renderAdminBody();};
 window.editMeta=async function(si,ci,ii,k,val){const m=ensureMeta(si,ci,ii);m[k]=val;await saveConfig();};
 window.editOptions=async function(si,ci,ii,val){const m=ensureMeta(si,ci,ii);m.options=val.split(',').map(s=>s.trim()).filter(Boolean);await saveConfig();};
-window.addQ=async function(si,ci){CFG.template[si].secs[ci].items.push(["New item","بند جديد","",{type:'okna'}]);await saveConfig();renderAdminBody();};
-window.delQ=async function(si,ci,ii){if(!confirm('حذف البند؟'))return;CFG.template[si].secs[ci].items.splice(ii,1);await saveConfig();renderAdminBody();};
-window.resetTpl=async function(){if(!confirm('استعادة القائمة الافتراضية؟'))return;CFG.template=JSON.parse(JSON.stringify(DEFAULT_STAGES));await saveConfig();renderAdminBody();toast('تمت الاستعادة');};
+window.addQ=async function(si,ci){curStages()[si].secs[ci].items.push(["New item","بند جديد","",{type:'okna',required:true}]);await saveConfig();renderAdminBody();};
+window.delQ=async function(si,ci,ii){if(!confirm(LANG==='ar'?'حذف البند؟':'Delete item?'))return;curStages()[si].secs[ci].items.splice(ii,1);await saveConfig();renderAdminBody();};
+window.addSection=async function(si){curStages()[si].secs.push({en:'New Section',ar:'قسم جديد',items:[["New item","بند جديد","",{type:'okna',required:true}]]});await saveConfig();renderAdminBody();};
+window.addStage=async function(){curStages().push({en:'NEW STAGE',ar:'مرحلة جديدة',secs:[{en:'Items',ar:'البنود',items:[["New item","بند جديد","",{type:'okna',required:true}]]}]});await saveConfig();renderAdminBody();};
+
 
 // rules
 function rulesPanel(){const r=CFG.rules;return '<div class="card"><h3>قواعد الإقفال <small>Submit Rules</small></h3><div class="body">'+
