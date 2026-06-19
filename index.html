@@ -204,6 +204,13 @@
   .sev-h{background:#C0392B;color:#fff}.sev-m{background:#F0A500;color:#fff}.sev-l{background:#8a8a93;color:#fff}
   .srcTag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#EAF2FB;color:var(--navy)}
   .tplBadge{display:inline-block;font-size:10px;font-weight:800;padding:2px 9px;border-radius:10px;background:#EAF2FB;color:var(--navy);margin:4px 0}
+  /* procedures */
+  .procCard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-bottom:10px;cursor:pointer;border-inline-start:4px solid var(--orange)}
+  .procTop{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+  .procTitle{flex:1;font-weight:800;color:var(--navy);font-size:14px}
+  .procCat{font-size:10px;font-weight:800;padding:2px 9px;border-radius:10px;background:#EAF2FB;color:var(--navy);white-space:nowrap}
+  .procPrev{font-size:12px;color:#888;line-height:1.5}
+  .procBody{font-size:14px;line-height:1.9;color:#2c2c38;white-space:pre-wrap}
 </style></head><body>
 <div id="app"><div class="loadwrap"><div class="spinner"></div>Loading...</div></div>
 <script>window.onerror=function(m,s,l,c){var a=document.getElementById('app');if(a)a.innerHTML='<div style="padding:22px;text-align:left"><h3 style="color:#EC5020">Error</h3><pre style="background:#f4f4f4;padding:12px;white-space:pre-wrap">'+m+'\n'+l+':'+c+'</pre></div>';};</script>
@@ -311,7 +318,21 @@ const I18N={
   all_status:{en:'All statuses',ar:'كل الحالات'},
   all_projects:{en:'All projects',ar:'كل المشاريع'},
   no_ncr:{en:'No cases. Tap + to add a non-conformity.',ar:'لا توجد حالات. اضغط ＋ لإضافة حالة عدم مطابقة.'},
-  overdue:{en:'overdue',ar:'متأخرة'}
+  overdue:{en:'overdue',ar:'متأخرة'},
+  // procedures
+  procs_title:{en:'Procedures',ar:'الإجراءات'},
+  proc_search:{en:'🔎 Search procedures',ar:'🔎 بحث في الإجراءات'},
+  all_cats:{en:'All categories',ar:'كل التصنيفات'},
+  no_procs:{en:'No procedures yet.',ar:'لا توجد إجراءات بعد.'},
+  proc_new:{en:'New Procedure',ar:'إجراء جديد'},
+  proc_edit:{en:'Edit Procedure',ar:'تعديل إجراء'},
+  category:{en:'Category',ar:'التصنيف'},
+  content:{en:'Content',ar:'المحتوى'},
+  admin_only:{en:'Admins only',ar:'للمدير فقط'},
+  enter_title:{en:'Enter a title',ar:'اكتب عنواناً'},
+  added:{en:'Added',ar:'تمت الإضافة'},
+  deleted:{en:'Deleted',ar:'تم الحذف'},
+  confirm_del:{en:'Delete this item?',ar:'حذف هذا العنصر؟'}
 };
 function t(key){ const e=I18N[key]; return e? (e[LANG]||e.en) : key; }
 function applyDir(){ document.documentElement.lang=LANG; document.documentElement.dir=(LANG==='ar'?'rtl':'ltr'); }
@@ -322,6 +343,7 @@ function reRender(){
   if(!SESSION){ renderLogin(); return; }
   if(CUR){ renderReport(); return; }
   // detect current screen by a marker element
+  if(document.getElementById('procList')){ renderProcs(); return; }
   if(document.getElementById('ncrList')){ renderNCR(); return; }
   if(document.getElementById('adminBody')){ renderAdmin(); return; }
   if(document.querySelector('.kpis')){ renderDashboard(); return; }
@@ -510,6 +532,7 @@ function renderHome(){
    '<button class="gear" onclick="toggleLang()" title="Language">🌐</button>'+
    '<button class="gear" onclick="openDashboard()" title="'+t('dashboard')+'">📊</button>'+
    '<button class="gear" onclick="openNCR()" title="'+t('ncr_title')+'">⚠️</button>'+
+   '<button class="gear" onclick="openProcs()" title="'+t('procs_title')+'">📋</button>'+
    (SESSION.role==='admin'?'<button class="gear" onclick="openAdmin()" title="'+t('admin_panel')+'">🛠</button>':'')+
    '<button class="gear" onclick="openSet()">⚙</button>'+
    '<button class="gear" onclick="logout()" title="'+t('logout')+'">⎋</button></header><div class="stripe"></div>';
@@ -985,6 +1008,96 @@ window.saveNCR=async function(id,ro){
 window.delNCR=async function(id){
   if(!confirm('حذف هذه الحالة؟'))return;
   try{ await deleteDoc(doc(db,'ncr',id)); toast('تم الحذف'); openNCR(); }catch(e){ toast('تعذّر الحذف'); }
+};
+
+// ===== PROCEDURES & WORK INSTRUCTIONS =====
+let PROCS=[]; let PROCS_unsub=null; let PROC_F={q:'',cat:''};
+const PROC_CATS_EN=['Procedure','Work Instruction','Safety','Occupational Health','Technical Guideline'];
+const PROC_CATS_AR=['إجراء','تعليمات عمل','السلامة','الصحة المهنية','إرشاد فني'];
+function procCats(){ return LANG==='ar'?PROC_CATS_AR:PROC_CATS_EN; }
+
+window.openProcs=function(){ renderProcs(); subscribeProcs(); };
+function subscribeProcs(){
+  if(PROCS_unsub){PROCS_unsub();PROCS_unsub=null;}
+  let qy; try{ qy=query(collection(db,'procs'),orderBy('createdMs','desc')); }catch(e){ qy=collection(db,'procs'); }
+  PROCS_unsub=onSnapshot(qy,(snap)=>{ PROCS=[]; snap.forEach(d=>PROCS.push(Object.assign({id:d.id},d.data()))); PROCS.sort((a,b)=>(b.createdMs||0)-(a.createdMs||0)); paintProcs(); },
+   (err)=>{ const l=$('procList'); if(l)l.innerHTML='<div class="empty">'+esc(err.message)+'</div>'; });
+}
+function renderProcs(){
+  const cats=procCats();
+  let h='<header class="bar"><button class="menubtn" onclick="goHomeFromProcs()">‹</button>'+
+   '<img src="'+LOGO+'"><div class="t"><b>'+t('procs_title')+'</b><span>Procedures & Instructions</span></div></header><div class="stripe"></div>';
+  h+='<div class="wrap">';
+  h+='<div class="card"><div class="body" style="display:flex;flex-direction:column;gap:8px">'+
+     '<input id="procSearch" placeholder="'+t('proc_search')+'" oninput="procSearch(this.value)" value="'+esc(PROC_F.q)+'">'+
+     '<select onchange="procFilterCat(this.value)"><option value="">'+t('all_cats')+'</option>'+cats.map((c,i)=>'<option value="'+i+'"'+(PROC_F.cat==String(i)?' selected':'')+'>'+c+'</option>').join('')+'</select>'+
+     '</div></div>';
+  h+='<div id="procList"><div class="loadwrap"><div class="spinner"></div></div></div>';
+  h+='</div>';
+  if(SESSION.role==='admin') h+='<button class="fab" onclick="newProc()">＋</button>';
+  h+='<div class="toast" id="toast"></div>';
+  $('app').innerHTML=h; paintProcs();
+}
+window.goHomeFromProcs=function(){ if(PROCS_unsub){PROCS_unsub();PROCS_unsub=null;} renderHome(); };
+window.procSearch=function(v){PROC_F.q=v;paintProcs();};
+window.procFilterCat=function(v){PROC_F.cat=v;paintProcs();};
+function procFiltered(){
+  let list=PROCS.slice(); const q=(PROC_F.q||'').trim().toLowerCase();
+  if(q) list=list.filter(p=>((p.title||'')+(p.body||'')).toLowerCase().includes(q));
+  if(PROC_F.cat!=='') list=list.filter(p=>String(p.catIdx)===String(PROC_F.cat));
+  return list;
+}
+function catName(idx){ const cats=procCats(); return cats[idx]||cats[0]; }
+function paintProcs(){
+  const l=$('procList'); if(!l)return;
+  const list=procFiltered();
+  if(!list.length){ l.innerHTML='<div class="empty">'+t('no_procs')+'</div>'; return; }
+  l.innerHTML=list.map(p=>'<div class="procCard" onclick="viewProc(\''+p.id+'\')">'+
+    '<div class="procTop"><span class="procTitle">'+esc(p.title||'')+'</span><span class="procCat">'+esc(catName(p.catIdx))+'</span></div>'+
+    '<div class="procPrev">'+esc((p.body||'').slice(0,90))+((p.body||'').length>90?'…':'')+'</div></div>').join('');
+}
+window.viewProc=function(id){
+  const p=PROCS.find(x=>x.id===id); if(!p)return;
+  let h='<header class="bar"><button class="menubtn" onclick="openProcs()">‹</button>'+
+   '<img src="'+LOGO+'"><div class="t"><b>'+esc(p.title||'')+'</b><span>'+esc(catName(p.catIdx))+'</span></div>'+
+   (SESSION.role==='admin'?'<button class="gear" onclick="editProc(\''+p.id+'\')">✎</button>':'')+
+   '</header><div class="stripe"></div>';
+  h+='<div class="wrap"><div class="card"><div class="body"><div class="procBody">'+esc(p.body||'').replace(/\n/g,'<br>')+'</div>'+
+     '<p class="note" style="margin-top:14px">'+esc(p.author||'')+' · '+esc(p.dateStr||'')+'</p></div></div></div>';
+  h+='<div class="toast" id="toast"></div>';
+  $('app').innerHTML=h;
+};
+// admin create/edit
+window.newProc=function(){ procForm(null); };
+window.editProc=function(id){ const p=PROCS.find(x=>x.id===id); if(p)procForm(p); };
+function procForm(p){
+  if(SESSION.role!=='admin'){toast(t('admin_only'));return;}
+  const isNew=!p; p=p||{}; const cats=procCats();
+  let h='<header class="bar"><button class="menubtn" onclick="openProcs()">‹</button>'+
+   '<img src="'+LOGO+'"><div class="t"><b>'+(isNew?t('proc_new'):t('proc_edit'))+'</b><span></span></div></header><div class="stripe"></div>';
+  h+='<div class="wrap"><div class="card"><div class="body">';
+  h+='<label class="fld">'+t('title')+'</label><input id="pr_title" value="'+esc(p.title||'')+'">';
+  h+='<label class="fld">'+t('category')+'</label><select id="pr_cat">'+cats.map((c,i)=>'<option value="'+i+'"'+(p.catIdx===i?' selected':'')+'>'+c+'</option>').join('')+'</select>';
+  h+='<label class="fld">'+t('content')+'</label><textarea id="pr_body" rows="10">'+esc(p.body||'')+'</textarea>';
+  h+='</div></div>';
+  h+='<div style="padding:0 16px 90px"><button class="btn" style="width:100%" onclick="saveProc(\''+(p.id||'')+'\')">'+t('save')+'</button>';
+  if(!isNew)h+='<button class="btn ghost" style="width:100%;margin-top:10px;flex:1;border-color:#C0392B;color:#C0392B" onclick="delProc(\''+p.id+'\')">'+t('delete')+'</button>';
+  h+='</div><div class="toast" id="toast"></div>';
+  $('app').innerHTML=h;
+}
+window.saveProc=async function(id){
+  const title=($('pr_title').value||'').trim(), body=($('pr_body').value||'').trim(), catIdx=parseInt($('pr_cat').value)||0;
+  if(!title){toast(t('enter_title'));return;}
+  const data={title,body,catIdx,updatedMs:Date.now(),updated:serverTimestamp()};
+  try{
+    if(id){ await updateDoc(doc(db,'procs',id),data); toast(t('saved')); }
+    else{ const pid='pr'+Date.now(); await setDoc(doc(db,'procs',pid),Object.assign({id:pid,author:SESSION.name,dateStr:new Date().toISOString().slice(0,10),createdMs:Date.now(),created:serverTimestamp()},data)); toast(t('added')); }
+    openProcs();
+  }catch(e){ toast('تعذّر الحفظ: '+e.message); }
+};
+window.delProc=async function(id){
+  if(!confirm(t('confirm_del')))return;
+  try{ await deleteDoc(doc(db,'procs',id)); toast(t('deleted')); openProcs(); }catch(e){ toast('تعذّر الحذف'); }
 };
 
 // ===== SETTINGS (recipient + users) =====
