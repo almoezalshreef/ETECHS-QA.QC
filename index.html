@@ -183,7 +183,7 @@
   .ncitem .nca{font-size:12px;color:#C0392B;margin-top:2px}
 </style></head><body>
 <div id="app"><div class="loadwrap"><div class="spinner"></div>جاري التحميل...</div></div>
-<script>window.onerror=function(m,s,l,c){var a=document.getElementById('app');if(a)a.innerHTML='<div style="padding:22px;font-family:Arial;direction:rtl;text-align:right"><h3 style="color:#EC5020">حدث خطأ</h3><pre style="background:#f4f4f4;padding:12px;border-radius:8px;font-size:12px;white-space:pre-wrap;direction:ltr;text-align:left">'+m+'\n'+l+':'+c+'</pre></div>';};</script>
+<script>window.onerror=function(m,s,l,c){var a=document.getElementById('app');if(a)a.innerHTML='<div style="padding:22px;direction:rtl;text-align:right"><h3 style="color:#EC5020">حدث خطأ</h3><pre style="background:#f4f4f4;padding:12px;white-space:pre-wrap;direction:ltr;text-align:left">'+m+'\n'+l+':'+c+'</pre></div>';};</script>
 <script type="module">// ===== Firebase modular imports =====
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged }
@@ -243,16 +243,29 @@ function loading(msg){$('app').innerHTML='<div class="loadwrap"><div class="spin
 async function loadConfig(){
   const ref=doc(db,'config','app');
   const snap=await getDoc(ref);
-  if(snap.exists()){ CFG=snap.data(); }
+  if(snap.exists()){ CFG=snap.data(); CFG.template=tplFromStore(CFG.template)||DEFAULT_STAGES; }
   else {
     CFG={template:DEFAULT_STAGES, projects:[], rules:{allItems:true,photo:true,signature:true}, recipient:SESSION.email};
-    if(SESSION.role==='admin'){ try{await setDoc(ref,CFG);}catch(e){} }
+    if(SESSION.role==='admin'){ try{await setDoc(ref,Object.assign({},CFG,{template:tplToStore(DEFAULT_STAGES)}));}catch(e){} }
   }
   if(!CFG.template) CFG.template=DEFAULT_STAGES;
   if(!CFG.rules) CFG.rules={allItems:true,photo:true,signature:true};
   if(!CFG.projects) CFG.projects=[];
 }
-async function saveConfig(){ if(SESSION.role!=='admin')return; await setDoc(doc(db,'config','app'),CFG); }
+async function saveConfig(){ if(SESSION.role!=='admin')return; const out=Object.assign({},CFG,{template:tplToStore(CFG.template)}); await setDoc(doc(db,'config','app'),out); }
+
+// Firestore rejects nested arrays. Items are [en,ar,crit,meta]; store as objects.
+function tplToStore(tpl){
+  return (tpl||[]).map(st=>({en:st.en,ar:st.ar,secs:(st.secs||[]).map(sec=>({en:sec.en,ar:sec.ar,
+    items:(sec.items||[]).map(it=>({en:it[0]||'',ar:it[1]||'',crit:it[2]||'',meta:it[3]||{type:'okna'}}))}))}));
+}
+function tplFromStore(tpl){
+  if(!tpl||!tpl.length) return null;
+  // already in array form? (legacy/default) detect by first item being array
+  try{ if(Array.isArray(tpl[0].secs[0].items[0])) return tpl; }catch(e){}
+  return tpl.map(st=>({en:st.en,ar:st.ar,secs:(st.secs||[]).map(sec=>({en:sec.en,ar:sec.ar,
+    items:(sec.items||[]).map(o=>[o.en||'',o.ar||'',o.crit||'',o.meta||{type:'okna'}])}))}));
+}
 
 // ===== total/counts respect template =====
 function total(){let n=0;TPL.forEach(s=>s.secs.forEach(c=>n+=c.items.length));return n}
@@ -380,7 +393,7 @@ window.newReport=async function(){
   const rep={id,owner:SESSION.uid,ownerName:SESSION.name,ownerEmail:SESSION.email,status:'draft',
     createdMs:Date.now(),updatedMs:Date.now(),updated:serverTimestamp(),
     form:{},answers:{},photos:[],sig:null,counts:{done:0,total:0},
-    tpl:CFG.template, rules:CFG.rules};
+    tpl:tplToStore(CFG.template), rules:CFG.rules};
   loading('جاري الإنشاء...');
   try{ await setDoc(doc(db,'reports',id),rep); CUR=rep; openReportObj(rep); }
   catch(e){ toast('تعذّر الإنشاء: '+e.message); renderHome(); }
@@ -403,7 +416,7 @@ async function saveCur(notify){
 
 // ===== REPORT EDITOR =====
 function openReportObj(rep){
-  CUR=rep; TPL=rep.tpl||CFG.template; answers=rep.answers||{}; photos=rep.photos||[]; sig=rep.sig||null;
+  CUR=rep; TPL=tplFromStore(rep.tpl)||CFG.template; answers=rep.answers||{}; photos=rep.photos||[]; sig=rep.sig||null;
   renderReport();
 }
 function renderReport(){
@@ -594,7 +607,7 @@ function aggregate(list){
     projects[pj]=projects[pj]||{count:0,nc:0};
     projects[pj].count++;
     // pull findings from answers (Not OK / No)
-    const tpl=r.tpl||[];
+    const tpl=tplFromStore(r.tpl)||[];
     tpl.forEach((st,si)=>st.secs&&st.secs.forEach((sec,ci)=>sec.items.forEach((it,ii)=>{
       const a=(r.answers||{})[si+'_'+ci+'_'+ii];
       if(a&&((a.status==='Not OK')||(a.yn==='No'))){
