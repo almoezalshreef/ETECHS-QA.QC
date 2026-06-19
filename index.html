@@ -191,6 +191,18 @@
   /* mini buttons in user rows */
   .miniBtn{font-size:11px;font-weight:800;padding:6px 10px;border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:8px;cursor:pointer}
   .miniBtn.on{background:#FCE4D6;color:#C0392B;border-color:#C0392B}
+  /* NCR cards */
+  .ncrCard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-bottom:10px;cursor:pointer;border-inline-start:4px solid var(--navy)}
+  .ncrCard.overdue{border-inline-start-color:#C0392B;background:#fff7f6}
+  .ncrTop{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+  .ncrTitle{flex:1;font-weight:800;color:var(--navy);font-size:14px}
+  .ncrSt{font-size:10px;font-weight:800;padding:3px 9px;border-radius:11px}
+  .st-open{background:#FCE4D6;color:#C0392B}.st-prog{background:#FFF3CD;color:#A66A00}.st-closed{background:#DEF3E5;color:#1B8A3A}
+  .ncrMeta{font-size:12px;color:#777;margin-top:2px}
+  .ncrTags{display:flex;gap:6px;margin-top:7px}
+  .sev{font-size:10px;font-weight:800;padding:2px 8px;border-radius:10px}
+  .sev-h{background:#C0392B;color:#fff}.sev-m{background:#F0A500;color:#fff}.sev-l{background:#8a8a93;color:#fff}
+  .srcTag{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:#EAF2FB;color:var(--navy)}
 </style></head><body>
 <div id="app"><div class="loadwrap"><div class="spinner"></div>جاري التحميل...</div></div>
 <script>window.onerror=function(m,s,l,c){var a=document.getElementById('app');if(a)a.innerHTML='<div style="padding:22px;direction:rtl;text-align:right"><h3 style="color:#EC5020">حدث خطأ</h3><pre style="background:#f4f4f4;padding:12px;white-space:pre-wrap;direction:ltr;text-align:left">'+m+'\n'+l+':'+c+'</pre></div>';};</script>
@@ -373,6 +385,7 @@ window.renderHome=renderHome;
 function renderHome(){
   let h='<header class="bar"><img src="'+LOGO+'"><div class="t"><b>QA/QC Reports</b><span>'+esc(SESSION.name)+(SESSION.role==='admin'?' (Admin)':'')+'</span></div>'+
    '<button class="gear" onclick="openDashboard()" title="لوحة المعلومات">📊</button>'+
+   '<button class="gear" onclick="openNCR()" title="عدم المطابقة">⚠️</button>'+
    (SESSION.role==='admin'?'<button class="gear" onclick="openAdmin()" title="لوحة التحكم">🛠</button>':'')+
    '<button class="gear" onclick="openSet()">⚙</button>'+
    '<button class="gear" onclick="logout()" title="خروج">⎋</button></header><div class="stripe"></div>';
@@ -705,6 +718,134 @@ window.dashSetMonth=function(v){DASH_MONTH=v||null;renderDashboard();};
 window.dashSetProject=function(v){DASH_PROJECT=v||'';renderDashboard();};
 function kpi(ar,en,val,col){return '<div class="kpi" style="border-top:3px solid '+col+'"><div class="kv" style="color:'+col+'">'+val+'</div><div class="kl">'+ar+'</div><div class="kle">'+en+'</div></div>';}
 function dbar(lb,v,tot,col){const w=tot?Math.max(3,Math.round(v/tot*100)):0;return '<div class="brow2"><span class="lb2">'+lb+'</span><div class="track2"><div style="width:'+w+'%;height:100%;background:'+col+';border-radius:7px"></div></div><b>'+v+'</b></div>';}
+
+// ===== NON-CONFORMITY MANAGEMENT (NCR) =====
+let NCR_LIST=[]; let NCR_unsub=null;
+let NCR_F={q:'',status:'',project:''};
+const NC_STATUS=['مفتوحة','قيد المعالجة','مغلقة'];
+const NC_SEV=['عالية','متوسطة','منخفضة'];
+
+window.openNCR=function(){ renderNCR(); subscribeNCR(); };
+
+function subscribeNCR(){
+  if(NCR_unsub){NCR_unsub();NCR_unsub=null;}
+  let qy;
+  try{
+    if(SESSION.role==='admin') qy=query(collection(db,'ncr'),orderBy('createdMs','desc'));
+    else qy=collection(db,'ncr');
+  }catch(e){ qy=collection(db,'ncr'); }
+  NCR_unsub=onSnapshot(qy,(snap)=>{
+    NCR_LIST=[]; snap.forEach(d=>NCR_LIST.push(Object.assign({id:d.id},d.data())));
+    // engineers see only their own (responsible or creator)
+    if(SESSION.role!=='admin') NCR_LIST=NCR_LIST.filter(n=>n.owner===SESSION.uid||n.responsibleUid===SESSION.uid);
+    NCR_LIST.sort((a,b)=>(b.createdMs||0)-(a.createdMs||0));
+    paintNCR();
+  },(err)=>{ const l=$('ncrList'); if(l)l.innerHTML='<div class="empty">تعذّر التحميل: '+esc(err.message)+'</div>'; });
+}
+
+function renderNCR(){
+  const projNames=[...new Set((CFG.projects||[]).map(p=>p.name))];
+  let h='<header class="bar"><button class="menubtn" onclick="goHomeFromNCR()">‹</button>'+
+   '<img src="'+LOGO+'"><div class="t"><b>عدم المطابقة</b><span>Non-Conformities (NCR)</span></div></header><div class="stripe"></div>';
+  h+='<div class="wrap">';
+  h+='<div class="card"><div class="body" style="display:flex;flex-direction:column;gap:8px">'+
+     '<input id="ncrSearch" placeholder="🔎 بحث في العنوان/الوصف/المسؤول" oninput="ncrSearch(this.value)" value="'+esc(NCR_F.q)+'">'+
+     '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+     '<select onchange="ncrFilterStatus(this.value)" style="flex:1;min-width:120px"><option value="">كل الحالات</option>'+NC_STATUS.map(s=>'<option'+(NCR_F.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select>'+
+     '<select onchange="ncrFilterProject(this.value)" style="flex:1;min-width:120px"><option value="">كل المشاريع</option>'+projNames.map(p=>'<option'+(NCR_F.project===p?' selected':'')+'>'+esc(p)+'</option>').join('')+'</select>'+
+     '</div></div></div>';
+  h+='<div id="ncrList"><div class="loadwrap"><div class="spinner"></div></div></div>';
+  h+='</div><button class="fab" onclick="newNCR()">＋</button><div class="toast" id="toast"></div>';
+  $('app').innerHTML=h;
+  paintNCR();
+}
+window.goHomeFromNCR=function(){ if(NCR_unsub){NCR_unsub();NCR_unsub=null;} renderHome(); };
+window.ncrSearch=function(v){NCR_F.q=v;paintNCR();};
+window.ncrFilterStatus=function(v){NCR_F.status=v;paintNCR();};
+window.ncrFilterProject=function(v){NCR_F.project=v;paintNCR();};
+
+function ncrFiltered(){
+  let list=NCR_LIST.slice();
+  const q=(NCR_F.q||'').trim().toLowerCase();
+  if(q) list=list.filter(n=>((n.title||'')+(n.desc||'')+(n.responsible||'')+(n.project||'')).toLowerCase().includes(q));
+  if(NCR_F.status) list=list.filter(n=>n.status===NCR_F.status);
+  if(NCR_F.project) list=list.filter(n=>n.project===NCR_F.project);
+  return list;
+}
+function isOverdue(n){ if(!n.due||n.status==='مغلقة')return false; return n.due < new Date().toISOString().slice(0,10); }
+function paintNCR(){
+  const l=$('ncrList'); if(!l)return;
+  const list=ncrFiltered();
+  if(!list.length){ l.innerHTML='<div class="empty">لا توجد حالات. اضغط ＋ لإضافة حالة عدم مطابقة.</div>'; return; }
+  l.innerHTML=list.map(n=>{
+    const od=isOverdue(n);
+    const sevCls=n.severity==='عالية'?'sev-h':n.severity==='متوسطة'?'sev-m':'sev-l';
+    const stCls=n.status==='مغلقة'?'st-closed':n.status==='قيد المعالجة'?'st-prog':'st-open';
+    return '<div class="ncrCard'+(od?' overdue':'')+'" onclick="editNCR(\''+n.id+'\')">'+
+      '<div class="ncrTop"><span class="ncrTitle">'+esc(n.title||'(بدون عنوان)')+'</span>'+
+      '<span class="ncrSt '+stCls+'">'+esc(n.status||'مفتوحة')+'</span></div>'+
+      (n.project?'<div class="ncrMeta">📁 '+esc(n.project)+'</div>':'')+
+      '<div class="ncrMeta">👤 '+esc(n.responsible||'—')+(n.due?' · 📅 '+esc(n.due):'')+(od?' · <b style="color:#C0392B">متأخرة</b>':'')+'</div>'+
+      '<div class="ncrTags"><span class="sev '+sevCls+'">'+esc(n.severity||'متوسطة')+'</span>'+(n.source==='report'?'<span class="srcTag">من تقرير</span>':'')+'</div>'+
+      '</div>';
+  }).join('');
+}
+
+// create / edit
+window.newNCR=function(){ ncrForm(null); };
+window.editNCR=function(id){ const n=NCR_LIST.find(x=>x.id===id); if(n)ncrForm(n); };
+function ncrForm(n){
+  const isNew=!n; n=n||{};
+  const projNames=[...new Set((CFG.projects||[]).map(p=>p.name))];
+  const ro=(n.source==='report'); // findings from reports: limited edit (status/responsible/action only)
+  let h='<header class="bar"><button class="menubtn" onclick="openNCR()">‹</button>'+
+   '<img src="'+LOGO+'"><div class="t"><b>'+(isNew?'حالة جديدة':'تعديل حالة')+'</b><span>NCR</span></div></header><div class="stripe"></div>';
+  h+='<div class="wrap"><div class="card"><div class="body">';
+  h+='<label class="fld">العنوان / Title</label><input id="n_title" value="'+esc(n.title||'')+'"'+(ro?' disabled':'')+'>';
+  h+='<label class="fld">الوصف / Description</label><textarea id="n_desc" rows="2"'+(ro?' disabled':'')+'>'+esc(n.desc||'')+'</textarea>';
+  h+='<label class="fld">المشروع / Project</label><select id="n_project"'+(ro?' disabled':'')+'><option value="">—</option>'+projNames.map(p=>'<option'+(n.project===p?' selected':'')+'>'+esc(p)+'</option>').join('')+'</select>';
+  h+='<div class="grid2">';
+  h+='<div><label class="fld">المسؤول / Responsible</label><input id="n_resp" value="'+esc(n.responsible||'')+'"></div>';
+  h+='<div><label class="fld">تاريخ الاستحقاق / Due</label><input id="n_due" type="date" value="'+esc(n.due||'')+'"></div>';
+  h+='</div>';
+  h+='<div class="grid2">';
+  h+='<div><label class="fld">الحالة / Status</label><select id="n_status">'+NC_STATUS.map(s=>'<option'+(n.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select></div>';
+  h+='<div><label class="fld">الخطورة / Severity</label><select id="n_sev"'+(ro?' disabled':'')+'>'+NC_SEV.map(s=>'<option'+(n.severity===s?' selected':'')+'>'+s+'</option>').join('')+'</select></div>';
+  h+='</div>';
+  h+='<label class="fld">الإجراء التصحيحي / Corrective Action</label><textarea id="n_action" rows="2">'+esc(n.action||'')+'</textarea>';
+  if(ro)h+='<p class="note">هذه الحالة مستخرجة من تقرير. يمكنك تحديث المسؤول والتاريخ والحالة والإجراء فقط.</p>';
+  h+='</div></div>';
+  h+='<div style="padding:0 16px 90px"><button class="btn" style="width:100%" onclick="saveNCR(\''+(n.id||'')+'\','+(ro?'true':'false')+')">حفظ</button>';
+  if(!isNew&&!ro)h+='<button class="btn ghost" style="width:100%;margin-top:10px;flex:1;border-color:#C0392B;color:#C0392B" onclick="delNCR(\''+n.id+'\')">حذف الحالة</button>';
+  h+='</div>';
+  h+='<div class="toast" id="toast"></div>';
+  $('app').innerHTML=h;
+}
+window.saveNCR=async function(id,ro){
+  const g=x=>{const e=$(x);return e?e.value:'';};
+  const data={
+    title:g('n_title'),desc:g('n_desc'),project:g('n_project'),
+    responsible:g('n_resp'),due:g('n_due'),status:g('n_status'),
+    severity:g('n_sev'),action:g('n_action'),
+    updatedMs:Date.now(),updated:serverTimestamp()
+  };
+  if(!data.title&&!ro){toast('اكتب عنوان الحالة');return;}
+  try{
+    if(id){ await updateDoc(doc(db,'ncr',id),data); toast('تم الحفظ'); }
+    else{
+      const nid='nc'+Date.now()+Math.floor(Math.random()*1000);
+      await setDoc(doc(db,'ncr',nid),Object.assign({
+        id:nid,owner:SESSION.uid,ownerName:SESSION.name,source:'manual',createdMs:Date.now(),created:serverTimestamp()
+      },data));
+      toast('تمت الإضافة');
+    }
+    openNCR();
+  }catch(e){ toast('تعذّر الحفظ: '+e.message); }
+};
+window.delNCR=async function(id){
+  if(!confirm('حذف هذه الحالة؟'))return;
+  try{ await deleteDoc(doc(db,'ncr',id)); toast('تم الحذف'); openNCR(); }catch(e){ toast('تعذّر الحذف'); }
+};
 
 // ===== SETTINGS (recipient + users) =====
 window.openSet=async function(){
