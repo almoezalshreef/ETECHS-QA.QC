@@ -211,6 +211,27 @@
   .procCat{font-size:10px;font-weight:800;padding:2px 9px;border-radius:10px;background:#EAF2FB;color:var(--navy);white-space:nowrap}
   .procPrev{font-size:12px;color:#888;line-height:1.5}
   .procBody{font-size:14px;line-height:1.9;color:#2c2c38;white-space:pre-wrap}
+  /* risk */
+  .mxgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .mxcell{color:#fff;border-radius:10px;padding:12px 6px;text-align:center;font-size:11px;font-weight:700}
+  .mxcell b{display:block;font-size:22px;margin-top:3px}
+  .riskCard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 13px;margin-bottom:10px;cursor:pointer;border-inline-start:4px solid var(--navy)}
+  .riskHaz{font-weight:800;color:var(--navy);font-size:14px}
+  .riskMeta{font-size:12px;color:#777;margin-top:3px}
+  .riskScores{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .rscore{font-size:10px;font-weight:800;color:#fff;padding:3px 9px;border-radius:10px}
+  /* 5x5 matrix on screen */
+  .mx5wrap{display:flex;align-items:center;gap:6px;overflow-x:auto}
+  .mx5yaxis{writing-mode:vertical-rl;transform:rotate(180deg);font-size:10px;font-weight:700;color:#888;white-space:nowrap}
+  .mx5{border-collapse:collapse;margin:0 auto}
+  .mx5 td{border:2px solid #fff;width:42px;height:40px;text-align:center;padding:1px;vertical-align:middle}
+  .mx5 .mxcorner{background:transparent;border:0}
+  .mx5 .mxhead{background:var(--navy);color:#fff;font-weight:800;font-size:11px;width:22px;height:22px}
+  .mx5cell{position:relative;color:#fff}
+  .mxscore{font-size:10px;opacity:.7}
+  .mxdots{display:block}
+  .mxdots i{display:inline-block;background:#fff;color:#111;border-radius:50%;width:16px;height:16px;line-height:16px;font-size:9px;font-style:normal;font-weight:800;margin:1px}
+  .mx5xaxis{text-align:center;font-size:10px;font-weight:700;color:#888;margin-top:4px}
 </style></head><body>
 <div id="app"><div class="loadwrap"><div class="spinner"></div>Loading...</div></div>
 <script>window.onerror=function(m,s,l,c){var a=document.getElementById('app');if(a)a.innerHTML='<div style="padding:22px;text-align:left"><h3 style="color:#EC5020">Error</h3><pre style="background:#f4f4f4;padding:12px;white-space:pre-wrap">'+m+'\n'+l+':'+c+'</pre></div>';};</script>
@@ -332,7 +353,27 @@ const I18N={
   enter_title:{en:'Enter a title',ar:'اكتب عنواناً'},
   added:{en:'Added',ar:'تمت الإضافة'},
   deleted:{en:'Deleted',ar:'تم الحذف'},
-  confirm_del:{en:'Delete this item?',ar:'حذف هذا العنصر؟'}
+  confirm_del:{en:'Delete this item?',ar:'حذف هذا العنصر؟'},
+  // risk module
+  risk_title:{en:'Risk Management',ar:'إدارة المخاطر'},
+  risk_search:{en:'🔎 Search risks',ar:'🔎 بحث في المخاطر'},
+  no_risks:{en:'No risks yet. Tap + to add a risk.',ar:'لا توجد مخاطر بعد. اضغط ＋ لإضافة خطر.'},
+  risk_new:{en:'New Risk',ar:'خطر جديد'},
+  risk_edit:{en:'Edit Risk',ar:'تعديل خطر'},
+  activity:{en:'Activity / Hazard source',ar:'النشاط / مصدر الخطر'},
+  hazard:{en:'Hazard',ar:'الخطر'},
+  likelihood:{en:'Likelihood',ar:'الاحتمالية'},
+  consequence:{en:'Consequence',ar:'الشدّة'},
+  risk_score:{en:'Risk Score',ar:'درجة المخاطرة'},
+  before_controls:{en:'Before Controls',ar:'قبل المعالجة'},
+  after_controls:{en:'After Controls (Residual)',ar:'بعد المعالجة (المتبقي)'},
+  controls:{en:'Control Measures',ar:'إجراءات التحكّم'},
+  download_risk:{en:'Download Risk Report (PDF)',ar:'تنزيل تقرير المخاطر (PDF)'},
+  risk_matrix:{en:'Risk Matrix',ar:'مصفوفة المخاطر'},
+  level_low:{en:'Low',ar:'منخفض'},
+  level_med:{en:'Medium',ar:'متوسط'},
+  level_high:{en:'High',ar:'عالٍ'},
+  level_ext:{en:'Extreme',ar:'حرج'}
 };
 function t(key){ const e=I18N[key]; return e? (e[LANG]||e.en) : key; }
 function applyDir(){ document.documentElement.lang=LANG; document.documentElement.dir=(LANG==='ar'?'rtl':'ltr'); }
@@ -343,6 +384,7 @@ function reRender(){
   if(!SESSION){ renderLogin(); return; }
   if(CUR){ renderReport(); return; }
   // detect current screen by a marker element
+  if(document.getElementById('riskList')){ renderRisk(); return; }
   if(document.getElementById('procList')){ renderProcs(); return; }
   if(document.getElementById('ncrList')){ renderNCR(); return; }
   if(document.getElementById('adminBody')){ renderAdmin(); return; }
@@ -533,6 +575,7 @@ function renderHome(){
    '<button class="gear" onclick="openDashboard()" title="'+t('dashboard')+'">📊</button>'+
    '<button class="gear" onclick="openNCR()" title="'+t('ncr_title')+'">⚠️</button>'+
    '<button class="gear" onclick="openProcs()" title="'+t('procs_title')+'">📋</button>'+
+   '<button class="gear" onclick="openRisk()" title="'+t('risk_title')+'">🎯</button>'+
    (SESSION.role==='admin'?'<button class="gear" onclick="openAdmin()" title="'+t('admin_panel')+'">🛠</button>':'')+
    '<button class="gear" onclick="openSet()">⚙</button>'+
    '<button class="gear" onclick="logout()" title="'+t('logout')+'">⎋</button></header><div class="stripe"></div>';
@@ -1098,6 +1141,205 @@ window.saveProc=async function(id){
 window.delProc=async function(id){
   if(!confirm(t('confirm_del')))return;
   try{ await deleteDoc(doc(db,'procs',id)); toast(t('deleted')); openProcs(); }catch(e){ toast('تعذّر الحذف'); }
+};
+
+// ===== RISK MANAGEMENT =====
+let RISKS=[]; let RISK_unsub=null; let RISK_F={q:'',project:''};
+
+function riskLevel(score){ // 1..25
+  if(score>=15) return {key:'ext',label:t('level_ext'),color:'#7B1010'};
+  if(score>=10) return {key:'high',label:t('level_high'),color:'#C0392B'};
+  if(score>=5)  return {key:'med',label:t('level_med'),color:'#E8A100'};
+  return {key:'low',label:t('level_low'),color:'#1B8A3A'};
+}
+// build a 5x5 matrix HTML. rows = Likelihood (5 top → 1 bottom), cols = Consequence (1→5).
+// places each risk's residual (or before) score in its L×C cell.
+function buildMatrix(list, forPrint){
+  // grid[L][C] = array of indices
+  const cell={};
+  list.forEach((r,i)=>{
+    const L=(r.aL||r.bL||0), C=(r.aC||r.bC||0);
+    if(L>=1&&L<=5&&C>=1&&C<=5){ const k=L+'_'+C; (cell[k]=cell[k]||[]).push(i+1); }
+  });
+  const Llab=LANG==='ar'?'الاحتمالية ⟶':'Likelihood ⟶';
+  const Clab=LANG==='ar'?'الشدّة ⟶':'Consequence ⟶';
+  let h='<div class="mx5wrap"><div class="mx5yaxis">'+Llab+'</div><table class="mx5"><tr><td class="mxcorner"></td>';
+  for(let c=1;c<=5;c++) h+='<td class="mxhead">'+c+'</td>';
+  h+='</tr>';
+  for(let L=5;L>=1;L--){
+    h+='<tr><td class="mxhead">'+L+'</td>';
+    for(let C=1;C<=5;C++){
+      const score=L*C; const lv=riskLevel(score); const items=cell[L+'_'+C]||[];
+      h+='<td class="mx5cell" style="background:'+lv.color+'"><span class="mxscore">'+score+'</span>'+(items.length?'<span class="mxdots">'+items.map(n=>'<i>'+n+'</i>').join('')+'</span>':'')+'</td>';
+    }
+    h+='</tr>';
+  }
+  h+='</table></div><div class="mx5xaxis">'+Clab+'</div>';
+  return h;
+}
+
+window.openRisk=function(){ renderRisk(); subscribeRisk(); };
+function subscribeRisk(){
+  if(RISK_unsub){RISK_unsub();RISK_unsub=null;}
+  let qy; try{ qy=query(collection(db,'risks'),orderBy('createdMs','desc')); }catch(e){ qy=collection(db,'risks'); }
+  RISK_unsub=onSnapshot(qy,(snap)=>{
+    RISKS=[]; snap.forEach(d=>RISKS.push(Object.assign({id:d.id},d.data())));
+    if(SESSION.role!=='admin') RISKS=RISKS.filter(r=>r.owner===SESSION.uid||r.responsibleUid===SESSION.uid);
+    RISKS.sort((a,b)=>(b.createdMs||0)-(a.createdMs||0)); paintRisk();
+  },(err)=>{ const l=$('riskList'); if(l)l.innerHTML='<div class="empty">'+esc(err.message)+'</div>'; });
+}
+function renderRisk(){
+  const projNames=[...new Set((CFG.projects||[]).map(p=>p.name))];
+  let h='<header class="bar"><button class="menubtn" onclick="goHomeFromRisk()">‹</button>'+
+   '<img src="'+LOGO+'"><div class="t"><b>'+t('risk_title')+'</b><span>Risk Assessment</span></div>'+
+   '<button class="gear" onclick="downloadRiskReport()" title="'+t('download_risk')+'">⬇️</button>'+
+   '</header><div class="stripe"></div>';
+  h+='<div class="wrap">';
+  h+='<div class="card"><div class="body" style="display:flex;flex-direction:column;gap:8px">'+
+     '<input id="riskSearch" placeholder="'+t('risk_search')+'" oninput="riskSearch(this.value)" value="'+esc(RISK_F.q)+'">'+
+     '<select onchange="riskFilterProject(this.value)"><option value="">'+t('all_projects')+'</option>'+projNames.map(p=>'<option'+(RISK_F.project===p?' selected':'')+'>'+esc(p)+'</option>').join('')+'</select>'+
+     '</div></div>';
+  h+='<div id="riskMatrix"></div>';
+  h+='<div id="riskList"><div class="loadwrap"><div class="spinner"></div></div></div>';
+  h+='</div><button class="fab" onclick="newRisk()">＋</button><div class="toast" id="toast"></div>';
+  $('app').innerHTML=h; paintRisk();
+}
+window.goHomeFromRisk=function(){ if(RISK_unsub){RISK_unsub();RISK_unsub=null;} renderHome(); };
+window.riskSearch=function(v){RISK_F.q=v;paintRisk();};
+window.riskFilterProject=function(v){RISK_F.project=v;paintRisk();};
+function riskFiltered(){
+  let list=RISKS.slice(); const q=(RISK_F.q||'').trim().toLowerCase();
+  if(q) list=list.filter(r=>((r.hazard||'')+(r.activity||'')+(r.controls||'')+(r.responsible||'')).toLowerCase().includes(q));
+  if(RISK_F.project) list=list.filter(r=>r.project===RISK_F.project);
+  return list;
+}
+function paintRisk(){
+  const list=riskFiltered();
+  // matrix counts (use residual score)
+  const mx=$('riskMatrix');
+  if(mx){
+    let counts={low:0,med:0,high:0,ext:0};
+    list.forEach(r=>{ const s=(r.aL||0)*(r.aC||0)||(r.bL||0)*(r.bC||0); counts[riskLevel(s).key]++; });
+    mx.innerHTML='<div class="card"><h3>'+t('risk_matrix')+' <small>'+list.length+'</small></h3><div class="body">'+
+      buildMatrix(list,false)+
+      '<div class="mxgrid" style="margin-top:12px">'+
+      '<div class="mxcell" style="background:#1B8A3A">'+t('level_low')+'<b>'+counts.low+'</b></div>'+
+      '<div class="mxcell" style="background:#E8A100">'+t('level_med')+'<b>'+counts.med+'</b></div>'+
+      '<div class="mxcell" style="background:#C0392B">'+t('level_high')+'<b>'+counts.high+'</b></div>'+
+      '<div class="mxcell" style="background:#7B1010">'+t('level_ext')+'<b>'+counts.ext+'</b></div>'+
+      '</div></div></div>';
+  }
+  const l=$('riskList'); if(!l)return;
+  if(!list.length){ l.innerHTML='<div class="empty">'+t('no_risks')+'</div>'; return; }
+  l.innerHTML=list.map(r=>{
+    const bs=(r.bL||0)*(r.bC||0), as=(r.aL||0)*(r.aC||0);
+    const bl=riskLevel(bs), al=riskLevel(as||bs);
+    return '<div class="riskCard" onclick="editRisk(\''+r.id+'\')" style="border-inline-start-color:'+al.color+'">'+
+      '<div class="riskTop"><span class="riskHaz">'+esc(r.hazard||'(—)')+'</span></div>'+
+      (r.activity?'<div class="riskMeta">'+esc(r.activity)+'</div>':'')+
+      (r.project?'<div class="riskMeta">📁 '+esc(r.project)+'</div>':'')+
+      '<div class="riskScores">'+
+        '<span class="rscore" style="background:'+bl.color+'">'+t('before_controls')+': '+bs+' '+bl.label+'</span>'+
+        '<span class="rscore" style="background:'+al.color+'">'+t('after_controls')+': '+(as||bs)+' '+al.label+'</span>'+
+      '</div>'+
+      (r.responsible?'<div class="riskMeta">👤 '+esc(r.responsible)+(r.status?' · '+esc(r.status):'')+'</div>':'')+
+      '</div>';
+  }).join('');
+}
+window.newRisk=function(){ riskForm(null); };
+window.editRisk=function(id){ const r=RISKS.find(x=>x.id===id); if(r)riskForm(r); };
+function scoreSel(id,val){ return '<select id="'+id+'">'+[1,2,3,4,5].map(n=>'<option value="'+n+'"'+(val==n?' selected':'')+'>'+n+'</option>').join('')+'</select>'; }
+function riskForm(r){
+  const isNew=!r; r=r||{};
+  const projNames=[...new Set((CFG.projects||[]).map(p=>p.name))];
+  let h='<header class="bar"><button class="menubtn" onclick="openRisk()">‹</button>'+
+   '<img src="'+LOGO+'"><div class="t"><b>'+(isNew?t('risk_new'):t('risk_edit'))+'</b><span>Risk</span></div></header><div class="stripe"></div>';
+  h+='<div class="wrap"><div class="card"><div class="body">';
+  h+='<label class="fld">'+t('hazard')+'</label><input id="r_hazard" value="'+esc(r.hazard||'')+'">';
+  h+='<label class="fld">'+t('activity')+'</label><input id="r_activity" value="'+esc(r.activity||'')+'">';
+  h+='<label class="fld">'+t('project')+'</label><select id="r_project"><option value="">—</option>'+projNames.map(p=>'<option'+(r.project===p?' selected':'')+'>'+esc(p)+'</option>').join('')+'</select>';
+  h+='<div class="card" style="margin-top:12px;box-shadow:none;border:1px solid var(--line)"><h3 style="font-size:13px">'+t('before_controls')+'</h3><div class="body"><div class="grid2">'+
+     '<div><label class="fld">'+t('likelihood')+' (1-5)</label>'+scoreSel('r_bL',r.bL||3)+'</div>'+
+     '<div><label class="fld">'+t('consequence')+' (1-5)</label>'+scoreSel('r_bC',r.bC||3)+'</div>'+
+     '</div></div></div>';
+  h+='<label class="fld">'+t('controls')+'</label><textarea id="r_controls" rows="3">'+esc(r.controls||'')+'</textarea>';
+  h+='<div class="card" style="margin-top:12px;box-shadow:none;border:1px solid var(--line)"><h3 style="font-size:13px">'+t('after_controls')+'</h3><div class="body"><div class="grid2">'+
+     '<div><label class="fld">'+t('likelihood')+' (1-5)</label>'+scoreSel('r_aL',r.aL||2)+'</div>'+
+     '<div><label class="fld">'+t('consequence')+' (1-5)</label>'+scoreSel('r_aC',r.aC||2)+'</div>'+
+     '</div></div></div>';
+  h+='<div class="grid2"><div><label class="fld">'+t('responsible')+'</label><input id="r_resp" value="'+esc(r.responsible||'')+'"></div>'+
+     '<div><label class="fld">'+t('status')+'</label><select id="r_status">'+['مفتوحة','قيد المعالجة','مغلقة'].map(s=>'<option'+(r.status===s?' selected':'')+'>'+s+'</option>').join('')+'</select></div></div>';
+  h+='</div></div>';
+  h+='<div style="padding:0 16px 90px"><button class="btn" style="width:100%" onclick="saveRisk(\''+(r.id||'')+'\')">'+t('save')+'</button>';
+  if(!isNew)h+='<button class="btn ghost" style="width:100%;margin-top:10px;flex:1;border-color:#C0392B;color:#C0392B" onclick="delRisk(\''+r.id+'\')">'+t('delete')+'</button>';
+  h+='</div><div class="toast" id="toast"></div>';
+  $('app').innerHTML=h;
+}
+window.saveRisk=async function(id){
+  const g=x=>{const e=$(x);return e?e.value:'';};
+  const data={hazard:g('r_hazard'),activity:g('r_activity'),project:g('r_project'),
+    bL:parseInt(g('r_bL'))||0,bC:parseInt(g('r_bC'))||0,controls:g('r_controls'),
+    aL:parseInt(g('r_aL'))||0,aC:parseInt(g('r_aC'))||0,responsible:g('r_resp'),status:g('r_status'),
+    updatedMs:Date.now(),updated:serverTimestamp()};
+  if(!data.hazard){toast(LANG==='ar'?'اكتب الخطر':'Enter hazard');return;}
+  try{
+    if(id){ await updateDoc(doc(db,'risks',id),data); toast(t('saved')); }
+    else{ const rid='rk'+Date.now(); await setDoc(doc(db,'risks',rid),Object.assign({id:rid,owner:SESSION.uid,ownerName:SESSION.name,createdMs:Date.now(),created:serverTimestamp()},data)); toast(t('added')); }
+    openRisk();
+  }catch(e){ toast('تعذّر الحفظ: '+e.message); }
+};
+window.delRisk=async function(id){
+  if(!confirm(t('confirm_del')))return;
+  try{ await deleteDoc(doc(db,'risks',id)); toast(t('deleted')); openRisk(); }catch(e){ toast('تعذّر الحذف'); }
+};
+
+// ===== downloadable risk report (print-to-PDF) =====
+window.downloadRiskReport=function(){
+  const list=riskFiltered();
+  if(!list.length){ toast(LANG==='ar'?'لا توجد مخاطر':'No risks'); return; }
+  let counts={low:0,med:0,high:0,ext:0};
+  let rows='';
+  list.forEach((r,i)=>{
+    const bs=(r.bL||0)*(r.bC||0), as=(r.aL||0)*(r.aC||0)||bs;
+    const bl=riskLevel(bs), al=riskLevel(as); counts[al.key]++;
+    rows+='<tr><td>'+(i+1)+'</td><td>'+esc(r.hazard||'')+'<div class="sub">'+esc(r.activity||'')+'</div></td>'+
+      '<td>'+esc(r.project||'-')+'</td>'+
+      '<td style="text-align:center">'+(r.bL||0)+'×'+(r.bC||0)+'<br><b style="color:'+bl.color+'">'+bs+' '+bl.label+'</b></td>'+
+      '<td>'+esc(r.controls||'-')+'</td>'+
+      '<td style="text-align:center">'+(r.aL||0)+'×'+(r.aC||0)+'<br><b style="color:'+al.color+'">'+as+' '+al.label+'</b></td>'+
+      '<td>'+esc(r.responsible||'-')+'<div class="sub">'+esc(r.status||'')+'</div></td></tr>';
+  });
+  const rep='<!DOCTYPE html><html lang="'+LANG+'" dir="'+(LANG==='ar'?'rtl':'ltr')+'"><head><meta charset="utf-8"><title>Risk Report</title><style>'+
+    '*{box-sizing:border-box}body{font-family:Arial,Tahoma,sans-serif;margin:0;color:#1c1c28;font-size:12px}'+
+    '.hd{background:'+NAVY+';color:#fff;padding:14px 18px;display:flex;align-items:center;gap:14px}.hd img{height:44px;background:#fff;border-radius:6px;padding:3px}.hd .ti{margin-inline-start:auto;text-align:'+(LANG==='ar'?'left':'right')+'}.hd b{font-size:16px}.hd span{font-size:11px;opacity:.85}'+
+    '.or{height:5px;background:'+ORANGE+'}.sec1{padding:16px 18px}.h2{color:'+NAVY+';font-size:15px;font-weight:800;border-bottom:2px solid #eee;padding-bottom:5px;margin:6px 0 12px}'+
+    '.sum{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}.sb{flex:1;min-width:90px;text-align:center;color:#fff;border-radius:10px;padding:10px}.sb b{display:block;font-size:22px}'+
+    'table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:7px 8px;text-align:'+(LANG==='ar'?'right':'left')+';vertical-align:top}th{background:'+NAVY+';color:#fff;font-size:11px}.sub{color:#888;font-size:10px;margin-top:2px}'+
+    '.mx5wrap{display:flex;align-items:center;gap:6px;margin-bottom:6px}.mx5yaxis{writing-mode:vertical-rl;transform:rotate(180deg);font-size:10px;font-weight:700;color:#666}'+
+    '.mx5{width:auto;border-collapse:collapse;margin:0 auto}.mx5 td{border:1px solid #fff;width:46px;height:42px;text-align:center;padding:2px}'+
+    '.mxcorner{background:#fff!important;border:0!important}.mxhead{background:#0F0A44;color:#fff;font-weight:800;font-size:11px;width:24px!important;height:24px!important}'+
+    '.mx5cell{position:relative;color:#fff}.mxscore{font-size:10px;opacity:.75}.mxdots{display:block;font-size:0}.mxdots i{display:inline-block;background:#fff;color:#111;border-radius:50%;width:15px;height:15px;line-height:15px;font-size:9px;font-style:normal;font-weight:800;margin:1px}'+
+    '.mx5xaxis{text-align:center;font-size:10px;font-weight:700;color:#666;margin-bottom:10px}'+
+    '.toolbar{position:sticky;top:0;background:#fff;padding:10px;border-bottom:1px solid #eee}.toolbar button{width:100%;padding:13px;border:0;border-radius:10px;font-size:15px;font-weight:800;color:#fff;background:'+ORANGE+';cursor:pointer}'+
+    '@media print{.toolbar{display:none}}</style></head><body>'+
+    '<div class="toolbar"><button onclick="window.print()">'+(LANG==='ar'?'حفظ PDF / طباعة':'Save PDF / Print')+'</button></div>'+
+    '<div class="hd"><img src="'+LOGO+'"><div class="ti"><b>RISK ASSESSMENT REPORT</b><br><span>ETECHS · '+new Date().toLocaleDateString('en-GB')+'</span></div></div><div class="or"></div>'+
+    '<div class="sec1"><div class="h2">'+(LANG==='ar'?'ملخّص المخاطر (المتبقية)':'Risk Summary (Residual)')+'</div>'+
+    '<div class="sum">'+
+      '<div class="sb" style="background:#1B8A3A">'+t('level_low')+'<b>'+counts.low+'</b></div>'+
+      '<div class="sb" style="background:#E8A100">'+t('level_med')+'<b>'+counts.med+'</b></div>'+
+      '<div class="sb" style="background:#C0392B">'+t('level_high')+'<b>'+counts.high+'</b></div>'+
+      '<div class="sb" style="background:#7B1010">'+t('level_ext')+'<b>'+counts.ext+'</b></div>'+
+    '</div>'+
+    '<div class="h2">'+t('risk_matrix')+'</div>'+
+    buildMatrix(list,true)+
+    '<div class="h2">'+(LANG==='ar'?'سجل المخاطر':'Risk Register')+'</div>'+
+    '<table><tr><th>#</th><th>'+t('hazard')+'</th><th>'+t('project')+'</th><th>'+t('before_controls')+'</th><th>'+t('controls')+'</th><th>'+t('after_controls')+'</th><th>'+t('responsible')+'</th></tr>'+rows+'</table>'+
+    '<p style="color:#888;font-size:10px;margin-top:14px">'+(LANG==='ar'?'درجة المخاطرة = الاحتمالية × الشدّة (1-25)':'Risk Score = Likelihood × Consequence (1-25)')+'</p>'+
+    '</div></body></html>';
+  const w=window.open('','_blank');
+  if(w){ w.document.open(); w.document.write(rep); w.document.close(); toast(LANG==='ar'?'افتح «حفظ PDF» في الأعلى':'Tap Save PDF at top'); }
+  else{ const blob=new Blob([rep],{type:'text/html'}); location.href=URL.createObjectURL(blob); }
 };
 
 // ===== SETTINGS (recipient + users) =====
