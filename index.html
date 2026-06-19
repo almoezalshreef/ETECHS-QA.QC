@@ -181,6 +181,16 @@
   .ncitem .nctitle{font-size:13px;font-weight:700;color:var(--navy);margin:2px 0}
   .ncitem .ncf{font-size:12px;color:#444;margin-top:3px}
   .ncitem .nca{font-size:12px;color:#C0392B;margin-top:2px}
+  /* announcement banner */
+  .annc{display:flex;align-items:flex-start;gap:9px;border-radius:12px;padding:12px 14px;margin-bottom:14px;color:#fff;font-size:13.5px;font-weight:600;line-height:1.5}
+  .annc .ai{font-size:18px;flex:0 0 auto}
+  .annc.navy{background:var(--navy)}
+  .annc.orange{background:var(--orange)}
+  .annc.red{background:#C0392B}
+  .annc.green{background:#1B8A3A}
+  /* mini buttons in user rows */
+  .miniBtn{font-size:11px;font-weight:800;padding:6px 10px;border:1px solid var(--line);background:#fff;color:var(--navy);border-radius:8px;cursor:pointer}
+  .miniBtn.on{background:#FCE4D6;color:#C0392B;border-color:#C0392B}
 </style></head><body>
 <div id="app"><div class="loadwrap"><div class="spinner"></div>جاري التحميل...</div></div>
 <script>window.onerror=function(m,s,l,c){var a=document.getElementById('app');if(a)a.innerHTML='<div style="padding:22px;direction:rtl;text-align:right"><h3 style="color:#EC5020">حدث خطأ</h3><pre style="background:#f4f4f4;padding:12px;white-space:pre-wrap;direction:ltr;text-align:left">'+m+'\n'+l+':'+c+'</pre></div>';};</script>
@@ -302,11 +312,30 @@ onAuthStateChanged(auth, async (user)=>{
       usnap=await getDoc(uref);
     }
     const u=usnap.data();
+    // disabled account check
+    if(u.disabled){ await signOut(auth); renderDisabled(); return; }
     SESSION={uid:user.uid,email:user.email,name:u.name||user.email,role:u.role||'user'};
     await loadConfig();
+    // app lock check (admins bypass)
+    if(SESSION.role!=='admin'){
+      try{ const lock=await getDoc(doc(db,'meta','lock')); if(lock.exists()&&lock.data().locked){ renderLocked(lock.data().message||''); return; } }catch(e){}
+    }
     renderHome();
   }catch(e){ $('app').innerHTML='<div class="loadwrap">خطأ: '+esc(e.message)+'<br><br><button class="btn" style="max-width:200px;margin:0 auto" onclick="location.reload()">إعادة المحاولة</button></div>'; }
 });
+
+function renderDisabled(){
+  $('app').innerHTML='<div class="login"><div class="box"><img src="'+LOGO+'">'+
+    '<h1 style="color:#C0392B">الحساب معطّل</h1><p>حسابك معطّل حالياً. يرجى مراجعة مدير النظام لإعادة التفعيل.</p>'+
+    '<button class="btn" style="width:100%;margin-top:16px" onclick="location.reload()">العودة لتسجيل الدخول</button></div></div>';
+}
+function renderLocked(msg){
+  $('app').innerHTML='<div class="login"><div class="box"><img src="'+LOGO+'">'+
+    '<div style="font-size:46px;margin:6px 0">🔒</div>'+
+    '<h1>التطبيق مقفل مؤقتاً</h1><p>'+(msg?esc(msg):'التطبيق متوقّف مؤقتاً للصيانة. يرجى المحاولة لاحقاً.')+'</p>'+
+    '<button class="btn ghost" style="width:100%;margin-top:16px;flex:1" onclick="logout()">خروج</button>'+
+    '<button class="btn" style="width:100%;margin-top:8px" onclick="location.reload()">تحديث</button></div></div>';
+}
 
 function renderLogin(){
   $('app').innerHTML='<div class="login"><div class="box">'+
@@ -347,11 +376,22 @@ function renderHome(){
    (SESSION.role==='admin'?'<button class="gear" onclick="openAdmin()" title="لوحة التحكم">🛠</button>':'')+
    '<button class="gear" onclick="openSet()">⚙</button>'+
    '<button class="gear" onclick="logout()" title="خروج">⎋</button></header><div class="stripe"></div>';
-  h+='<div class="wrap"><div class="card"><h3>'+(SESSION.role==='admin'?'كل التقارير':'تقاريري')+' <small id="syncBadge"></small></h3><div class="body" id="homeList"><div class="loadwrap"><div class="spinner"></div></div></div></div></div>';
+  h+='<div class="wrap"><div id="annc"></div><div class="card"><h3>'+(SESSION.role==='admin'?'كل التقارير':'تقاريري')+' <small id="syncBadge"></small></h3><div class="body" id="homeList"><div class="loadwrap"><div class="spinner"></div></div></div></div></div>';
   h+='<button class="fab" onclick="newReport()">＋</button>';
   h+='<div class="toast" id="toast"></div>';
   $('app').innerHTML=h;
   subscribeReports();
+  loadAnnouncement();
+}
+async function loadAnnouncement(){
+  try{
+    const snap=await getDoc(doc(db,'meta','announce'));
+    const box=$('annc'); if(!box)return;
+    if(snap.exists()&&snap.data().text){
+      const a=snap.data(); const col=a.color||'navy';
+      box.innerHTML='<div class="annc '+col+'"><span class="ai">📢</span><span class="atxt">'+esc(a.text)+'</span></div>';
+    } else box.innerHTML='';
+  }catch(e){}
 }
 function subscribeReports(){
   if(reportsUnsub){reportsUnsub();reportsUnsub=null;}
@@ -722,9 +762,9 @@ function renderAdmin(){
   h+='<div class="tabs" id="tabs">'+tabBtns()+'</div><div class="wrap" id="adminBody"></div><div class="toast" id="toast"></div>';
   $('app').innerHTML=h; renderAdminBody();
 }
-function tabBtns(){return [['projects','المشاريع'],['questions','الأسئلة'],['rules','القواعد']].map(t=>'<button class="tabbtn'+(ADMIN_TAB===t[0]?' on':'')+'" onclick="setTab(\''+t[0]+'\')">'+t[1]+'</button>').join('');}
+function tabBtns(){return [['projects','المشاريع'],['questions','الأسئلة'],['rules','القواعد'],['security','الأمان']].map(t=>'<button class="tabbtn'+(ADMIN_TAB===t[0]?' on':'')+'" onclick="setTab(\''+t[0]+'\')">'+t[1]+'</button>').join('');}
 window.setTab=function(t){ADMIN_TAB=t;const b=$('tabs');if(b)b.innerHTML=tabBtns();renderAdminBody();};
-function renderAdminBody(){const c=$('adminBody');if(!c)return;c.innerHTML=ADMIN_TAB==='projects'?projectsPanel():ADMIN_TAB==='questions'?questionsPanel():rulesPanel();}
+function renderAdminBody(){const c=$('adminBody');if(!c)return;c.innerHTML=ADMIN_TAB==='projects'?projectsPanel():ADMIN_TAB==='questions'?questionsPanel():ADMIN_TAB==='rules'?rulesPanel():securityPanel();if(ADMIN_TAB==='security')initSecurity();}
 
 // projects
 function projectsPanel(){
@@ -786,6 +826,76 @@ function rulesPanel(){const r=CFG.rules;return '<div class="card"><h3>قواعد
   '<p class="note">تُطبَّق على التقارير الجديدة.</p></div></div>';}
 function ruleRow(key,title,desc,on){return '<div class="rulerow"><div class="ui"><b>'+title+'</b><span>'+desc+'</span></div><button class="toggle'+(on?' on':'')+'" onclick="toggleRule(\''+key+'\',this)"><i></i></button></div>';}
 window.toggleRule=async function(key,btn){CFG.rules[key]=!CFG.rules[key];btn.classList.toggle('on',CFG.rules[key]);await saveConfig();};
+
+// ===== SECURITY PANEL (lock + announcement + users) =====
+function securityPanel(){
+  return '<div class="card"><h3>قفل التطبيق <small>App Lock</small></h3><div class="body">'+
+    '<div class="rulerow"><div class="ui"><b>إقفال التطبيق لكل المستخدمين</b><span>عند التفعيل، لا يدخل أحد غير المدير</span></div>'+
+    '<button class="toggle" id="lockToggle" onclick="toggleLock(this)"><i></i></button></div>'+
+    '<label class="fld">رسالة تظهر للمستخدمين عند القفل (اختياري)</label><input id="lockMsg" placeholder="التطبيق متوقّف مؤقتاً للصيانة">'+
+    '<button class="btn ghost" style="width:100%;margin-top:8px;flex:1" onclick="saveLockMsg()">حفظ الرسالة</button>'+
+    '<p class="note">القفل منطقي داخل التطبيق. الحماية الأمنية الحقيقية في قواعد Firestore.</p></div></div>'+
+
+    '<div class="card"><h3>الإعلانات <small>Announcement</small></h3><div class="body">'+
+    '<label class="fld">نص الإعلان (يظهر لكل المستخدمين)</label><textarea id="anncText" rows="2" placeholder="اكتب إعلاناً..."></textarea>'+
+    '<label class="fld">لون الشريط</label><select id="anncColor"><option value="navy">معلومة (كحلي)</option><option value="orange">تنبيه (برتقالي)</option><option value="red">تحذير (أحمر)</option><option value="green">نجاح (أخضر)</option></select>'+
+    '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn" style="flex:1" onclick="saveAnnounce()">نشر الإعلان</button>'+
+    '<button class="btn ghost" style="flex:1" onclick="clearAnnounce()">مسح</button></div></div></div>'+
+
+    '<div class="card"><h3>المستخدمون <small>Users & Roles</small></h3><div class="body" id="usersBox"><div class="loadwrap"><div class="spinner"></div></div></div></div>';
+}
+async function initSecurity(){
+  // load lock state
+  try{ const lock=await getDoc(doc(db,'meta','lock')); if(lock.exists()){ const d=lock.data(); const t=$('lockToggle'); if(t)t.classList.toggle('on',!!d.locked); const m=$('lockMsg'); if(m)m.value=d.message||''; } }catch(e){}
+  // load announcement
+  try{ const a=await getDoc(doc(db,'meta','announce')); if(a.exists()){ const d=a.data(); const t=$('anncText'); if(t)t.value=d.text||''; const c=$('anncColor'); if(c&&d.color)c.value=d.color; } }catch(e){}
+  loadUsersAdmin();
+}
+window.toggleLock=async function(btn){
+  const on=!btn.classList.contains('on'); btn.classList.toggle('on',on);
+  const msg=($('lockMsg')&&$('lockMsg').value||'').trim();
+  try{ await setDoc(doc(db,'meta','lock'),{locked:on,message:msg,by:SESSION.email,at:serverTimestamp()}); toast(on?'تم قفل التطبيق':'تم فتح التطبيق'); }
+  catch(e){ btn.classList.toggle('on',!on); toast('تعذّر الحفظ'); }
+};
+window.saveLockMsg=async function(){
+  const msg=($('lockMsg').value||'').trim(); const on=$('lockToggle').classList.contains('on');
+  try{ await setDoc(doc(db,'meta','lock'),{locked:on,message:msg,by:SESSION.email,at:serverTimestamp()}); toast('تم حفظ الرسالة'); }catch(e){ toast('تعذّر الحفظ'); }
+};
+window.saveAnnounce=async function(){
+  const text=($('anncText').value||'').trim(); const color=$('anncColor').value;
+  if(!text){toast('اكتب نص الإعلان');return;}
+  try{ await setDoc(doc(db,'meta','announce'),{text,color,by:SESSION.email,at:serverTimestamp()}); toast('تم نشر الإعلان'); }catch(e){ toast('تعذّر النشر'); }
+};
+window.clearAnnounce=async function(){
+  try{ await setDoc(doc(db,'meta','announce'),{text:'',color:'navy',at:serverTimestamp()}); $('anncText').value=''; toast('تم مسح الإعلان'); }catch(e){ toast('تعذّر المسح'); }
+};
+async function loadUsersAdmin(){
+  const box=$('usersBox'); if(!box)return;
+  try{
+    const snap=await getDocs(collection(db,'users'));
+    const list=[]; snap.forEach(d=>list.push(Object.assign({uid:d.id},d.data())));
+    if(!list.length){box.innerHTML='<div class="note">لا يوجد مستخدمون.</div>';return;}
+    box.innerHTML=list.map(u=>{
+      const me=u.uid===SESSION.uid;
+      return '<div class="urow"><div class="ui"><b>'+esc(u.name)+(me?' (أنت)':'')+'</b><span>'+esc(u.email)+' · '+(u.role==='admin'?'مدير':'مهندس')+(u.disabled?' · معطّل':'')+'</span></div>'+
+        (me?'':'<div style="display:flex;gap:6px">'+
+          '<button class="miniBtn" onclick="toggleRole(\''+u.uid+'\',\''+(u.role==='admin'?'user':'admin')+'\')">'+(u.role==='admin'?'تنزيل':'ترقية')+'</button>'+
+          '<button class="miniBtn '+(u.disabled?'on':'')+'" onclick="toggleDisable(\''+u.uid+'\','+(u.disabled?'false':'true')+')">'+(u.disabled?'تفعيل':'تعطيل')+'</button>'+
+          '<button class="udel" onclick="delUser(\''+u.uid+'\')">🗑</button></div>')+
+        '</div>';
+    }).join('');
+  }catch(e){ box.innerHTML='<div class="note">تعذّر تحميل المستخدمين: '+esc(e.message)+'</div>'; }
+}
+window.toggleRole=async function(uid,newRole){
+  try{ await updateDoc(doc(db,'users',uid),{role:newRole}); toast('تم تغيير الدور'); loadUsersAdmin(); }catch(e){ toast('تعذّر التغيير'); }
+};
+window.toggleDisable=async function(uid,dis){
+  try{ await updateDoc(doc(db,'users',uid),{disabled:dis}); toast(dis?'تم التعطيل':'تم التفعيل'); loadUsersAdmin(); }catch(e){ toast('تعذّر التغيير'); }
+};
+window.delUser=async function(uid){
+  if(!confirm('حذف ملف هذا المستخدم؟ (لن يستطيع الدخول للبيانات)'))return;
+  try{ await deleteDoc(doc(db,'users',uid)); toast('تم الحذف'); loadUsersAdmin(); }catch(e){ toast('تعذّر الحذف'); }
+};
 
 function answerDisplay(a,it){
   const tp=itemType(it);
