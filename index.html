@@ -85,16 +85,8 @@
   .roletag{display:inline-block;font-size:10px;font-weight:800;padding:2px 9px;border-radius:20px;margin-inline-start:6px}
   .roletag.admin{background:#EC5020;color:#fff}
   .roletag.user{background:#EAF2FB;color:#0F0A44}
-  /* sidebar */
-  .drawer{position:fixed;inset:0;z-index:90;display:none}
-  .drawer.show{display:block}
-  .drawer .ov{position:absolute;inset:0;background:rgba(15,10,68,.5)}
-  .drawer .panel{position:absolute;top:0;bottom:0;inset-inline-start:0;width:84%;max-width:340px;background:#fff;box-shadow:2px 0 20px rgba(0,0,0,.25);display:flex;flex-direction:column;animation:slidein .22s ease}
+  /* sidebar (see drawer rules below) */
   @keyframes slidein{from{transform:translateX(-100%)}to{transform:none}}
-  .drawer .dh{background:var(--navy);color:#fff;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 14px;display:flex;align-items:center;gap:10px}
-  .drawer .dh img{height:34px;background:#fff;border-radius:6px;padding:3px}
-  .drawer .dh b{font-size:14px;display:block}.drawer .dh span{font-size:11px;opacity:.8}
-  .drawer .list{flex:1;overflow:auto;padding:10px}
   .rep{border:1.5px solid var(--line);border-radius:12px;padding:11px 12px;margin-bottom:9px;cursor:pointer;position:relative}
   .rep.active{border-color:var(--orange);background:#fff7f3}
   .rep .rt{font-weight:800;font-size:14px;color:var(--navy);padding-inline-end:50px}
