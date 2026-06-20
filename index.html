@@ -7,7 +7,24 @@
     --navy:#0F0A44; --orange:#EC5020; --light:#F2F2F5; --blue:#EAF2FB;
     --ok:#1B8A3A; --notok:#C0392B; --na:#8a8a93; --line:#e0e0e6; --ink:#1c1c28;
     --safe-b:env(safe-area-inset-bottom,0px);
+    --surface:#fff; --surface2:#fff; --appbg:#e9e9ec; --text:#1c1c28; --muted:#777; --headbg:#0F0A44;
   }
+  html[data-theme=dark]{
+    --navy:#1a1450; --light:#23222e; --blue:#1d2740; --line:#34333f; --ink:#e8e8ee;
+    --surface:#1c1b26; --surface2:#23222e; --appbg:#121119; --text:#e8e8ee; --muted:#9a9aa6; --headbg:#15102e;
+  }
+  html[data-theme=dark] body{background:var(--appbg)}
+  html[data-theme=dark] #app{background:var(--surface)}
+  html[data-theme=dark] .card{background:var(--surface);border-color:var(--line)}
+  html[data-theme=dark] input,html[data-theme=dark] select,html[data-theme=dark] textarea{background:var(--surface2);color:var(--text);border-color:var(--line)}
+  html[data-theme=dark] .rep,html[data-theme=dark] .ncrCard,html[data-theme=dark] .riskCard,html[data-theme=dark] .procCard,html[data-theme=dark] .urow,html[data-theme=dark] .permRow{background:var(--surface2);border-color:var(--line)}
+  html[data-theme=dark] .drawer,html[data-theme=dark] .modal .sheet{background:var(--surface)}
+  html[data-theme=dark] .navItem{color:var(--text)}
+  html[data-theme=dark] .navItem:hover{background:var(--surface2)}
+  html[data-theme=dark] .rt,html[data-theme=dark] .riskHaz,html[data-theme=dark] .ncrTitle,html[data-theme=dark] .procTitle,html[data-theme=dark] label.fld{color:var(--text)}
+  html[data-theme=dark] footer.sb,html[data-theme=dark] .progWrap{background:var(--surface)}
+  html[data-theme=dark] .miniBtn{background:var(--surface2);color:var(--text)}
+  
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0}
   body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,Tahoma,sans-serif;background:#e9e9ec;color:var(--ink);font-size:16px;line-height:1.4}
@@ -261,6 +278,14 @@
   .footInfo{display:flex;flex-direction:column;gap:1px;min-width:90px}
   .saveStat{font-size:11px;font-weight:700}
   .pct{font-size:12px;font-weight:800;color:#777}
+  /* smooth transitions (phase 2 aesthetic) */
+  .card,.rep,.ncrCard,.riskCard,.procCard,.navItem,.btn,.miniBtn,input,select,textarea,.gear{transition:background .2s,color .2s,border-color .2s,transform .12s,box-shadow .2s}
+  .rep:active,.ncrCard:active,.riskCard:active,.procCard:active{transform:scale(.985)}
+  .btn:active,.gear:active,.miniBtn:active{transform:scale(.94)}
+  #app{animation:fadeApp .25s ease}
+  @keyframes fadeApp{from{opacity:.35}to{opacity:1}}
+  .card{animation:cardIn .25s ease}
+  @keyframes cardIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 </style></head><body>
 <div id="app"><div class="loadwrap"><div class="spinner"></div>Loading...</div></div>
 <script>window.onerror=function(m,s,l,c){var a=document.getElementById('app');if(a)a.innerHTML='<div style="padding:22px;text-align:left"><h3 style="color:#EC5020">Error</h3><pre style="background:#f4f4f4;padding:12px;white-space:pre-wrap">'+m+'\n'+l+':'+c+'</pre></div>';};</script>
@@ -450,6 +475,12 @@ function can(key){
 function applyDir(){ document.documentElement.lang=LANG; document.documentElement.dir=(LANG==='ar'?'rtl':'ltr'); }
 window.toggleLang=function(){ LANG=(LANG==='ar'?'en':'ar'); try{localStorage.setItem('etechs_lang',LANG);}catch(e){} applyDir(); reRender(); };
 function loadLang(){ try{const s=localStorage.getItem('etechs_lang'); if(s)LANG=s;}catch(e){} applyDir(); }
+// ===== dark mode =====
+let THEME='light';
+function applyTheme(){ document.documentElement.setAttribute('data-theme', THEME==='dark'?'dark':'light'); }
+window.toggleTheme=function(){ THEME=(THEME==='dark'?'light':'dark'); try{localStorage.setItem('etechs_theme',THEME);}catch(e){} applyTheme(); reRender(); };
+function loadTheme(){ try{const s=localStorage.getItem('etechs_theme'); if(s)THEME=s;}catch(e){} applyTheme(); }
+loadTheme();
 // re-render whatever screen is active
 function reRender(){
   if(!SESSION){ renderLogin(); return; }
@@ -661,6 +692,7 @@ window.renderHome=renderHome;
 function renderHome(){
   let h='<header class="bar"><button class="menubtn" onclick="toggleDrawer()">☰</button>'+
    '<img src="'+LOGO+'"><div class="t"><b>'+t('app_title')+'</b><span>'+esc(SESSION.name)+(SESSION.role==='admin'?' (Admin)':'')+'</span></div>'+
+   '<button class="gear" onclick="toggleTheme()" title="Theme">'+(THEME==='dark'?'☀️':'🌙')+'</button>'+
    '<button class="gear" onclick="toggleLang()" title="Language">🌐</button></header><div class="stripe"></div>';
   h+=drawerHTML();
   h+='<div class="wrap"><div id="annc"></div><div class="card"><h3>'+(SESSION.role==='admin'?t('all_reports'):t('my_reports'))+' <small id="syncBadge"></small></h3><div class="body"><input id="repSearch" class="repSearch" placeholder="'+(LANG==='ar'?'🔎 بحث بالمحطة/المشروع/LOA':'🔎 Search site/project/LOA')+'" oninput="filterHome(this.value)" value="'+esc(HOME_Q||'')+'"><div id="homeList"><div class="loadwrap"><div class="spinner"></div></div></div></div></div></div>';
