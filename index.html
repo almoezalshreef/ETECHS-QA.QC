@@ -286,6 +286,11 @@
   @keyframes fadeApp{from{opacity:.35}to{opacity:1}}
   .card{animation:cardIn .25s ease}
   @keyframes cardIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .refNo{display:inline-block;font-size:11px;font-weight:800;color:var(--orange);letter-spacing:.3px;margin:3px 0}
+  .exportBtn{font-size:12px;font-weight:700;color:var(--navy);background:var(--light);border:0;padding:7px 12px;border-radius:9px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+  .actRow{display:flex;align-items:flex-start;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+  .actRow .ui{flex:1}.actRow .ui b{color:var(--navy)}.actRow .ui span{color:var(--muted)}
+  .actTime{font-size:11px;color:var(--muted);white-space:nowrap}
 </style></head><body>
 <div id="app"><div class="loadwrap"><div class="spinner"></div>Loading...</div></div>
 <script>window.onerror=function(m,s,l,c){var a=document.getElementById('app');if(a)a.innerHTML='<div style="padding:22px;text-align:left"><h3 style="color:#EC5020">Error</h3><pre style="background:#f4f4f4;padding:12px;white-space:pre-wrap">'+m+'\n'+l+':'+c+'</pre></div>';};</script>
@@ -674,6 +679,19 @@ function authMsg(code){
 }
 window.logout=function(){ clearIdle(); signOut(auth); };
 
+// ===== activity log (audit trail) =====
+async function logAct(action, detail){
+  try{
+    if(!SESSION) return;
+    const id='act'+Date.now()+Math.floor(Math.random()*1000);
+    await setDoc(doc(db,'activity',id),{
+      id, action, detail:detail||'', by:SESSION.name, byUid:SESSION.uid,
+      ts:Date.now(), tsServer:serverTimestamp()
+    });
+  }catch(e){}
+}
+window.logAct=logAct;
+
 // ===== IMPROVEMENT 4: auto-logout after inactivity =====
 let IDLE_MS = 30*60*1000; // 30 minutes
 let idleTimer=null;
@@ -698,7 +716,7 @@ function renderHome(){
    '<button class="gear" onclick="toggleTheme()" title="Theme">'+(THEME==='dark'?'☀️':'🌙')+'</button>'+
    '<button class="gear" onclick="toggleLang()" title="Language">🌐</button></header><div class="stripe"></div>';
   h+=drawerHTML();
-  h+='<div class="wrap"><div id="annc"></div><div class="card"><h3>'+(SESSION.role==='admin'?t('all_reports'):t('my_reports'))+' <small id="syncBadge"></small></h3><div class="body"><input id="repSearch" class="repSearch" placeholder="'+(LANG==='ar'?'🔎 بحث بالمحطة/المشروع/LOA':'🔎 Search site/project/LOA')+'" oninput="filterHome(this.value)" value="'+esc(HOME_Q||'')+'"><div id="homeList"><div class="loadwrap"><div class="spinner"></div></div></div></div></div></div>';
+  h+='<div class="wrap"><div id="annc"></div><div class="card"><h3>'+(SESSION.role==='admin'?t('all_reports'):t('my_reports'))+' <small id="syncBadge"></small>'+(SESSION.role==='admin'?'<button class="exportBtn" style="margin-inline-start:auto" onclick="exportReportsCSV()">⬇️ Excel/CSV</button>':'')+'</h3><div class="body"><input id="repSearch" class="repSearch" placeholder="'+(LANG==='ar'?'🔎 بحث بالمحطة/المشروع/LOA':'🔎 Search site/project/LOA')+'" oninput="filterHome(this.value)" value="'+esc(HOME_Q||'')+'"><div id="homeList"><div class="loadwrap"><div class="spinner"></div></div></div></div></div></div>';
   if(can('create')) h+='<button class="fab" onclick="newReport()">＋</button>';
   h+='<div class="toast" id="toast"></div>';
   $('app').innerHTML=h;
@@ -784,6 +802,24 @@ function subscribeReports(){
 window.subscribeReports=subscribeReports;
 let HOME_Q='';
 window.filterHome=function(v){HOME_Q=v;paintHome();};
+window.exportReportsCSV=function(){
+  if(!REPORTS||!REPORTS.length){toast(LANG==='ar'?'لا توجد تقارير':'No reports');return;}
+  const cols=['Ref No','Site','Project','Client','Contract','LOA','Service','System','Date','Status','Done','Total','Compliance%','Engineer'];
+  const rows=REPORTS.map(r=>{
+    const f=r.form||{},c=r.counts||{};
+    const comp=c.total?Math.round((c.done/c.total)*100):0;
+    return [r.refNo||'',f.site||'',f.project||'',f.client||'',f.contract||'',f.loa||'',f.service||'',f.system||'',f.date||'',(r.status==='done'?'Closed':'Open'),c.done||0,c.total||0,comp,r.ownerName||''];
+  });
+  const esc2=s=>{ s=String(s==null?'':s); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+  let csv=cols.join(',')+'\n'+rows.map(r=>r.map(esc2).join(',')).join('\n');
+  // BOM for Excel Arabic support
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='ETECHS_Reports_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  toast(LANG==='ar'?'تم تصدير CSV':'CSV exported');
+};
 function paintHome(){
   const l=$('homeList'); if(!l)return;
   if(!REPORTS.length){ l.innerHTML='<div class="empty">📋<br>'+(LANG==='ar'?'لا توجد تقارير بعد.':'No reports yet.')+'<br><br><button class="btn" style="max-width:240px;margin:0 auto" onclick="newReport()">＋ '+(LANG==='ar'?'ابدأ أول تقرير':'Start first report')+'</button></div>'; return; }
@@ -799,6 +835,7 @@ function repCard(r){
   const stat=r.status==='done'?'<span class="st done">'+t('closed')+'</span>':'<span class="st draft">'+t('open')+'</span>';
   return '<div class="rep" onclick="openReport(\''+r.id+'\')">'+
     '<div class="rt">'+esc((r.form&&r.form.site)||'(بدون محطة)')+'</div>'+stat+
+    (r.refNo?'<div class="refNo">'+esc(r.refNo)+'</div>':'')+
     (r.templateName?'<div class="tplBadge">'+esc(r.templateName)+'</div>':'')+
     '<div class="rm">LOA: '+esc((r.form&&r.form.loa)||'—')+' · '+esc((r.form&&r.form.date)||'')+' · '+c.done+'/'+c.total+'</div>'+
     (SESSION.role==='admin'?'<div class="who">👤 '+esc(r.ownerName||'')+'</div>':'')+
@@ -823,14 +860,28 @@ window.pickTemplate=function(id){ closeTplPick(); createReportFromTemplate(id); 
 async function createReportFromTemplate(templateId){
   const tp=templateById(templateId);
   const id=uid();
+  const refNo=nextRefNo();
   const rep={id,owner:SESSION.uid,ownerName:SESSION.name,ownerEmail:SESSION.email,status:'draft',
+    refNo:refNo,
     templateId:tp.id, templateName:tp.name,
     createdMs:Date.now(),updatedMs:Date.now(),updated:serverTimestamp(),
     form:{},answers:{},photos:[],sig:null,counts:{done:0,total:0},
     tpl:tplToStore(tp.stages), rules:CFG.rules};
   loading('جاري الإنشاء...');
-  try{ await setDoc(doc(db,'reports',id),rep); CUR=rep; openReportObj(rep); }
+  try{ await setDoc(doc(db,'reports',id),rep); logAct('create_report', refNo+' · '+(tp.name||'')); CUR=rep; openReportObj(rep); }
   catch(e){ toast('تعذّر الإنشاء: '+e.message); renderHome(); }
+}
+// auto reference number: ETECHS-QC-YYYY-NNN (sequential within the year)
+function nextRefNo(){
+  const year=new Date().getFullYear();
+  const prefix='ETECHS-QC-'+year+'-';
+  let max=0;
+  (REPORTS||[]).forEach(r=>{
+    if(r.refNo && r.refNo.indexOf(prefix)===0){
+      const n=parseInt(r.refNo.slice(prefix.length))||0; if(n>max)max=n;
+    }
+  });
+  return prefix+String(max+1).padStart(3,'0');
 }
 window.openReport=async function(id){
   loading();
@@ -839,7 +890,8 @@ window.openReport=async function(id){
 };
 window.delReport=async function(id){
   if(!confirm('حذف هذا التقرير نهائياً؟'))return;
-  try{ await deleteDoc(doc(db,'reports',id)); toast('تم الحذف'); }catch(e){ toast('تعذّر الحذف'); }
+  const r=(REPORTS||[]).find(x=>x.id===id);
+  try{ await deleteDoc(doc(db,'reports',id)); logAct('delete_report',(r&&r.refNo)||id); toast('تم الحذف'); }catch(e){ toast('تعذّر الحذف'); }
 };
 async function saveCur(notify){
   if(!CUR)return;
@@ -872,7 +924,7 @@ function renderReport(){
   const r=CUR; const f=r.form||{}; const ro=(r.status==='done');
   const today=new Date().toISOString().slice(0,10);
   let h='<header class="bar"><button class="menubtn" onclick="goHome()">‹</button>'+
-   '<img src="'+LOGO+'"><div class="t"><b>'+(ro?t('report_locked'):t('report_open'))+'</b><span>'+esc(f.site||t('site'))+'</span></div></header><div class="stripe"></div><div class="wrap">';
+   '<img src="'+LOGO+'"><div class="t"><b>'+(ro?t('report_locked'):t('report_open'))+'</b><span>'+(CUR.refNo?esc(CUR.refNo)+' · ':'')+esc(f.site||t('site'))+'</span></div></header><div class="stripe"></div><div class="wrap">';
   const projOpts='<option value="">— اختر المشروع —</option>'+CFG.projects.map((p,i)=>'<option value="'+i+'"'+(f.projIdx==i?' selected':'')+'>'+esc(p.name)+'</option>').join('');
   h+='<div class="card"><h3>'+t('wo_info')+' <small></small></h3><div class="body">'+
     '<label class="fld">'+t('project')+'</label><select id="f_proj" onchange="onProj()">'+projOpts+'</select>'+
@@ -1038,7 +1090,7 @@ window.doSubmit=async function(){
   if(rules.photo&&photos.length===0){toast('أضف صورة عامة واحدة على الأقل');$('ph').scrollIntoView({behavior:'smooth',block:'center'});return;}
   if(rules.signature&&!sig){toast('وقّع في خانة التوقيع');$('sig').scrollIntoView({behavior:'smooth',block:'center'});return;}
   if(!CFG.recipient){openSet();toast('أضف إيميل المستلم في الإعدادات');return;}
-  CUR.status='done'; await saveCur(false); buzz([30,40,30]);
+  CUR.status='done'; await saveCur(false); logAct('close_report',(CUR.refNo||'')+' · '+((CUR.form&&CUR.form.site)||'')); buzz([30,40,30]);
   buildReport(f);
 };
 
@@ -1855,7 +1907,9 @@ function securityPanel(){
     '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn" style="flex:1" onclick="saveAnnounce()">نشر الإعلان</button>'+
     '<button class="btn ghost" style="flex:1" onclick="clearAnnounce()">مسح</button></div></div></div>'+
 
-    '<div class="card"><h3>المستخدمون <small>Users & Roles</small></h3><div class="body" id="usersBox"><div class="loadwrap"><div class="spinner"></div></div></div></div>';
+    '<div class="card"><h3>المستخدمون <small>Users & Roles</small></h3><div class="body" id="usersBox"><div class="loadwrap"><div class="spinner"></div></div></div></div>'+
+
+    '<div class="card"><h3>'+(LANG==='ar'?'سجلّ النشاط':'Activity Log')+' <small>Audit</small></h3><div class="body" id="actBox"><div class="loadwrap"><div class="spinner"></div></div></div></div>';
 }
 async function initSecurity(){
   // load lock state
@@ -1863,6 +1917,22 @@ async function initSecurity(){
   // load announcement
   try{ const a=await getDoc(doc(db,'meta','announce')); if(a.exists()){ const d=a.data(); const t=$('anncText'); if(t)t.value=d.text||''; const c=$('anncColor'); if(c&&d.color)c.value=d.color; } }catch(e){}
   loadUsersAdmin();
+  loadActivity();
+}
+async function loadActivity(){
+  const box=$('actBox'); if(!box)return;
+  try{
+    let qy; try{ qy=query(collection(db,'activity'),orderBy('ts','desc')); }catch(e){ qy=collection(db,'activity'); }
+    const snap=await getDocs(qy);
+    let list=[]; snap.forEach(d=>list.push(d.data()));
+    list.sort((a,b)=>(b.ts||0)-(a.ts||0)); list=list.slice(0,50);
+    if(!list.length){ box.innerHTML='<div class="note">'+(LANG==='ar'?'لا يوجد نشاط مسجّل بعد.':'No activity yet.')+'</div>'; return; }
+    const lbl={create_report:(LANG==='ar'?'أنشأ تقريراً':'created report'),close_report:(LANG==='ar'?'أقفل تقريراً':'closed report'),delete_report:(LANG==='ar'?'حذف تقريراً':'deleted report')};
+    box.innerHTML=list.map(a=>{
+      const d=new Date(a.ts||0); const dt=d.toLocaleDateString('en-GB')+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+      return '<div class="actRow"><div class="ui"><b>'+esc(a.by||'')+'</b> <span>'+(lbl[a.action]||esc(a.action))+' — '+esc(a.detail||'')+'</span></div><span class="actTime">'+dt+'</span></div>';
+    }).join('');
+  }catch(e){ box.innerHTML='<div class="note">'+esc(e.message)+'</div>'; }
 }
 window.toggleLock=async function(btn){
   const on=!btn.classList.contains('on'); btn.classList.toggle('on',on);
@@ -2067,7 +2137,7 @@ function buildReport(f){
   '.toolbar button{flex:1;padding:13px;border:0;border-radius:10px;font-size:15px;font-weight:800;color:#fff;cursor:pointer}.tp{background:'+ORANGE+'}.te{background:'+NAVY+'}'+
   '@media print{.toolbar{display:none}}</style></head><body>'+
   '<div class="toolbar"><button class="tp" onclick="window.print()">حفظ PDF / طباعة</button><button class="te" onclick="sendMail()">إرسال بالإيميل</button></div>'+
-  '<div class="hd"><img src="'+LOGO+'"><div class="ti"><b>MAINTENANCE QA/QC REPORT</b><br><span>Equipment & Technical Services Co. (ETECHS)</span></div></div><div class="or"></div>'+
+  '<div class="hd"><img src="'+LOGO+'"><div class="ti"><b>MAINTENANCE QA/QC REPORT</b><br><span>'+(CUR&&CUR.refNo?esc(CUR.refNo)+' · ':'')+'Equipment & Technical Services Co. (ETECHS)</span></div></div><div class="or"></div>'+
   '<div class="sec1"><div class="h2">Work Order Information / بيانات أمر العمل</div>'+
   '<div class="info"><div><b>Project:</b> '+esc(f.project||'-')+'</div><div><b>Client:</b> '+esc(f.client||'-')+'</div>'+
   '<div><b>Contract:</b> '+esc(f.contract||'-')+'</div><div><b>City:</b> '+esc(f.city||'-')+'</div>'+
