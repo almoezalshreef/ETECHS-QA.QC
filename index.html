@@ -246,6 +246,10 @@
   .permRow .ui{flex:1}.permRow .ui b{font-size:13px;color:var(--navy)}
   /* drawer close button */
   .dClose{margin-inline-start:auto;background:rgba(255,255,255,.15);border:0;color:#fff;width:34px;height:34px;border-radius:9px;font-size:16px;cursor:pointer;flex:0 0 auto}
+  /* managed list chips */
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:var(--light);color:var(--navy);font-size:12px;font-weight:700;padding:5px 10px;border-radius:20px}
+  .chip button{border:0;background:rgba(15,10,68,.15);color:var(--navy);border-radius:50%;width:17px;height:17px;font-size:10px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center}
 </style></head><body>
 <div id="app"><div class="loadwrap"><div class="spinner"></div>Loading...</div></div>
 <script>window.onerror=function(m,s,l,c){var a=document.getElementById('app');if(a)a.innerHTML='<div style="padding:22px;text-align:left"><h3 style="color:#EC5020">Error</h3><pre style="background:#f4f4f4;padding:12px;white-space:pre-wrap">'+m+'\n'+l+':'+c+'</pre></div>';};</script>
@@ -1590,15 +1594,33 @@ function renderAdminBody(){const c=$('adminBody');if(!c)return;c.innerHTML=ADMIN
 
 // projects
 function projectsPanel(){
-  let list=CFG.projects.length?CFG.projects.map((p,i)=>'<div class="urow"><div class="ui"><b>'+esc(p.name)+'</b><span>'+esc(p.client)+' · عقد '+esc(p.contract)+' · '+esc(p.city)+'</span></div><button class="udel" onclick="delProj('+i+')">🗑</button></div>').join(''):'<div class="note">لا مشاريع بعد.</div>';
-  return '<div class="card"><h3>المشاريع <small>Projects</small></h3><div class="body">'+list+
+  if(!CFG.cities) CFG.cities = CITIES.slice();
+  if(!CFG.contracts) CFG.contracts = [];
+  let list=CFG.projects.length?CFG.projects.map((p,i)=>'<div class="urow"><div class="ui"><b>'+esc(p.name)+'</b><span>'+esc(p.client)+' · '+(LANG==='ar'?'عقد ':'Contract ')+esc(p.contract)+' · '+esc(p.city)+'</span></div><button class="udel" onclick="delProj('+i+')">🗑</button></div>').join(''):'<div class="note">'+(LANG==='ar'?'لا مشاريع بعد.':'No projects yet.')+'</div>';
+  // managed cities
+  let cityChips=CFG.cities.map((c,i)=>'<span class="chip">'+esc(c)+'<button onclick="delCity('+i+')">✕</button></span>').join('');
+  let contractChips=CFG.contracts.length?CFG.contracts.map((c,i)=>'<span class="chip">'+esc(c)+'<button onclick="delContract('+i+')">✕</button></span>').join(''):'<span class="note" style="font-size:12px">'+(LANG==='ar'?'لا عقود بعد':'No contracts yet')+'</span>';
+  return '<div class="card"><h3>'+(LANG==='ar'?'المدن':'Cities')+' <small>'+(LANG==='ar'?'قائمة مُدارة':'managed list')+'</small></h3><div class="body">'+
+      '<div class="chips">'+cityChips+'</div>'+
+      '<div style="display:flex;gap:8px;margin-top:8px"><input id="newCity" placeholder="'+(LANG==='ar'?'أضف مدينة':'Add city')+'" style="flex:1"><button class="btn ghost" style="flex:0 0 auto;width:auto;padding:0 16px" onclick="addCity()">＋</button></div>'+
+    '</div></div>'+
+    '<div class="card"><h3>'+(LANG==='ar'?'العقود':'Contracts')+' <small>'+(LANG==='ar'?'قائمة مُدارة':'managed list')+'</small></h3><div class="body">'+
+      '<div class="chips">'+contractChips+'</div>'+
+      '<div style="display:flex;gap:8px;margin-top:8px"><input id="newContract" placeholder="'+(LANG==='ar'?'أضف رقم عقد':'Add contract no.')+'" style="flex:1"><button class="btn ghost" style="flex:0 0 auto;width:auto;padding:0 16px" onclick="addContract()">＋</button></div>'+
+    '</div></div>'+
+    '<div class="card"><h3>'+(LANG==='ar'?'المشاريع':'Projects')+' <small>Projects</small></h3><div class="body">'+list+
     '<div style="border:1px dashed var(--line);border-radius:10px;padding:10px;margin-top:10px">'+
-    '<label class="fld">اسم المشروع</label><input id="p_name">'+
-    '<label class="fld">العميل / Client</label><input id="p_client" placeholder="National Grid SA">'+
-    '<label class="fld">رقم العقد / Contract</label><input id="p_contract" placeholder="4400022044">'+
-    '<label class="fld">المدينة / City</label><select id="p_city">'+CITIES.map(c=>'<option>'+c+'</option>').join('')+'</select>'+
-    '<button class="btn" style="width:100%;margin-top:10px" onclick="addProj()">＋ إضافة مشروع</button></div></div>';
+    '<label class="fld">'+(LANG==='ar'?'اسم المشروع':'Project name')+'</label><input id="p_name">'+
+    '<label class="fld">'+t('client')+'</label><input id="p_client" placeholder="National Grid SA">'+
+    '<label class="fld">'+t('contract')+'</label>'+
+      (CFG.contracts.length?'<select id="p_contract"><option value="">—</option>'+CFG.contracts.map(c=>'<option>'+esc(c)+'</option>').join('')+'</select>':'<input id="p_contract" placeholder="4400022044">')+
+    '<label class="fld">'+t('city')+'</label><select id="p_city">'+CFG.cities.map(c=>'<option>'+esc(c)+'</option>').join('')+'</select>'+
+    '<button class="btn" style="width:100%;margin-top:10px" onclick="addProj()">＋ '+(LANG==='ar'?'إضافة مشروع':'Add project')+'</button></div></div></div>';
 }
+window.addCity=async function(){const v=($('newCity').value||'').trim();if(!v)return;if(!CFG.cities)CFG.cities=[];if(CFG.cities.indexOf(v)<0)CFG.cities.push(v);await saveConfig();renderAdminBody();toast(t('added'));};
+window.delCity=async function(i){CFG.cities.splice(i,1);await saveConfig();renderAdminBody();};
+window.addContract=async function(){const v=($('newContract').value||'').trim();if(!v)return;if(!CFG.contracts)CFG.contracts=[];if(CFG.contracts.indexOf(v)<0)CFG.contracts.push(v);await saveConfig();renderAdminBody();toast(t('added'));};
+window.delContract=async function(i){CFG.contracts.splice(i,1);await saveConfig();renderAdminBody();};
 window.addProj=async function(){const n=($('p_name').value||'').trim();if(!n){toast('اكتب اسم المشروع');return;}CFG.projects.push({name:n,client:($('p_client').value||'').trim(),contract:($('p_contract').value||'').trim(),city:$('p_city').value});try{await saveConfig();renderAdminBody();toast('تمت الإضافة');}catch(e){toast('تعذّر الحفظ');}};
 window.delProj=async function(i){if(!confirm('حذف المشروع؟'))return;CFG.projects.splice(i,1);await saveConfig();renderAdminBody();};
 
