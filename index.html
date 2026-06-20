@@ -226,7 +226,7 @@
   .mx5xaxis{text-align:center;font-size:10px;font-weight:700;color:#888;margin-top:4px}
   /* side drawer */
   .menubtn{background:rgba(255,255,255,.15);border:0;color:#fff;width:38px;height:38px;border-radius:10px;font-size:18px;cursor:pointer;flex:0 0 auto}
-  .drawer{position:fixed;top:0;inset-inline-start:0;width:280px;max-width:82vw;height:100%;background:#fff;z-index:300;transform:translateX(-105%);transition:transform .25s;box-shadow:2px 0 18px rgba(0,0,0,.18);display:flex;flex-direction:column}
+  .drawer{position:fixed;top:0;inset-inline-start:0;width:280px;max-width:82vw;height:100%;background:#fff;z-index:300;transform:translateX(-105%);transition:transform .25s;box-shadow:2px 0 18px rgba(0,0,0,.18);display:flex;flex-direction:column;padding-top:56px}
   html[dir=rtl] .drawer{inset-inline-start:auto;inset-inline-end:0;transform:translateX(105%)}
   .drawer.open{transform:translateX(0)}
   .dHead{background:var(--navy);color:#fff;padding:20px 16px;display:flex;align-items:center;gap:12px}
@@ -238,10 +238,14 @@
   .navItem .ni{font-size:19px;width:24px;text-align:center}
   .navSep{font-size:11px;font-weight:800;color:#aaa;padding:14px 18px 6px;text-transform:uppercase;letter-spacing:.5px}
   .drawerBg{position:fixed;inset:0;background:rgba(15,10,68,.45);z-index:299;opacity:0;pointer-events:none;transition:opacity .25s}
+  header.bar{position:relative;z-index:320}
+  .menubtn{position:relative;z-index:321}
   .drawerBg.show{opacity:1;pointer-events:auto}
   /* permissions editor */
   .permRow{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:11px;padding:11px;margin-bottom:8px}
   .permRow .ui{flex:1}.permRow .ui b{font-size:13px;color:var(--navy)}
+  /* drawer close button */
+  .dClose{margin-inline-start:auto;background:rgba(255,255,255,.15);border:0;color:#fff;width:34px;height:34px;border-radius:9px;font-size:16px;cursor:pointer;flex:0 0 auto}
 </style></head><body>
 <div id="app"><div class="loadwrap"><div class="spinner"></div>Loading...</div></div>
 <script>window.onerror=function(m,s,l,c){var a=document.getElementById('app');if(a)a.innerHTML='<div style="padding:22px;text-align:left"><h3 style="color:#EC5020">Error</h3><pre style="background:#f4f4f4;padding:12px;white-space:pre-wrap">'+m+'\n'+l+':'+c+'</pre></div>';};</script>
@@ -602,7 +606,7 @@ window.logout=function(){ signOut(auth); };
 // ===== HOME + reports list (realtime) =====
 window.renderHome=renderHome;
 function renderHome(){
-  let h='<header class="bar"><button class="menubtn" onclick="openDrawer()">☰</button>'+
+  let h='<header class="bar"><button class="menubtn" onclick="toggleDrawer()">☰</button>'+
    '<img src="'+LOGO+'"><div class="t"><b>'+t('app_title')+'</b><span>'+esc(SESSION.name)+(SESSION.role==='admin'?' (Admin)':'')+'</span></div>'+
    '<button class="gear" onclick="toggleLang()" title="Language">🌐</button></header><div class="stripe"></div>';
   h+=drawerHTML();
@@ -628,7 +632,7 @@ function drawerHTML(){
     adminNav='<div class="navSep">'+(LANG==='ar'?'الإدارة':'Admin')+'</div>'+
       '<button class="navItem" onclick="navGo(\'admin\')"><span class="ni">🛠</span>'+t('admin_panel')+'</button>';
   }
-  return '<div class="drawer" id="drawer"><div class="dHead"><img src="'+LOGO+'"><div class="dHt"><b>'+esc(SESSION.name)+'</b><span>'+esc(SESSION.email)+'</span></div></div>'+
+  return '<div class="drawer" id="drawer"><div class="dHead"><img src="'+LOGO+'"><div class="dHt"><b>'+esc(SESSION.name)+'</b><span>'+esc(SESSION.email)+'</span></div><button class="dClose" onclick="closeDrawer()">✕</button></div>'+
     '<div class="dNav">'+nav+adminNav+
     '<div class="navSep">'+t('settings')+'</div>'+
     '<button class="navItem" onclick="navGo(\'settings\')"><span class="ni">⚙</span>'+t('settings')+'</button>'+
@@ -637,6 +641,7 @@ function drawerHTML(){
 }
 window.openDrawer=function(){const d=$('drawer'),b=$('drawerBg');if(d)d.classList.add('open');if(b)b.classList.add('show');};
 window.closeDrawer=function(){const d=$('drawer'),b=$('drawerBg');if(d)d.classList.remove('open');if(b)b.classList.remove('show');};
+window.toggleDrawer=function(){const d=$('drawer');if(d&&d.classList.contains('open'))closeDrawer();else openDrawer();};
 window.navGo=function(dest){
   closeDrawer();
   if(dest==='home')return renderHome();
