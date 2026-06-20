@@ -250,6 +250,17 @@
   .chips{display:flex;flex-wrap:wrap;gap:7px}
   .chip{display:inline-flex;align-items:center;gap:6px;background:var(--light);color:var(--navy);font-size:12px;font-weight:700;padding:5px 10px;border-radius:20px}
   .chip button{border:0;background:rgba(15,10,68,.15);color:var(--navy);border-radius:50%;width:17px;height:17px;font-size:10px;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center}
+  /* home search */
+  .repSearch{width:100%;margin-bottom:12px;font-size:14px}
+  .empty{text-align:center;color:#999;padding:30px 16px;font-size:14px;line-height:1.7}
+  .empty .btn{font-size:14px}
+  /* report progress bar (sticky above footer) */
+  .progWrap{position:fixed;bottom:64px;left:0;right:0;z-index:40;background:#fff;padding:0}
+  .progBar{height:6px;background:#ececf2;overflow:hidden}
+  .progBar i{display:block;height:100%;background:linear-gradient(90deg,var(--orange),#ff7a45);transition:width .3s;border-radius:0 3px 3px 0}
+  .footInfo{display:flex;flex-direction:column;gap:1px;min-width:90px}
+  .saveStat{font-size:11px;font-weight:700}
+  .pct{font-size:12px;font-weight:800;color:#777}
 </style></head><body>
 <div id="app"><div class="loadwrap"><div class="spinner"></div>Loading...</div></div>
 <script>window.onerror=function(m,s,l,c){var a=document.getElementById('app');if(a)a.innerHTML='<div style="padding:22px;text-align:left"><h3 style="color:#EC5020">Error</h3><pre style="background:#f4f4f4;padding:12px;white-space:pre-wrap">'+m+'\n'+l+':'+c+'</pre></div>';};</script>
@@ -652,7 +663,7 @@ function renderHome(){
    '<img src="'+LOGO+'"><div class="t"><b>'+t('app_title')+'</b><span>'+esc(SESSION.name)+(SESSION.role==='admin'?' (Admin)':'')+'</span></div>'+
    '<button class="gear" onclick="toggleLang()" title="Language">🌐</button></header><div class="stripe"></div>';
   h+=drawerHTML();
-  h+='<div class="wrap"><div id="annc"></div><div class="card"><h3>'+(SESSION.role==='admin'?t('all_reports'):t('my_reports'))+' <small id="syncBadge"></small></h3><div class="body" id="homeList"><div class="loadwrap"><div class="spinner"></div></div></div></div></div>';
+  h+='<div class="wrap"><div id="annc"></div><div class="card"><h3>'+(SESSION.role==='admin'?t('all_reports'):t('my_reports'))+' <small id="syncBadge"></small></h3><div class="body"><input id="repSearch" class="repSearch" placeholder="'+(LANG==='ar'?'🔎 بحث بالمحطة/المشروع/LOA':'🔎 Search site/project/LOA')+'" oninput="filterHome(this.value)" value="'+esc(HOME_Q||'')+'"><div id="homeList"><div class="loadwrap"><div class="spinner"></div></div></div></div></div></div>';
   if(can('create')) h+='<button class="fab" onclick="newReport()">＋</button>';
   h+='<div class="toast" id="toast"></div>';
   $('app').innerHTML=h;
@@ -736,10 +747,16 @@ function subscribeReports(){
   });
 }
 window.subscribeReports=subscribeReports;
+let HOME_Q='';
+window.filterHome=function(v){HOME_Q=v;paintHome();};
 function paintHome(){
   const l=$('homeList'); if(!l)return;
-  if(!REPORTS.length){ l.innerHTML='<div class="empty">لا توجد تقارير بعد.<br>اضغط ＋ لبدء تقرير جديد.</div>'; return; }
-  l.innerHTML=REPORTS.map(r=>repCard(r)).join('');
+  if(!REPORTS.length){ l.innerHTML='<div class="empty">📋<br>'+(LANG==='ar'?'لا توجد تقارير بعد.':'No reports yet.')+'<br><br><button class="btn" style="max-width:240px;margin:0 auto" onclick="newReport()">＋ '+(LANG==='ar'?'ابدأ أول تقرير':'Start first report')+'</button></div>'; return; }
+  let list=REPORTS.slice();
+  const q=(HOME_Q||'').trim().toLowerCase();
+  if(q) list=list.filter(r=>{ const f=r.form||{}; return ((f.site||'')+(f.project||'')+(f.loa||'')+(r.templateName||'')+(r.ownerName||'')).toLowerCase().includes(q); });
+  if(!list.length){ l.innerHTML='<div class="empty">'+(LANG==='ar'?'لا نتائج مطابقة.':'No matching results.')+'</div>'; return; }
+  l.innerHTML=list.map(r=>repCard(r)).join('');
 }
 function repCard(r){
   const c=r.counts||{done:0,total:0};
@@ -792,8 +809,23 @@ window.delReport=async function(id){
 async function saveCur(notify){
   if(!CUR)return;
   CUR.form=form(); CUR.answers=answers; CUR.photos=photos; CUR.sig=sig; CUR.counts=counts(); CUR.updatedMs=Date.now();
-  try{ await updateDoc(doc(db,'reports',CUR.id),{form:CUR.form,answers:CUR.answers,photos:CUR.photos,sig:CUR.sig,counts:CUR.counts,status:CUR.status,updatedMs:CUR.updatedMs,updated:serverTimestamp()}); if(notify)toast('تم الحفظ'); }
-  catch(e){ if(notify)toast('تعذّر الحفظ (تحقق من الإنترنت)'); }
+  try{ await updateDoc(doc(db,'reports',CUR.id),{form:CUR.form,answers:CUR.answers,photos:CUR.photos,sig:CUR.sig,counts:CUR.counts,status:CUR.status,updatedMs:CUR.updatedMs,updated:serverTimestamp()}); if(notify)toast('تم الحفظ'); setSaveStatus('saved'); }
+  catch(e){ if(notify)toast('تعذّر الحفظ (تحقق من الإنترنت)'); setSaveStatus('error'); }
+}
+// auto-save: debounced, triggered on any field/answer change
+let autoSaveTimer=null;
+function autoSave(){
+  if(!CUR)return;
+  setSaveStatus('saving');
+  if(autoSaveTimer)clearTimeout(autoSaveTimer);
+  autoSaveTimer=setTimeout(function(){ saveCur(false); }, 1200);
+}
+window.autoSave=autoSave;
+function setSaveStatus(state){
+  const e=$('saveStat'); if(!e)return;
+  if(state==='saving') e.innerHTML='<span style="color:#A66A00">● '+(LANG==='ar'?'يحفظ…':'saving…')+'</span>';
+  else if(state==='saved') e.innerHTML='<span style="color:#1B8A3A">✓ '+(LANG==='ar'?'محفوظ':'saved')+'</span>';
+  else if(state==='error') e.innerHTML='<span style="color:#C0392B">⚠ '+(LANG==='ar'?'لم يُحفظ':'not saved')+'</span>';
 }
 
 // ===== REPORT EDITOR =====
@@ -830,13 +862,19 @@ function renderReport(){
   h+='<div class="card"><h3>'+t('site_notes')+' <small></small></h3><div class="body"><textarea id="f_notes" rows="2" placeholder="ملاحظات عامة">'+esc(f.notes||'')+'</textarea></div></div>';
   h+='<div class="card"><h3>'+t('signature')+' <small></small></h3><div class="body"><div class="sigwrap"><canvas id="sig"></canvas><button class="clr" onclick="clearSig()">'+t('clear')+'</button><div class="sighint" id="sighint">وقّع هنا بإصبعك</div></div></div></div>';
   h+='</div>';
-  h+='<footer class="sb"><span class="pct" id="pct">0/0</span><button class="btn ghost" onclick="saveCur(true)">'+t('save')+'</button><button class="btn" id="sub" onclick="doSubmit()">'+t('submit_pdf')+'</button></footer>';
+  h+='<div class="progWrap"><div class="progBar"><i id="progFill" style="width:0%"></i></div></div>';
+  h+='<footer class="sb"><div class="footInfo"><span class="pct" id="pct">0/0</span><span class="saveStat" id="saveStat"></span></div><button class="btn ghost" onclick="saveCur(true)">'+t('save')+'</button><button class="btn" id="sub" onclick="doSubmit()">'+t('submit_pdf')+'</button></footer>';
   h+='<div class="toast" id="toast"></div><input id="cam" type="file" accept="image/*" capture="environment" class="hidden" onchange="onPhoto(event)">';
   h+='<input id="qcam" type="file" accept="image/*" capture="environment" class="hidden" onchange="onQPhoto(event)">';
   $('app').innerHTML=h;
   onProj();
   restoreAnswers();
-  renderPhotos(); initSig(); upd();
+  renderPhotos(); initSig(); upd(true);
+  // auto-save on work-order field edits
+  ['f_site','f_loa','f_service','f_system','f_team','f_date'].forEach(function(id){
+    const el=$(id); if(el){ el.addEventListener('change',function(){ autoSave(); }); el.addEventListener('input',function(){ autoSave(); }); }
+  });
+  setSaveStatus('saved');
 }
 function itemHTML(st,sec,it,si,ci,ii){
   const key=kk(si,ci,ii); const tp=itemType(it); const a=answers[key]||{};
@@ -907,7 +945,14 @@ function restoreAnswers(){
     if(tp==='rating')paintStars(key);
   })));
 }
-function upd(){const c=counts();const e=$('pct');if(e){e.innerHTML=c.done+'/'+c.total+' · 📷'+photos.length;e.style.color=(c.done===c.total&&photos.length>0)?'#1B8A3A':'#777';}}
+function upd(skipSave){
+  const c=counts();
+  const e=$('pct');
+  const pc=c.total?Math.round(c.done/c.total*100):0;
+  if(e){e.innerHTML=c.done+'/'+c.total+' ('+pc+'%) · 📷'+photos.length;e.style.color=(c.done===c.total&&photos.length>0)?'#1B8A3A':'#777';}
+  const bar=$('progFill'); if(bar)bar.style.width=pc+'%';
+  if(!skipSave) autoSave();
+}
 
 // ===== form / project =====
 function fld(id,label,ph,val,type){return '<div><label class="fld">'+label+'</label><input id="'+id+'" type="'+(type||'text')+'" placeholder="'+(ph||'')+'" value="'+esc(val||'')+'"></div>'}
