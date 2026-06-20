@@ -257,7 +257,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, onSnapshot, serverTimestamp }
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, onSnapshot, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -271,7 +271,13 @@ const firebaseConfig = {
 };
 const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
-const db = getFirestore(fbApp);
+// Offline cache: shows last data instantly + works offline, reducing load hangs
+let db;
+try{
+  db = initializeFirestore(fbApp, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+}catch(e){
+  db = getFirestore(fbApp);
+}
 // ===== i18n =====
 let LANG='en'; // default English
 const I18N={
@@ -700,23 +706,36 @@ async function loadAnnouncement(){
     } else box.innerHTML='';
   }catch(e){}
 }
+let reportsTimeout=null;
 function subscribeReports(){
   if(reportsUnsub){reportsUnsub();reportsUnsub=null;}
+  if(reportsTimeout){clearTimeout(reportsTimeout);reportsTimeout=null;}
   let qy;
   try{
     if(SESSION.role==='admin') qy=query(collection(db,'reports'),orderBy('updated','desc'));
     else qy=query(collection(db,'reports'),where('owner','==',SESSION.uid));
   }catch(e){ qy=collection(db,'reports'); }
+  let firstResponse=false;
+  // safety timeout: if no data within 9s, show retry instead of hanging
+  reportsTimeout=setTimeout(()=>{
+    if(!firstResponse){
+      const l=$('homeList');
+      if(l)l.innerHTML='<div class="empty">'+(LANG==='ar'?'التحميل يستغرق وقتاً أطول من المعتاد. تحقّق من الاتصال.':'Loading is taking longer than usual. Check your connection.')+'<br><br><button class="btn" style="max-width:220px;margin:0 auto" onclick="subscribeReports()">'+(LANG==='ar'?'إعادة المحاولة':'Retry')+'</button></div>';
+    }
+  },9000);
   reportsUnsub=onSnapshot(qy,(snap)=>{
+    firstResponse=true; if(reportsTimeout){clearTimeout(reportsTimeout);reportsTimeout=null;}
     REPORTS=[]; snap.forEach(d=>REPORTS.push(Object.assign({id:d.id},d.data())));
     REPORTS.sort((a,b)=>(b.updatedMs||0)-(a.updatedMs||0));
     paintHome();
     const b=$('syncBadge'); if(b)b.innerHTML='<span class="sync">'+t('online')+'</span>';
   },(err)=>{
-    const l=$('homeList'); if(l)l.innerHTML='<div class="empty">تعذّر تحميل التقارير: '+esc(err.message)+'</div>';
+    firstResponse=true; if(reportsTimeout){clearTimeout(reportsTimeout);reportsTimeout=null;}
+    const l=$('homeList'); if(l)l.innerHTML='<div class="empty">'+(LANG==='ar'?'تعذّر تحميل التقارير':'Could not load reports')+': '+esc(err.message)+'<br><br><button class="btn" style="max-width:220px;margin:0 auto" onclick="subscribeReports()">'+(LANG==='ar'?'إعادة المحاولة':'Retry')+'</button></div>';
     const b=$('syncBadge'); if(b)b.innerHTML='<span class="sync off">'+t('offline')+'</span>';
   });
 }
+window.subscribeReports=subscribeReports;
 function paintHome(){
   const l=$('homeList'); if(!l)return;
   if(!REPORTS.length){ l.innerHTML='<div class="empty">لا توجد تقارير بعد.<br>اضغط ＋ لبدء تقرير جديد.</div>'; return; }
