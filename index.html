@@ -569,6 +569,7 @@ onAuthStateChanged(auth, async (user)=>{
     // disabled account check
     if(u.disabled){ await signOut(auth); renderDisabled(); return; }
     SESSION={uid:user.uid,email:user.email,name:u.name||user.email,role:u.role||'user',perms:u.perms||null};
+    resetIdle();
     await loadConfig();
     // app lock check (admins bypass)
     if(SESSION.role!=='admin'){
@@ -620,7 +621,23 @@ function authMsg(code){
   if(code==='auth/network-request-failed')return 'لا يوجد اتصال إنترنت';
   return 'تعذّر الدخول';
 }
-window.logout=function(){ signOut(auth); };
+window.logout=function(){ clearIdle(); signOut(auth); };
+
+// ===== IMPROVEMENT 4: auto-logout after inactivity =====
+let IDLE_MS = 30*60*1000; // 30 minutes
+let idleTimer=null;
+function clearIdle(){ if(idleTimer){ clearTimeout(idleTimer); idleTimer=null; } }
+function resetIdle(){
+  if(!SESSION) return;
+  clearIdle();
+  idleTimer=setTimeout(function(){
+    try{ signOut(auth); }catch(e){}
+    try{ if(typeof $==='function' && $('app')) $('app').innerHTML='<div class="login"><div class="box"><img src="'+LOGO+'"><h1>'+(typeof t==='function'?'':'')+'انتهت الجلسة</h1><p>تم تسجيل خروجك تلقائياً بعد فترة خمول لحماية البيانات.</p><button class="btn" style="width:100%;margin-top:16px" onclick="location.reload()">تسجيل الدخول</button></div></div>'; }catch(e){}
+  }, IDLE_MS);
+}
+['click','keydown','touchstart','mousemove','scroll'].forEach(function(ev){
+  window.addEventListener(ev, function(){ if(SESSION) resetIdle(); }, {passive:true});
+});
 
 // ===== HOME + reports list (realtime) =====
 window.renderHome=renderHome;
