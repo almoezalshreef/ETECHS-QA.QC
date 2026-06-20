@@ -420,6 +420,7 @@ function reRender(){
   if(!SESSION){ renderLogin(); return; }
   if(CUR){ renderReport(); return; }
   // detect current screen by a marker element
+  if(document.getElementById('mrBody')){ renderMonthly(); return; }
   if(document.getElementById('riskList')){ renderRisk(); return; }
   if(document.getElementById('procList')){ renderProcs(); return; }
   if(document.getElementById('ncrList')){ renderNCR(); return; }
@@ -1404,6 +1405,109 @@ window.downloadRiskReport=function(){
     '<div class="h2">'+(LANG==='ar'?'سجل المخاطر':'Risk Register')+'</div>'+
     '<table><tr><th>#</th><th>'+t('hazard')+'</th><th>'+t('project')+'</th><th>'+t('before_controls')+'</th><th>'+t('controls')+'</th><th>'+t('after_controls')+'</th><th>'+t('responsible')+'</th></tr>'+rows+'</table>'+
     '<p style="color:#888;font-size:10px;margin-top:14px">'+(LANG==='ar'?'درجة المخاطرة = الاحتمالية × الشدّة (1-25)':'Risk Score = Likelihood × Consequence (1-25)')+'</p>'+
+    '</div></body></html>';
+  const w=window.open('','_blank');
+  if(w){ w.document.open(); w.document.write(rep); w.document.close(); toast(LANG==='ar'?'افتح «حفظ PDF» في الأعلى':'Tap Save PDF at top'); }
+  else{ const blob=new Blob([rep],{type:'text/html'}); location.href=URL.createObjectURL(blob); }
+};
+
+// ===== MONTHLY AGGREGATED QUALITY REPORT =====
+let MR_MONTH='', MR_PROJECT='';
+
+window.openMonthly=async function(){
+  if(SESSION.role!=='admin' && !can('monthly')){ toast(t('admin_only')); return; }
+  // ensure reports are loaded
+  if(!REPORTS || !REPORTS.length){
+    try{
+      let qy = (SESSION.role==='admin') ? collection(db,'reports') : query(collection(db,'reports'),where('owner','==',SESSION.uid));
+      const snap=await getDocs(qy); REPORTS=[]; snap.forEach(d=>REPORTS.push(Object.assign({id:d.id},d.data())));
+    }catch(e){}
+  }
+  renderMonthly();
+};
+function renderMonthly(){
+  const months=[...new Set(REPORTS.map(reportMonth).filter(Boolean))].sort().reverse();
+  const projNames=[...new Set(REPORTS.map(r=>(r.form&&r.form.project)||'').filter(Boolean))];
+  if(!MR_MONTH && months.length) MR_MONTH=months[0];
+  let h='<header class="bar"><button class="menubtn" onclick="renderHome()">‹</button>'+
+   '<img src="'+LOGO+'"><div class="t"><b>'+t('monthly_title')+'</b><span>Monthly Quality Report</span></div></header><div class="stripe"></div>';
+  h+='<div class="wrap">';
+  h+='<div class="card"><div class="body" style="display:flex;gap:10px;flex-wrap:wrap">'+
+     '<div style="flex:1;min-width:140px"><label class="fld">'+t('month')+'</label><select onchange="mrSetMonth(this.value)"><option value="">'+t('all')+'</option>'+months.map(m=>'<option value="'+m+'"'+(MR_MONTH===m?' selected':'')+'>'+m+'</option>').join('')+'</select></div>'+
+     '<div style="flex:1;min-width:140px"><label class="fld">'+t('project')+'</label><select onchange="mrSetProject(this.value)"><option value="">'+t('all_projects')+'</option>'+projNames.map(p=>'<option'+(MR_PROJECT===p?' selected':'')+'>'+esc(p)+'</option>').join('')+'</select></div>'+
+     '</div></div>';
+  h+='<div id="mrBody"></div>';
+  h+='</div><div class="toast" id="toast"></div>';
+  $('app').innerHTML=h;
+  paintMonthly();
+}
+window.mrSetMonth=function(v){MR_MONTH=v;paintMonthly();};
+window.mrSetProject=function(v){MR_PROJECT=v;paintMonthly();};
+function mrFiltered(){
+  let list=REPORTS.slice();
+  if(MR_MONTH) list=list.filter(r=>reportMonth(r)===MR_MONTH);
+  if(MR_PROJECT) list=list.filter(r=>((r.form&&r.form.project)||'')===MR_PROJECT);
+  return list;
+}
+function paintMonthly(){
+  const box=$('mrBody'); if(!box)return;
+  const list=mrFiltered();
+  if(!list.length){ box.innerHTML='<div class="empty">'+(LANG==='ar'?'لا توجد تقارير لهذه الفترة.':'No reports for this period.')+'</div>'; return; }
+  const ag=aggregate(list);
+  let h='<div class="card"><h3>'+(LANG==='ar'?'ملخّص الفترة':'Period Summary')+' <small>'+(MR_MONTH||t('all'))+'</small></h3><div class="body">'+
+    '<div class="mxgrid">'+
+    '<div class="mxcell" style="background:'+NAVY+'">'+t('total_reports')+'<b>'+ag.total+'</b></div>'+
+    '<div class="mxcell" style="background:#1B8A3A">'+t('closed_reports')+'<b>'+ag.done+'</b></div>'+
+    '<div class="mxcell" style="background:'+ORANGE+'">'+t('open_reports')+'<b>'+ag.draft+'</b></div>'+
+    '<div class="mxcell" style="background:#C0392B">'+t('nonconf')+'<b>'+ag.ncOpen+'</b></div>'+
+    '</div>'+
+    '<div style="text-align:center;margin-top:14px"><div class="donut2" style="margin:0 auto;background:conic-gradient('+ORANGE+' 0 '+ag.compliance+'%, #e8e8ee '+ag.compliance+'% 100%)"><div class="hole2"><b>'+ag.compliance+'%</b><span>'+t('compliance')+'</span></div></div></div>'+
+    '</div></div>';
+  // per-project
+  h+='<div class="card"><h3>'+(LANG==='ar'?'حسب المشروع':'By Project')+'</h3><div class="body">';
+  Object.keys(ag.projects).forEach(pj=>{ const p=ag.projects[pj]; h+='<div class="urow"><div class="ui"><b>'+esc(pj)+'</b><span>'+p.count+' '+(LANG==='ar'?'تقرير':'reports')+' · '+p.nc+' '+t('nonconf')+'</span></div></div>'; });
+  h+='</div></div>';
+  h+='<div style="padding:0 16px 90px"><button class="btn" style="width:100%" onclick="downloadMonthly()">⬇️ '+(LANG==='ar'?'تنزيل التقرير الشهري (PDF)':'Download Monthly Report (PDF)')+'</button></div>';
+  box.innerHTML=h;
+}
+window.downloadMonthly=function(){
+  const list=mrFiltered();
+  if(!list.length){ toast(LANG==='ar'?'لا توجد تقارير':'No reports'); return; }
+  const ag=aggregate(list);
+  let repRows='';
+  list.forEach((r,i)=>{
+    const c=r.counts||{};
+    repRows+='<tr><td>'+(i+1)+'</td><td>'+esc((r.form&&r.form.site)||'-')+'</td><td>'+esc((r.form&&r.form.project)||'-')+'</td>'+
+      '<td>'+esc((r.form&&r.form.loa)||'-')+'</td><td>'+esc((r.form&&r.form.date)||'-')+'</td>'+
+      '<td style="text-align:center">'+(c.done||0)+'/'+(c.total||0)+'</td>'+
+      '<td style="text-align:center">'+(r.status==='done'?t('closed'):t('open'))+'</td><td>'+esc(r.ownerName||'-')+'</td></tr>';
+  });
+  let ncRows='';
+  ag.ncs.forEach((n,i)=>{ ncRows+='<tr><td>'+(i+1)+'</td><td>'+esc(n.site)+'</td><td>'+esc(n.project)+'</td><td>'+esc(n.item)+'</td><td>'+esc(n.finding||'-')+'</td><td>'+esc(n.action||'-')+'</td><td>'+esc(n.date)+'</td></tr>'; });
+  const period=(MR_MONTH||t('all'))+(MR_PROJECT?' · '+MR_PROJECT:'');
+  const rep='<!DOCTYPE html><html lang="'+LANG+'" dir="'+(LANG==='ar'?'rtl':'ltr')+'"><head><meta charset="utf-8"><title>Monthly Report</title><style>'+
+    '*{box-sizing:border-box}body{font-family:Arial,Tahoma,sans-serif;margin:0;color:#1c1c28;font-size:12px}'+
+    '.hd{background:'+NAVY+';color:#fff;padding:14px 18px;display:flex;align-items:center;gap:14px}.hd img{height:44px;background:#fff;border-radius:6px;padding:3px}.hd .ti{margin-inline-start:auto;text-align:'+(LANG==='ar'?'left':'right')+'}.hd b{font-size:16px}.hd span{font-size:11px;opacity:.85}'+
+    '.or{height:5px;background:'+ORANGE+'}.sec1{padding:16px 18px}.h2{color:'+NAVY+';font-size:15px;font-weight:800;border-bottom:2px solid #eee;padding-bottom:5px;margin:14px 0 12px}'+
+    '.sum{display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap}.sb{flex:1;min-width:90px;text-align:center;color:#fff;border-radius:10px;padding:12px}.sb b{display:block;font-size:24px}.sb span{font-size:11px}'+
+    'table{width:100%;border-collapse:collapse;margin-bottom:8px}th,td{border:1px solid #ddd;padding:7px 8px;text-align:'+(LANG==='ar'?'right':'left')+';vertical-align:top;font-size:11px}th{background:'+NAVY+';color:#fff}'+
+    '.comp{text-align:center;margin:10px 0}.cbig{font-size:34px;font-weight:800;color:'+ORANGE+'}'+
+    '.toolbar{position:sticky;top:0;background:#fff;padding:10px;border-bottom:1px solid #eee}.toolbar button{width:100%;padding:13px;border:0;border-radius:10px;font-size:15px;font-weight:800;color:#fff;background:'+ORANGE+';cursor:pointer}'+
+    '@media print{.toolbar{display:none}}</style></head><body>'+
+    '<div class="toolbar"><button onclick="window.print()">'+(LANG==='ar'?'حفظ PDF / طباعة':'Save PDF / Print')+'</button></div>'+
+    '<div class="hd"><img src="'+LOGO+'"><div class="ti"><b>MONTHLY QUALITY REPORT</b><br><span>ETECHS · '+esc(period)+' · '+new Date().toLocaleDateString('en-GB')+'</span></div></div><div class="or"></div>'+
+    '<div class="sec1">'+
+    '<div class="h2">'+(LANG==='ar'?'ملخّص الفترة':'Period Summary')+'</div>'+
+    '<div class="sum">'+
+      '<div class="sb" style="background:'+NAVY+'"><b>'+ag.total+'</b><span>'+t('total_reports')+'</span></div>'+
+      '<div class="sb" style="background:#1B8A3A"><b>'+ag.done+'</b><span>'+t('closed_reports')+'</span></div>'+
+      '<div class="sb" style="background:'+ORANGE+'"><b>'+ag.draft+'</b><span>'+t('open_reports')+'</span></div>'+
+      '<div class="sb" style="background:#C0392B"><b>'+ag.ncOpen+'</b><span>'+t('nonconf')+'</span></div>'+
+    '</div>'+
+    '<div class="comp"><div class="cbig">'+ag.compliance+'%</div><div>'+t('compliance')+'</div></div>'+
+    '<div class="h2">'+(LANG==='ar'?'التقارير':'Reports')+'</div>'+
+    '<table><tr><th>#</th><th>'+t('site')+'</th><th>'+t('project')+'</th><th>LOA</th><th>'+t('date')+'</th><th>'+(LANG==='ar'?'منجز':'Done')+'</th><th>'+t('status')+'</th><th>'+(LANG==='ar'?'المهندس':'Engineer')+'</th></tr>'+repRows+'</table>'+
+    (ncRows?('<div class="h2">'+(LANG==='ar'?'حالات عدم المطابقة':'Non-Conformities')+'</div><table><tr><th>#</th><th>'+t('site')+'</th><th>'+t('project')+'</th><th>'+(LANG==='ar'?'البند':'Item')+'</th><th>'+t('finding')+'</th><th>'+t('required_action')+'</th><th>'+t('date')+'</th></tr>'+ncRows+'</table>'):'')+
     '</div></body></html>';
   const w=window.open('','_blank');
   if(w){ w.document.open(); w.document.write(rep); w.document.close(); toast(LANG==='ar'?'افتح «حفظ PDF» في الأعلى':'Tap Save PDF at top'); }
