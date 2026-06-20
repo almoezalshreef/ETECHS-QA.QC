@@ -232,6 +232,24 @@
   .mxdots{display:block}
   .mxdots i{display:inline-block;background:#fff;color:#111;border-radius:50%;width:16px;height:16px;line-height:16px;font-size:9px;font-style:normal;font-weight:800;margin:1px}
   .mx5xaxis{text-align:center;font-size:10px;font-weight:700;color:#888;margin-top:4px}
+  /* side drawer */
+  .menubtn{background:rgba(255,255,255,.15);border:0;color:#fff;width:38px;height:38px;border-radius:10px;font-size:18px;cursor:pointer;flex:0 0 auto}
+  .drawer{position:fixed;top:0;inset-inline-start:0;width:280px;max-width:82vw;height:100%;background:#fff;z-index:300;transform:translateX(-105%);transition:transform .25s;box-shadow:2px 0 18px rgba(0,0,0,.18);display:flex;flex-direction:column}
+  html[dir=rtl] .drawer{inset-inline-start:auto;inset-inline-end:0;transform:translateX(105%)}
+  .drawer.open{transform:translateX(0)}
+  .dHead{background:var(--navy);color:#fff;padding:20px 16px;display:flex;align-items:center;gap:12px}
+  .dHead img{height:42px;background:#fff;border-radius:8px;padding:3px}
+  .dHt b{display:block;font-size:14px}.dHt span{font-size:11px;opacity:.8}
+  .dNav{flex:1;overflow-y:auto;padding:10px 0}
+  .navItem{display:flex;align-items:center;gap:13px;width:100%;border:0;background:none;padding:14px 18px;font-size:14.5px;font-weight:700;color:var(--navy);cursor:pointer;text-align:start;font-family:inherit}
+  .navItem:hover{background:var(--light)}
+  .navItem .ni{font-size:19px;width:24px;text-align:center}
+  .navSep{font-size:11px;font-weight:800;color:#aaa;padding:14px 18px 6px;text-transform:uppercase;letter-spacing:.5px}
+  .drawerBg{position:fixed;inset:0;background:rgba(15,10,68,.45);z-index:299;opacity:0;pointer-events:none;transition:opacity .25s}
+  .drawerBg.show{opacity:1;pointer-events:auto}
+  /* permissions editor */
+  .permRow{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:11px;padding:11px;margin-bottom:8px}
+  .permRow .ui{flex:1}.permRow .ui b{font-size:13px;color:var(--navy)}
 </style></head><body>
 <div id="app"><div class="loadwrap"><div class="spinner"></div>Loading...</div></div>
 <script>window.onerror=function(m,s,l,c){var a=document.getElementById('app');if(a)a.innerHTML='<div style="padding:22px;text-align:left"><h3 style="color:#EC5020">Error</h3><pre style="background:#f4f4f4;padding:12px;white-space:pre-wrap">'+m+'\n'+l+':'+c+'</pre></div>';};</script>
@@ -373,9 +391,31 @@ const I18N={
   level_low:{en:'Low',ar:'منخفض'},
   level_med:{en:'Medium',ar:'متوسط'},
   level_high:{en:'High',ar:'عالٍ'},
-  level_ext:{en:'Extreme',ar:'حرج'}
+  level_ext:{en:'Extreme',ar:'حرج'},
+  monthly_title:{en:'Monthly Report',ar:'التقرير الشهري'},
+  permissions:{en:'Permissions',ar:'الصلاحيات'},
+  perms_for:{en:'Permissions for',ar:'صلاحيات'}
 };
 function t(key){ const e=I18N[key]; return e? (e[LANG]||e.en) : key; }
+// ===== permissions =====
+// sections an engineer's access can be toggled for
+const PERM_KEYS=['create','dashboard','ncr','risk','procs','monthly'];
+const PERM_LABELS={
+  create:{en:'Create Reports',ar:'إنشاء التقارير'},
+  dashboard:{en:'Dashboard',ar:'لوحة المعلومات'},
+  ncr:{en:'Non-Conformities',ar:'عدم المطابقة'},
+  risk:{en:'Risk Management',ar:'إدارة المخاطر'},
+  procs:{en:'Procedures',ar:'الإجراءات'},
+  monthly:{en:'Monthly Report',ar:'التقرير الشهري'}
+};
+// default engineer perms when none set
+const PERM_DEFAULT={create:true,dashboard:false,ncr:true,risk:false,procs:true,monthly:false};
+function can(key){
+  if(!SESSION) return false;
+  if(SESSION.role==='admin') return true;
+  const p=SESSION.perms||PERM_DEFAULT;
+  return p[key]!==undefined ? !!p[key] : (PERM_DEFAULT[key]||false);
+}
 function applyDir(){ document.documentElement.lang=LANG; document.documentElement.dir=(LANG==='ar'?'rtl':'ltr'); }
 window.toggleLang=function(){ LANG=(LANG==='ar'?'en':'ar'); try{localStorage.setItem('etechs_lang',LANG);}catch(e){} applyDir(); reRender(); };
 function loadLang(){ try{const s=localStorage.getItem('etechs_lang'); if(s)LANG=s;}catch(e){} applyDir(); }
@@ -513,7 +553,7 @@ onAuthStateChanged(auth, async (user)=>{
     const u=usnap.data();
     // disabled account check
     if(u.disabled){ await signOut(auth); renderDisabled(); return; }
-    SESSION={uid:user.uid,email:user.email,name:u.name||user.email,role:u.role||'user'};
+    SESSION={uid:user.uid,email:user.email,name:u.name||user.email,role:u.role||'user',perms:u.perms||null};
     await loadConfig();
     // app lock check (admins bypass)
     if(SESSION.role!=='admin'){
@@ -570,22 +610,53 @@ window.logout=function(){ signOut(auth); };
 // ===== HOME + reports list (realtime) =====
 window.renderHome=renderHome;
 function renderHome(){
-  let h='<header class="bar"><img src="'+LOGO+'"><div class="t"><b>'+t('app_title')+'</b><span>'+esc(SESSION.name)+(SESSION.role==='admin'?' (Admin)':'')+'</span></div>'+
-   '<button class="gear" onclick="toggleLang()" title="Language">🌐</button>'+
-   '<button class="gear" onclick="openDashboard()" title="'+t('dashboard')+'">📊</button>'+
-   '<button class="gear" onclick="openNCR()" title="'+t('ncr_title')+'">⚠️</button>'+
-   '<button class="gear" onclick="openProcs()" title="'+t('procs_title')+'">📋</button>'+
-   '<button class="gear" onclick="openRisk()" title="'+t('risk_title')+'">🎯</button>'+
-   (SESSION.role==='admin'?'<button class="gear" onclick="openAdmin()" title="'+t('admin_panel')+'">🛠</button>':'')+
-   '<button class="gear" onclick="openSet()">⚙</button>'+
-   '<button class="gear" onclick="logout()" title="'+t('logout')+'">⎋</button></header><div class="stripe"></div>';
+  let h='<header class="bar"><button class="menubtn" onclick="openDrawer()">☰</button>'+
+   '<img src="'+LOGO+'"><div class="t"><b>'+t('app_title')+'</b><span>'+esc(SESSION.name)+(SESSION.role==='admin'?' (Admin)':'')+'</span></div>'+
+   '<button class="gear" onclick="toggleLang()" title="Language">🌐</button></header><div class="stripe"></div>';
+  h+=drawerHTML();
   h+='<div class="wrap"><div id="annc"></div><div class="card"><h3>'+(SESSION.role==='admin'?t('all_reports'):t('my_reports'))+' <small id="syncBadge"></small></h3><div class="body" id="homeList"><div class="loadwrap"><div class="spinner"></div></div></div></div></div>';
-  h+='<button class="fab" onclick="newReport()">＋</button>';
+  if(can('create')) h+='<button class="fab" onclick="newReport()">＋</button>';
   h+='<div class="toast" id="toast"></div>';
   $('app').innerHTML=h;
   subscribeReports();
   loadAnnouncement();
 }
+// ===== side drawer navigation =====
+function drawerHTML(){
+  const items=[];
+  items.push(['home',t('app_title'),'🏠']);
+  if(can('dashboard')) items.push(['dashboard',t('dashboard'),'📊']);
+  if(can('ncr')) items.push(['ncr',t('ncr_title'),'⚠️']);
+  if(can('risk')) items.push(['risk',t('risk_title'),'🎯']);
+  if(can('procs')) items.push(['procs',t('procs_title'),'📋']);
+  if(can('monthly')&&SESSION.role==='admin') items.push(['monthly',t('monthly_title'),'📅']);
+  let nav=items.map(it=>'<button class="navItem" onclick="navGo(\''+it[0]+'\')"><span class="ni">'+it[2]+'</span>'+esc(it[1])+'</button>').join('');
+  let adminNav='';
+  if(SESSION.role==='admin'){
+    adminNav='<div class="navSep">'+(LANG==='ar'?'الإدارة':'Admin')+'</div>'+
+      '<button class="navItem" onclick="navGo(\'admin\')"><span class="ni">🛠</span>'+t('admin_panel')+'</button>';
+  }
+  return '<div class="drawer" id="drawer"><div class="dHead"><img src="'+LOGO+'"><div class="dHt"><b>'+esc(SESSION.name)+'</b><span>'+esc(SESSION.email)+'</span></div></div>'+
+    '<div class="dNav">'+nav+adminNav+
+    '<div class="navSep">'+t('settings')+'</div>'+
+    '<button class="navItem" onclick="navGo(\'settings\')"><span class="ni">⚙</span>'+t('settings')+'</button>'+
+    '<button class="navItem" onclick="navGo(\'logout\')"><span class="ni">⎋</span>'+t('logout')+'</button>'+
+    '</div></div><div class="drawerBg" id="drawerBg" onclick="closeDrawer()"></div>';
+}
+window.openDrawer=function(){const d=$('drawer'),b=$('drawerBg');if(d)d.classList.add('open');if(b)b.classList.add('show');};
+window.closeDrawer=function(){const d=$('drawer'),b=$('drawerBg');if(d)d.classList.remove('open');if(b)b.classList.remove('show');};
+window.navGo=function(dest){
+  closeDrawer();
+  if(dest==='home')return renderHome();
+  if(dest==='dashboard')return openDashboard();
+  if(dest==='ncr')return openNCR();
+  if(dest==='risk')return openRisk();
+  if(dest==='procs')return openProcs();
+  if(dest==='monthly')return (typeof openMonthly==='function'?openMonthly():toast('قريباً'));
+  if(dest==='admin')return openAdmin();
+  if(dest==='settings')return openSet();
+  if(dest==='logout')return logout();
+};
 async function loadAnnouncement(){
   try{
     const snap=await getDoc(doc(db,'meta','announce'));
@@ -843,7 +914,7 @@ window.doSubmit=async function(){
 let DASH_MONTH=null; // 'YYYY-MM' filter or null=all
 let DASH_PROJECT='';  // project name filter
 
-window.openDashboard=function(){ DASH_MONTH=null; DASH_PROJECT=''; renderDashboard(); };
+window.openDashboard=function(){ if(!can('dashboard')){toast(t('admin_only'));return;} DASH_MONTH=null; DASH_PROJECT=''; renderDashboard(); };
 
 function reportMonth(r){ const d=(r.form&&r.form.date)||''; return d?d.slice(0,7):''; }
 function allReportsForDash(){
@@ -931,7 +1002,7 @@ let NCR_F={q:'',status:'',project:''};
 const NC_STATUS=['مفتوحة','قيد المعالجة','مغلقة'];
 const NC_SEV=['عالية','متوسطة','منخفضة'];
 
-window.openNCR=function(){ renderNCR(); subscribeNCR(); };
+window.openNCR=function(){ if(!can('ncr')){toast(t('admin_only'));return;} renderNCR(); subscribeNCR(); };
 
 function subscribeNCR(){
   if(NCR_unsub){NCR_unsub();NCR_unsub=null;}
@@ -1059,7 +1130,7 @@ const PROC_CATS_EN=['Procedure','Work Instruction','Safety','Occupational Health
 const PROC_CATS_AR=['إجراء','تعليمات عمل','السلامة','الصحة المهنية','إرشاد فني'];
 function procCats(){ return LANG==='ar'?PROC_CATS_AR:PROC_CATS_EN; }
 
-window.openProcs=function(){ renderProcs(); subscribeProcs(); };
+window.openProcs=function(){ if(!can('procs')){toast(t('admin_only'));return;} renderProcs(); subscribeProcs(); };
 function subscribeProcs(){
   if(PROCS_unsub){PROCS_unsub();PROCS_unsub=null;}
   let qy; try{ qy=query(collection(db,'procs'),orderBy('createdMs','desc')); }catch(e){ qy=collection(db,'procs'); }
@@ -1178,7 +1249,7 @@ function buildMatrix(list, forPrint){
   return h;
 }
 
-window.openRisk=function(){ renderRisk(); subscribeRisk(); };
+window.openRisk=function(){ if(!can('risk')){toast(t('admin_only'));return;} renderRisk(); subscribeRisk(); };
 function subscribeRisk(){
   if(RISK_unsub){RISK_unsub();RISK_unsub=null;}
   let qy; try{ qy=query(collection(db,'risks'),orderBy('createdMs','desc')); }catch(e){ qy=collection(db,'risks'); }
@@ -1558,16 +1629,19 @@ window.saveAnnounce=async function(){
 window.clearAnnounce=async function(){
   try{ await setDoc(doc(db,'meta','announce'),{text:'',color:'navy',at:serverTimestamp()}); $('anncText').value=''; toast('تم مسح الإعلان'); }catch(e){ toast('تعذّر المسح'); }
 };
+let ADMIN_USERS=[];
 async function loadUsersAdmin(){
   const box=$('usersBox'); if(!box)return;
   try{
     const snap=await getDocs(collection(db,'users'));
     const list=[]; snap.forEach(d=>list.push(Object.assign({uid:d.id},d.data())));
+    ADMIN_USERS=list;
     if(!list.length){box.innerHTML='<div class="note">لا يوجد مستخدمون.</div>';return;}
     box.innerHTML=list.map(u=>{
       const me=u.uid===SESSION.uid;
       return '<div class="urow"><div class="ui"><b>'+esc(u.name)+(me?' (أنت)':'')+'</b><span>'+esc(u.email)+' · '+(u.role==='admin'?'مدير':'مهندس')+(u.disabled?' · معطّل':'')+'</span></div>'+
-        (me?'':'<div style="display:flex;gap:6px">'+
+        (me?'':'<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">'+
+          (u.role==='admin'?'':'<button class="miniBtn" onclick="openPerms(\''+u.uid+'\')">'+t('permissions')+'</button>')+
           '<button class="miniBtn" onclick="toggleRole(\''+u.uid+'\',\''+(u.role==='admin'?'user':'admin')+'\')">'+(u.role==='admin'?'تنزيل':'ترقية')+'</button>'+
           '<button class="miniBtn '+(u.disabled?'on':'')+'" onclick="toggleDisable(\''+u.uid+'\','+(u.disabled?'false':'true')+')">'+(u.disabled?'تفعيل':'تعطيل')+'</button>'+
           '<button class="udel" onclick="delUser(\''+u.uid+'\')">🗑</button></div>')+
@@ -1575,6 +1649,24 @@ async function loadUsersAdmin(){
     }).join('');
   }catch(e){ box.innerHTML='<div class="note">تعذّر تحميل المستخدمين: '+esc(e.message)+'</div>'; }
 }
+window.openPerms=function(uid){
+  const u=ADMIN_USERS.find(x=>x.uid===uid); if(!u)return;
+  const p=u.perms||PERM_DEFAULT;
+  const modal=document.createElement('div'); modal.className='modal show'; modal.id='permModal';
+  modal.innerHTML='<div class="sheet"><h3>'+t('perms_for')+' '+esc(u.name)+'</h3><div class="c">'+
+    PERM_KEYS.map(k=>'<div class="permRow"><div class="ui"><b>'+(PERM_LABELS[k][LANG]||PERM_LABELS[k].en)+'</b></div>'+
+      '<button class="toggle'+((p[k]!==undefined?p[k]:PERM_DEFAULT[k])?' on':'')+'" onclick="this.classList.toggle(\'on\')" data-k="'+k+'"><i></i></button></div>').join('')+
+    '<button class="btn" style="width:100%;margin-top:14px" onclick="savePerms(\''+uid+'\')">'+t('save')+'</button>'+
+    '<button class="btn ghost" style="width:100%;margin-top:8px;flex:1" onclick="closePerms()">'+t('close')+'</button>'+
+    '</div></div>';
+  document.body.appendChild(modal);
+};
+window.closePerms=function(){const m=$('permModal');if(m)m.remove();};
+window.savePerms=async function(uid){
+  const perms={}; document.querySelectorAll('#permModal .toggle').forEach(b=>{perms[b.dataset.k]=b.classList.contains('on');});
+  try{ await updateDoc(doc(db,'users',uid),{perms}); toast(t('saved')); closePerms(); loadUsersAdmin(); }
+  catch(e){ toast('تعذّر الحفظ: '+e.message); }
+};
 window.toggleRole=async function(uid,newRole){
   try{ await updateDoc(doc(db,'users',uid),{role:newRole}); toast('تم تغيير الدور'); loadUsersAdmin(); }catch(e){ toast('تعذّر التغيير'); }
 };
