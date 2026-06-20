@@ -390,7 +390,21 @@ const I18N={
   level_ext:{en:'Extreme',ar:'حرج'},
   monthly_title:{en:'Monthly Report',ar:'التقرير الشهري'},
   permissions:{en:'Permissions',ar:'الصلاحيات'},
-  perms_for:{en:'Permissions for',ar:'صلاحيات'}
+  perms_for:{en:'Permissions for',ar:'صلاحيات'},
+  // archive / retention
+  tab_archive:{en:'Archive',ar:'الأرشفة'},
+  retention:{en:'Retention Period',ar:'فترة الاحتفاظ'},
+  older_than:{en:'Show reports older than',ar:'إظهار التقارير الأقدم من'},
+  months_6:{en:'6 months',ar:'6 أشهر'},
+  year_1:{en:'1 year',ar:'سنة'},
+  years_2:{en:'2 years',ar:'سنتان'},
+  include_open:{en:'Include open reports too',ar:'تضمين التقارير المفتوحة أيضاً'},
+  old_reports:{en:'Old Reports',ar:'التقارير القديمة'},
+  no_old:{en:'No reports older than this period.',ar:'لا توجد تقارير أقدم من هذه الفترة.'},
+  export_before:{en:'Export summary (PDF)',ar:'تصدير ملخّص (PDF)'},
+  delete_selected:{en:'Delete selected',ar:'حذف المحدد'},
+  select_all:{en:'Select all',ar:'تحديد الكل'},
+  selected:{en:'selected',ar:'محدد'}
 };
 function t(key){ const e=I18N[key]; return e? (e[LANG]||e.en) : key; }
 // ===== permissions =====
@@ -1570,9 +1584,9 @@ function renderAdmin(){
   h+='<div class="tabs" id="tabs">'+tabBtns()+'</div><div class="wrap" id="adminBody"></div><div class="toast" id="toast"></div>';
   $('app').innerHTML=h; renderAdminBody();
 }
-function tabBtns(){return [['projects',t('tab_projects')],['questions',t('tab_questions')],['rules',t('tab_rules')],['security',t('tab_security')]].map(t=>'<button class="tabbtn'+(ADMIN_TAB===t[0]?' on':'')+'" onclick="setTab(\''+t[0]+'\')">'+t[1]+'</button>').join('');}
-window.setTab=function(t){ADMIN_TAB=t;const b=$('tabs');if(b)b.innerHTML=tabBtns();renderAdminBody();};
-function renderAdminBody(){const c=$('adminBody');if(!c)return;c.innerHTML=ADMIN_TAB==='projects'?projectsPanel():ADMIN_TAB==='questions'?questionsPanel():ADMIN_TAB==='rules'?rulesPanel():securityPanel();if(ADMIN_TAB==='security')initSecurity();}
+function tabBtns(){var labs=[['projects',t('tab_projects')],['questions',t('tab_questions')],['rules',t('tab_rules')],['security',t('tab_security')],['archive',t('tab_archive')]];return labs.map(function(x){return '<button class="tabbtn'+(ADMIN_TAB===x[0]?' on':'')+'" onclick="setTab(\''+x[0]+'\')">'+x[1]+'</button>';}).join('');}
+window.setTab=function(tb){ADMIN_TAB=tb;const b=$('tabs');if(b)b.innerHTML=tabBtns();renderAdminBody();};
+function renderAdminBody(){const c=$('adminBody');if(!c)return;c.innerHTML=ADMIN_TAB==='projects'?projectsPanel():ADMIN_TAB==='questions'?questionsPanel():ADMIN_TAB==='rules'?rulesPanel():ADMIN_TAB==='archive'?archivePanel():securityPanel();if(ADMIN_TAB==='security')initSecurity();if(ADMIN_TAB==='archive')initArchive();}
 
 // projects
 function projectsPanel(){
@@ -1777,6 +1791,82 @@ window.toggleDisable=async function(uid,dis){
 window.delUser=async function(uid){
   if(!confirm('حذف ملف هذا المستخدم؟ (لن يستطيع الدخول للبيانات)'))return;
   try{ await deleteDoc(doc(db,'users',uid)); toast('تم الحذف'); loadUsersAdmin(); }catch(e){ toast('تعذّر الحذف'); }
+};
+
+// ===== ARCHIVE / RETENTION PANEL =====
+let ARCH_REPORTS=[]; let ARCH_MONTHS=12; let ARCH_INC_OPEN=false; let ARCH_SEL={};
+function archivePanel(){
+  return '<div class="note" style="margin-bottom:10px">'+(LANG==='ar'?'راجع التقارير القديمة واحذفها يدوياً لتنظيف التخزين. الحذف نهائي.':'Review old reports and delete them manually to clean storage. Deletion is permanent.')+'</div>'+
+    '<div class="card"><h3>'+t('retention')+'</h3><div class="body">'+
+    '<label class="fld">'+t('older_than')+'</label>'+
+    '<select id="archAge" onchange="archAgeChange(this.value)">'+
+      '<option value="6"'+(ARCH_MONTHS==6?' selected':'')+'>'+t('months_6')+'</option>'+
+      '<option value="12"'+(ARCH_MONTHS==12?' selected':'')+'>'+t('year_1')+'</option>'+
+      '<option value="24"'+(ARCH_MONTHS==24?' selected':'')+'>'+t('years_2')+'</option>'+
+    '</select>'+
+    '<label class="permRow" style="margin-top:10px"><div class="ui"><b>'+t('include_open')+'</b></div>'+
+      '<input type="checkbox" style="width:auto" '+(ARCH_INC_OPEN?'checked':'')+' onchange="archIncOpen(this.checked)"></label>'+
+    '</div></div>'+
+    '<div class="card"><h3>'+t('old_reports')+' <small id="archCount"></small></h3><div class="body" id="archList"><div class="loadwrap"><div class="spinner"></div></div></div></div>'+
+    '<div style="padding:0 16px 90px;display:flex;gap:8px;flex-wrap:wrap">'+
+      '<button class="btn ghost" style="flex:1" onclick="archExport()">'+t('export_before')+'</button>'+
+      '<button class="btn" style="flex:1;background:#C0392B" onclick="archDelete()">'+t('delete_selected')+'</button>'+
+    '</div>';
+}
+window.archAgeChange=function(v){ARCH_MONTHS=parseInt(v)||12;ARCH_SEL={};loadArchive();};
+window.archIncOpen=function(c){ARCH_INC_OPEN=c;ARCH_SEL={};loadArchive();};
+async function initArchive(){ loadArchive(); }
+async function loadArchive(){
+  const box=$('archList'); if(!box)return;
+  box.innerHTML='<div class="loadwrap"><div class="spinner"></div></div>';
+  try{
+    const snap=await getDocs(collection(db,'reports'));
+    const all=[]; snap.forEach(d=>all.push(Object.assign({id:d.id},d.data())));
+    const cutoff=Date.now()-(ARCH_MONTHS*30*24*60*60*1000);
+    ARCH_REPORTS=all.filter(r=>{
+      const ms=r.createdMs||0;
+      if(ms>=cutoff) return false;
+      if(!ARCH_INC_OPEN && r.status!=='done') return false;
+      return true;
+    }).sort((a,b)=>(a.createdMs||0)-(b.createdMs||0));
+    paintArchive();
+  }catch(e){ box.innerHTML='<div class="note">'+esc(e.message)+'</div>'; }
+}
+function paintArchive(){
+  const box=$('archList'); if(!box)return;
+  const cnt=$('archCount'); if(cnt)cnt.textContent=ARCH_REPORTS.length;
+  if(!ARCH_REPORTS.length){ box.innerHTML='<div class="empty">'+t('no_old')+'</div>'; return; }
+  let h='<label class="permRow"><div class="ui"><b>'+t('select_all')+'</b></div><input type="checkbox" style="width:auto" onchange="archSelAll(this.checked)"></label>';
+  h+=ARCH_REPORTS.map(r=>{
+    const d=(r.form&&r.form.date)||new Date(r.createdMs||0).toISOString().slice(0,10);
+    return '<label class="permRow"><div class="ui"><b>'+esc((r.form&&r.form.site)||'(—)')+'</b>'+
+      '<span>'+esc((r.form&&r.form.project)||'')+' · '+esc(d)+' · '+(r.status==='done'?t('closed'):t('open'))+'</span></div>'+
+      '<input type="checkbox" style="width:auto" '+(ARCH_SEL[r.id]?'checked':'')+' onchange="archSel(\''+r.id+'\',this.checked)"></label>';
+  }).join('');
+  box.innerHTML=h;
+}
+window.archSel=function(id,c){if(c)ARCH_SEL[id]=true;else delete ARCH_SEL[id];const n=Object.keys(ARCH_SEL).length;};
+window.archSelAll=function(c){ARCH_SEL={};if(c)ARCH_REPORTS.forEach(r=>ARCH_SEL[r.id]=true);paintArchive();};
+window.archDelete=async function(){
+  const ids=Object.keys(ARCH_SEL); if(!ids.length){toast(LANG==='ar'?'لم تحدّد تقارير':'No reports selected');return;}
+  if(!confirm((LANG==='ar'?'حذف ':'Delete ')+ids.length+(LANG==='ar'?' تقرير نهائياً؟':' reports permanently?')))return;
+  let ok=0;
+  for(const id of ids){ try{ await deleteDoc(doc(db,'reports',id)); ok++; }catch(e){} }
+  ARCH_SEL={}; toast((LANG==='ar'?'تم حذف ':'Deleted ')+ok); loadArchive();
+};
+window.archExport=function(){
+  if(!ARCH_REPORTS.length){toast(LANG==='ar'?'لا توجد تقارير':'No reports');return;}
+  let rows='';
+  ARCH_REPORTS.forEach((r,i)=>{ const c=r.counts||{}; const d=(r.form&&r.form.date)||new Date(r.createdMs||0).toISOString().slice(0,10);
+    rows+='<tr><td>'+(i+1)+'</td><td>'+esc((r.form&&r.form.site)||'-')+'</td><td>'+esc((r.form&&r.form.project)||'-')+'</td><td>'+esc((r.form&&r.form.loa)||'-')+'</td><td>'+esc(d)+'</td><td style="text-align:center">'+(c.done||0)+'/'+(c.total||0)+'</td><td>'+esc(r.ownerName||'-')+'</td></tr>'; });
+  const rep='<!DOCTYPE html><html lang="'+LANG+'" dir="'+(LANG==='ar'?'rtl':'ltr')+'"><head><meta charset="utf-8"><title>Archive</title><style>'+
+    'body{font-family:Arial,Tahoma,sans-serif;margin:0;font-size:12px}.hd{background:'+NAVY+';color:#fff;padding:14px 18px;display:flex;gap:14px;align-items:center}.hd img{height:42px;background:#fff;border-radius:6px;padding:3px}.hd .ti{margin-inline-start:auto}.or{height:5px;background:'+ORANGE+'}'+
+    '.sec1{padding:16px 18px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:7px 8px;text-align:'+(LANG==='ar'?'right':'left')+';font-size:11px}th{background:'+NAVY+';color:#fff}'+
+    '.toolbar{position:sticky;top:0;background:#fff;padding:10px;border-bottom:1px solid #eee}.toolbar button{width:100%;padding:13px;border:0;border-radius:10px;font-size:15px;font-weight:800;color:#fff;background:'+ORANGE+'}@media print{.toolbar{display:none}}</style></head><body>'+
+    '<div class="toolbar"><button onclick="window.print()">'+(LANG==='ar'?'حفظ PDF / طباعة':'Save PDF / Print')+'</button></div>'+
+    '<div class="hd"><img src="'+LOGO+'"><div class="ti"><b>ARCHIVE SUMMARY</b><br><span>ETECHS · '+new Date().toLocaleDateString('en-GB')+' · '+ARCH_REPORTS.length+' reports</span></div></div><div class="or"></div>'+
+    '<div class="sec1"><table><tr><th>#</th><th>'+t('site')+'</th><th>'+t('project')+'</th><th>LOA</th><th>'+t('date')+'</th><th>'+(LANG==='ar'?'منجز':'Done')+'</th><th>'+(LANG==='ar'?'المهندس':'Engineer')+'</th></tr>'+rows+'</table></div></body></html>';
+  const w=window.open('','_blank'); if(w){w.document.open();w.document.write(rep);w.document.close();toast(LANG==='ar'?'افتح «حفظ PDF»':'Tap Save PDF');}
 };
 
 function answerDisplay(a,it){
