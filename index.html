@@ -309,6 +309,25 @@
   .sysDot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-inline-end:6px;vertical-align:middle}
   .sysChip .noSecHint{font-size:10px;opacity:.7;font-weight:600}
   .sysPill{display:inline-block;color:#fff;font-size:11px;font-weight:800;padding:2px 9px;border-radius:11px;margin:2px}
+  /* audit answer buttons (5 graded states) */
+  .auditSeg{flex-wrap:wrap}
+  .auditSeg button{flex:1 1 30%;min-height:46px;font-size:13px}
+  .auditSeg button.aud-C.on{background:#1B8A3A;color:#fff;border-color:#1B8A3A}
+  .auditSeg button.aud-minor.on{background:#D4A017;color:#fff;border-color:#D4A017}
+  .auditSeg button.aud-major.on{background:#E67E22;color:#fff;border-color:#E67E22}
+  .auditSeg button.aud-critical.on{background:#C0392B;color:#fff;border-color:#C0392B}
+  .auditSeg button.aud-NA.on{background:#8a8a93;color:#fff;border-color:#8a8a93}
+  .ncDate{width:100%;margin-top:4px}
+  /* in-report audit dashboard */
+  .auditDash{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+  .adTop{display:flex;align-items:center;gap:16px;margin-bottom:12px}
+  .adScore{width:84px;height:84px;border:5px solid var(--orange);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:0 0 auto}
+  .adScore b{font-size:22px;line-height:1}.adScore span{font-size:9px;color:var(--muted)}
+  .adRisk{display:flex;flex-direction:column;gap:2px}.adRisk span{font-size:11px;color:var(--muted)}.adRisk b{font-size:16px}
+  .adBar{display:flex;height:16px;border-radius:8px;overflow:hidden;background:var(--light);margin-bottom:12px}.adBar div{height:100%}
+  .adCells{display:flex;gap:8px;flex-wrap:wrap}
+  .adCell{flex:1;min-width:58px;text-align:center;background:var(--light);border-radius:9px;padding:8px 4px}
+  .adCell b{display:block;font-size:19px;line-height:1.1}.adCell span{font-size:10px;color:var(--muted)}
 </style></head><body>
 <div id="app"><div class="loadwrap"><div class="spinner"></div>Loading...</div></div>
 <script>window.onerror=function(m,s,l,c){var a=document.getElementById('app');if(a)a.innerHTML='<div style="padding:22px;text-align:left"><h3 style="color:#EC5020">Error</h3><pre style="background:#f4f4f4;padding:12px;white-space:pre-wrap">'+m+'\n'+l+':'+c+'</pre></div>';};</script>
@@ -540,6 +559,7 @@ function systemsList(){
 }
 // backward-compat alias used across the app
 let SYSTEMS=DEFAULT_SYSTEMS.slice();
+const AUDIT_TEMPLATE_STAGES=[{"en": "MONTHLY CONTRACT PERFORMANCE AUDIT", "ar": "التدقيق الشهري على أداء العقد", "secs": [{"en": "1. Scope of Work Compliance", "ar": "١. الالتزام بنطاق العمل", "sys": "", "items": [["All contracted maintenance activities performed", "تنفيذ كل أعمال الصيانة المتعاقد عليها", "", {"type": "audit", "required": true}], ["Work executed per approved monthly plan", "تنفيذ العمل حسب الخطة الشهرية المعتمدة", "", {"type": "audit", "required": true}], ["No scope omissions or unauthorized changes", "لا إغفال للنطاق ولا تغييرات غير معتمدة", "", {"type": "audit", "required": true}]]}, {"en": "2. Service Level (SLA)", "ar": "٢. مستوى الخدمة", "sys": "", "items": [["Response time to requests within SLA", "زمن الاستجابة للطلبات ضمن المتعاقد عليه", "", {"type": "audit", "required": true}], ["Work orders completed within target time", "إنجاز أوامر العمل ضمن المدة المستهدفة", "", {"type": "audit", "required": true}], ["Closed work-order ratio meets target", "نسبة أوامر العمل المغلقة ضمن المستهدف", "", {"type": "audit", "required": true}], ["Emergency/breakdown response acceptable", "الاستجابة للطوارئ/الأعطال مقبولة", "", {"type": "audit", "required": true}]]}, {"en": "3. Quality of Execution", "ar": "٣. جودة التنفيذ", "sys": "", "items": [["Repairs conform to technical specifications", "الإصلاحات مطابقة للمواصفات الفنية", "", {"type": "audit", "required": true}], ["Genuine/approved spare parts used", "استخدام قطع غيار أصلية/معتمدة", "", {"type": "audit", "required": true}], ["Systems returned to service after each job", "إعادة الأنظمة للخدمة بعد كل عمل", "", {"type": "audit", "required": true}], ["Repeat-failure rate within acceptable limit", "معدّل تكرار الأعطال ضمن الحد المقبول", "", {"type": "audit", "required": true}], ["Before/after evidence (photos) documented", "توثيق الأعمال بالصور قبل/بعد", "", {"type": "audit", "required": true}]]}, {"en": "4. HSE / Safety", "ar": "٤. السلامة والصحة المهنية", "sys": "", "items": [["Permit to Work (PTW) used for all tasks", "استخدام تصاريح العمل لكل المهام", "", {"type": "audit", "required": true}], ["LOTO (isolation) procedures applied", "تطبيق إجراءات العزل والتأمين LOTO", "", {"type": "audit", "required": true}], ["PPE worn and adequate", "استخدام معدّات الحماية الشخصية وكفايتها", "", {"type": "audit", "required": true}], ["Incidents / near-misses reported", "الإبلاغ عن الحوادث/الحوادث الوشيكة", "", {"type": "audit", "required": true}], ["Risk assessments present & updated on site", "تقييمات المخاطر موجودة ومُحدَّثة بالموقع", "", {"type": "audit", "required": true}]]}, {"en": "5. Team & Competency", "ar": "٥. الفريق والكفاءة", "sys": "", "items": [["Personnel qualified & certified for the work", "المهندسون/الفنيون مؤهّلون ومعتمدون", "", {"type": "audit", "required": true}], ["Training certificates valid", "شهادات التدريب سارية المفعول", "", {"type": "audit", "required": true}], ["Adequate manpower per contract", "العدد الكافي من الفريق حسب العقد", "", {"type": "audit", "required": true}], ["Attendance & coverage records complete", "سجلّ الحضور والتغطية مكتمل", "", {"type": "audit", "required": true}]]}, {"en": "6. Documentation & Equipment", "ar": "٦. التوثيق والمعدّات", "sys": "", "items": [["Maintenance records complete & updated", "سجلّات الصيانة مكتملة ومُحدَّثة", "", {"type": "audit", "required": true}], ["Calibration of test equipment valid", "معايرة أجهزة القياس سارية", "", {"type": "audit", "required": true}], ["Materials/stock available per requirements", "المواد/المخزون متوفّرة حسب المتطلّبات", "", {"type": "audit", "required": true}], ["Vehicle & equipment register updated", "سجلّ المركبات والمعدّات مُحدَّث", "", {"type": "audit", "required": true}]]}, {"en": "7. KPIs & Reporting", "ar": "٧. مؤشّرات الأداء والتقارير", "sys": "", "items": [["Periodic progress reports submitted on time", "تقديم التقارير الدورية في موعدها", "", {"type": "audit", "required": true}], ["KPIs within contractual targets", "مؤشّرات الأداء ضمن المستهدف التعاقدي", "", {"type": "audit", "required": true}], ["Data accuracy in reports", "دقّة البيانات في التقارير", "", {"type": "audit", "required": true}]]}, {"en": "8. Client Satisfaction", "ar": "٨. رضا العميل", "sys": "", "items": [["Client complaints addressed & closed", "معالجة وإغلاق ملاحظات/شكاوى العميل", "", {"type": "audit", "required": true}], ["Coordination with client representative", "التنسيق مع ممثّل العميل", "", {"type": "audit", "required": true}], ["Overall client satisfaction acceptable", "الرضا العام للعميل مقبول", "", {"type": "audit", "required": true}]]}]}];
 const SYSTEM_SECTIONS=[{"en": "E1. Sprinkler — Technical Checks", "ar": "هـ١. الرشاشات — الفحوص الفنية", "sys": "Sprinkler System", "items": [["Component repaired/replaced (type & ref)", "المكوّن المُصلَّح/المُستبدَل (النوع والرقم)", "Recorded", {"type": "text"}], ["System pressure after repair", "ضغط النظام بعد الإصلاح", "Within range", {"type": "measure", "unit": "bar"}], ["No leakage after repair", "لا تسريب بعد الإصلاح", "No leaks", {"type": "okna", "required": true}], ["Sprinkler heads intact & clear (45cm)", "رؤوس الرشاشات سليمة وخالية من العوائق (45 سم)", "Compliant", {"type": "okna", "required": true}], ["Flow switch signals panel after repair", "مفتاح التدفق يرسل إشارة للوحة بعد الإصلاح", "Signal OK", {"type": "okna", "required": true}], ["Alarm/check valve test", "اختبار صمام الإنذار", "Pass", {"type": "okna", "required": true}], ["Main control valve OPEN & chained", "الصمام الرئيسي مفتوح ومقفول بالسلسلة", "Open & locked", {"type": "okna", "required": true}], ["System restored to service", "النظام أُعيد للخدمة", "Restored", {"type": "okna", "required": true}]]}, {"en": "E2. Gas Suppression (FM-200/CO2) — Technical Checks", "ar": "هـ٢. الإطفاء الغازي — الفحوص الفنية", "sys": "Gas Suppression (FM-200/CO2/Inert)", "items": [["Component repaired/replaced (type & ref)", "المكوّن المُصلَّح/المُستبدَل (النوع والرقم)", "Recorded", {"type": "text"}], ["Cylinder weight/pressure correct", "وزن/ضغط الأسطوانة صحيح", "Within limits", {"type": "okna", "required": true}], ["Discharge nozzles clear & aimed", "المنفّذات غير مسدودة وموجّهة صح", "Clear", {"type": "okna", "required": true}], ["Detectors in protected area tested", "كواشف المنطقة المحمية تعمل", "Pass", {"type": "okna", "required": true}], ["Panel NORMAL (no faults)", "اللوحة Normal بلا أعطال", "Normal", {"type": "okna", "required": true}], ["Manual release & abort tested", "اختبار التفريغ والتعطيل اليدوي", "Pass", {"type": "okna", "required": true}], ["Safety pins removed after work", "أختام الأمان أُزيلت بعد العمل", "Removed", {"type": "okna", "required": true}], ["System ARMED / automatic mode", "النظام مسلّح وعاد للوضع التلقائي", "Armed", {"type": "okna", "required": true}]]}, {"en": "E3. Fire Alarm — Technical Checks", "ar": "هـ٣. الإنذار — الفحوص الفنية", "sys": "Fire Alarm System", "items": [["Component repaired/replaced (type & ref)", "المكوّن المُصلَّح/المُستبدَل (النوع والرقم)", "Recorded", {"type": "text"}], ["Repaired device tested OK", "اختبار المكوّن المُصلَّح ناجح", "Pass", {"type": "okna", "required": true}], ["Sounders/strobes operate", "الأجراس/الفلاشرات تعمل", "Operational", {"type": "okna", "required": true}], ["Backup battery voltage", "جهد البطارية الاحتياطية", "Within range", {"type": "measure", "unit": "V"}], ["Signal to control room/civil defense", "الإشارة لغرفة التحكّم/الدفاع المدني", "Confirmed", {"type": "okna", "required": true}], ["Panel NORMAL (no trouble)", "اللوحة Normal بلا أعطال", "Normal", {"type": "okna", "required": true}], ["Zone isolation removed, points in service", "أُلغي عزل المنطقة وكل النقاط بالخدمة", "Restored", {"type": "okna", "required": true}]]}, {"en": "E4. Fire Pump — Technical Checks", "ar": "هـ٤. مضخة الحريق — الفحوص الفنية", "sys": "Fire Pump", "items": [["Component repaired/replaced (type & ref)", "المكوّن المُصلَّح/المُستبدَل (النوع والرقم)", "Recorded", {"type": "text"}], ["Pump start test after repair", "اختبار تشغيل المضخة بعد الإصلاح", "Pass", {"type": "okna", "required": true}], ["Start/stop pressure correct", "ضغط التشغيل/الإيقاف صحيح", "Within setpoint", {"type": "measure", "unit": "bar"}], ["Suction & discharge valves OPEN", "صمامات الشفط والطرد مفتوحة", "Open", {"type": "okna", "required": true}], ["No leakage from packing/seals", "لا تسريب من الحشوات", "No leaks", {"type": "okna", "required": true}], ["Controller returned to AUTO", "لوحة التحكّم عادت لوضع Auto", "Auto", {"type": "okna", "required": true}], ["Pump restored & ready (standby)", "المضخة عادت للخدمة وجاهزة", "Ready", {"type": "okna", "required": true}]]}, {"en": "E5. Foam / Water Mist — Technical Checks", "ar": "هـ٥. الرغوة / Water Mist — الفحوص الفنية", "sys": "Foam/Water Mist", "items": [["Component repaired/replaced (type & ref)", "المكوّن المُصلَّح/المُستبدَل (النوع والرقم)", "Recorded", {"type": "text"}], ["Foam concentrate level & validity", "مستوى وصلاحية مركّز الرغوة", "OK", {"type": "okna", "required": true}], ["Proportioning ratio correct", "نسبة الخلط صحيحة", "Correct", {"type": "okna", "required": true}], ["Valves & nozzles intact", "الصمامات والمنفّذات سليمة", "Intact", {"type": "okna", "required": true}], ["System restored to service", "النظام أُعيد للخدمة", "Restored", {"type": "okna", "required": true}]]}];
 // deterministic distinct color per system name (for chips + sections)
 const SYS_PALETTE=["#EC5020","#1B7FB8","#1B8A3A","#8E44AD","#D4A017","#C0392B","#16A085","#E67E22","#2C3E50","#AD1457"];
@@ -553,6 +573,7 @@ const CITIES=["Jeddah / جدة","Makkah / مكة","Riyadh / الرياض","Madin
 // Answer types
 const ATYPES=[
   {id:"okna",label:"OK / Not OK / N/A"},
+  {id:"audit",label:"تدقيق (مطابق/صغرى/كبرى/حرجة/غير متوفر)"},
   {id:"rating",label:"تقييم نجوم (1-5)"},
   {id:"text",label:"نص حر"},
   {id:"measure",label:"رقم/قياس بوحدة"},
@@ -639,7 +660,24 @@ function secActive(sec){ // section shown if general (no sys) or matches any cho
   return chosenSystemsArr().indexOf(tag)>=0;
 }
 function total(){let n=0;TPL.forEach(s=>s.secs.forEach(c=>{if(secActive(c))n+=c.items.length}));return n}
-function isAnswered(a){ if(!a)return false; if(a.type==='okna')return !!a.status; if(a.type==='rating')return a.rating>0; if(a.type==='yesno')return !!a.yn; if(a.type==='text')return (a.text||'').trim().length>0; if(a.type==='measure')return (a.measure||'').toString().trim().length>0; if(a.type==='choice')return !!a.choice; return !!a.status; }
+function isAnswered(a){ if(!a)return false; if(a.type==='okna')return !!a.status; if(a.type==='audit')return !!a.status; if(a.type==='rating')return a.rating>0; if(a.type==='yesno')return !!a.yn; if(a.type==='text')return (a.text||'').trim().length>0; if(a.type==='measure')return (a.measure||'').toString().trim().length>0; if(a.type==='choice')return !!a.choice; return !!a.status; }
+// audit tally across active sections: compliant/minor/major/critical/na
+function auditCounts(){
+  let C=0,minor=0,major=0,critical=0,NA=0,total=0;
+  TPL.forEach((st,si)=>st.secs.forEach((sec,ci)=>{ if(!secActive(sec))return; sec.items.forEach((it,ii)=>{
+    if(itemType(it)!=='audit')return;
+    total++;
+    const a=answers[kk(si,ci,ii)];
+    if(a&&a.status==='C')C++;
+    else if(a&&a.status==='minor')minor++;
+    else if(a&&a.status==='major')major++;
+    else if(a&&a.status==='critical')critical++;
+    else if(a&&a.status==='NA')NA++;
+  });}));
+  const assessed=C+minor+major+critical; // excludes NA & unanswered
+  const score=assessed?Math.round((C/assessed)*100):0;
+  return {C,minor,major,critical,NA,total,assessed,score};
+}
 function counts(){let done=0,ok=0,no=0,na=0;TPL.forEach((st,si)=>st.secs.forEach((sec,ci)=>{if(!secActive(sec))return;sec.items.forEach((it,ii)=>{const a=answers[kk(si,ci,ii)];if(isAnswered(a)){done++;if(a.type==='okna'){if(a.status==='OK')ok++;else if(a.status==='Not OK')no++;else na++;}else if(a.type==='yesno'){if(a.yn==='Yes')ok++;else no++;}}})}));return{done,ok,no,na,total:total()}}
 function itemType(it){ return (it[3]&&it[3].type)||'okna'; }
 function itemReqPhoto(it){ return !!(it[3]&&it[3].photo); }
@@ -1022,6 +1060,7 @@ function renderReport(){
     sysChips(f)+
     '<input type="hidden" id="f_by" value="'+esc(f.by||SESSION.name)+'"></div></div>';
   h+='<div id="secFilterNote" class="filterNote"></div>';
+  h+='<div id="auditDash"></div>';
   TPL.forEach((st,si)=>{
     h+='<div class="stage" data-stage="'+si+'">'+esc(st.en)+' — '+esc(st.ar)+'</div>';
     st.secs.forEach((sec,ci)=>{
@@ -1054,6 +1093,7 @@ function renderReport(){
   });
   setSaveStatus('saved');
   filterSections();
+  renderAuditDash();
 }
 // show only general sections + sections matching any chosen system; color-code matches
 function filterSections(){
@@ -1105,6 +1145,36 @@ function filterSections(){
   if(typeof upd==='function') upd(true);
 }
 window.filterSections=filterSections;
+// professional audit dashboard (live, in-report)
+function hasAuditItems(){
+  let found=false;
+  TPL.forEach(st=>st.secs.forEach(sec=>{ if(!secActive(sec))return; sec.items.forEach(it=>{ if(itemType(it)==='audit')found=true; }); }));
+  return found;
+}
+function renderAuditDash(){
+  const box=$('auditDash'); if(!box)return;
+  if(!hasAuditItems()){ box.innerHTML=''; return; }
+  const a=auditCounts();
+  const seg=function(n,col){ const pct=a.total?Math.round(n/a.total*100):0; return pct?('<div style="width:'+pct+'%;background:'+col+'"></div>'):''; };
+  const riskLabel = a.critical>0?(LANG==='ar'?'حرجة — إجراء فوري':'CRITICAL — immediate action')
+    : a.major>0?(LANG==='ar'?'مرتفعة':'High')
+    : a.minor>0?(LANG==='ar'?'متوسطة':'Medium')
+    : (LANG==='ar'?'منخفضة':'Low');
+  const riskCol = a.critical>0?'#C0392B':a.major>0?'#E67E22':a.minor>0?'#D4A017':'#1B8A3A';
+  box.innerHTML=
+   '<div class="auditDash">'+
+     '<div class="adTop"><div class="adScore" style="border-color:'+riskCol+'"><b style="color:'+riskCol+'">'+a.score+'%</b><span>'+(LANG==='ar'?'الامتثال':'Compliance')+'</span></div>'+
+       '<div class="adRisk"><span>'+(LANG==='ar'?'مستوى المخاطر':'Risk level')+'</span><b style="color:'+riskCol+'">'+riskLabel+'</b></div></div>'+
+     '<div class="adBar">'+seg(a.C,'#1B8A3A')+seg(a.minor,'#D4A017')+seg(a.major,'#E67E22')+seg(a.critical,'#C0392B')+seg(a.NA,'#8a8a93')+'</div>'+
+     '<div class="adCells">'+
+       '<div class="adCell"><b style="color:#1B8A3A">'+a.C+'</b><span>'+(LANG==='ar'?'مطابق':'Compliant')+'</span></div>'+
+       '<div class="adCell"><b style="color:#D4A017">'+a.minor+'</b><span>'+(LANG==='ar'?'صغرى':'Minor')+'</span></div>'+
+       '<div class="adCell"><b style="color:#E67E22">'+a.major+'</b><span>'+(LANG==='ar'?'كبرى':'Major')+'</span></div>'+
+       '<div class="adCell"><b style="color:#C0392B">'+a.critical+'</b><span>'+(LANG==='ar'?'حرجة':'Critical')+'</span></div>'+
+       '<div class="adCell"><b style="color:#8a8a93">'+a.NA+'</b><span>'+(LANG==='ar'?'غير متوفر':'N/A')+'</span></div>'+
+     '</div></div>';
+}
+window.renderAuditDash=renderAuditDash;
 // hex + alpha -> rgba string
 function hexA(hex,a){
   hex=(hex||'#EC5020').replace('#','');
@@ -1127,6 +1197,9 @@ function itemHTML(st,sec,it,si,ci,ii){
   let ctrl='';
   if(tp==='okna'){
     ctrl='<div class="seg" data-k="'+key+'">'+['OK','Not OK','N/A'].map(v=>'<button data-v="'+v+'" onclick="setOKNA(\''+key+'\',\''+v+'\',this)">'+v+'</button>').join('')+'</div>';
+  } else if(tp==='audit'){
+    const opts=[['C',(LANG==='ar'?'مطابق':'Compliant')],['minor',(LANG==='ar'?'صغرى':'Minor')],['major',(LANG==='ar'?'كبرى':'Major')],['critical',(LANG==='ar'?'حرجة':'Critical')],['NA',(LANG==='ar'?'غير متوفر':'N/A')]];
+    ctrl='<div class="seg auditSeg" data-k="'+key+'">'+opts.map(o=>'<button data-v="'+o[0]+'" class="aud-'+o[0]+'" onclick="setAudit(\''+key+'\',\''+o[0]+'\',this)">'+o[1]+'</button>').join('')+'</div>';
   } else if(tp==='rating'){
     ctrl='<div class="qtype-rating" id="rt_'+key+'">'+[1,2,3,4,5].map(n=>'<span class="star" data-n="'+n+'" onclick="setRating(\''+key+'\','+n+')">★</span>').join('')+'</div>';
   } else if(tp==='yesno'){
@@ -1140,10 +1213,11 @@ function itemHTML(st,sec,it,si,ci,ii){
   }
   // NC box (finding + required action) for okna=Not OK or yesno=No
   let nc='';
-  const showNC=(tp==='okna'&&a.status==='Not OK')||(tp==='yesno'&&a.yn==='No');
+  const showNC=(tp==='okna'&&a.status==='Not OK')||(tp==='yesno'&&a.yn==='No')||(tp==='audit'&&['minor','major','critical'].indexOf(a.status)>=0);
   if(showNC){
-    nc='<div class="nc-box"><label>Finding / الملاحظة</label><textarea onchange="setNC(\''+key+'\',\'finding\',this.value)">'+esc(a.finding||'')+'</textarea>'+
-       '<label>Required Action / الإجراء المطلوب</label><textarea onchange="setNC(\''+key+'\',\'action\',this.value)">'+esc(a.action||'')+'</textarea></div>';
+    nc='<div class="nc-box"><label>Finding / حالة عدم المطابقة</label><textarea onchange="setNC(\''+key+'\',\'finding\',this.value)">'+esc(a.finding||'')+'</textarea>'+
+       '<label>Required Action / الإجراء المطلوب</label><textarea onchange="setNC(\''+key+'\',\'action\',this.value)">'+esc(a.action||'')+'</textarea>'+
+       '<label>Target Closure Date / تاريخ الإغلاق</label><input type="date" class="ncDate" value="'+esc(a.closeDate||'')+'" onchange="setNC(\''+key+'\',\'closeDate\',this.value)"></div>';
   }
   // per-question photo
   let ph='';
@@ -1158,12 +1232,13 @@ function itemHTML(st,sec,it,si,ci,ii){
     (it[2]?'<div class="crit">المعيار / Acceptance: <b>'+esc(it[2])+'</b></div>':'')+
     ctrl+nc+ph+rmk+'</div>';
 }
-function typeLabel(tp){return ({okna:'OK/NotOK',rating:'تقييم',text:'نص',measure:'قياس',yesno:'نعم/لا',choice:'قائمة'})[tp]||tp}
+function typeLabel(tp){return ({okna:'OK/NotOK',audit:(LANG==='ar'?'تدقيق':'Audit'),rating:'تقييم',text:'نص',measure:'قياس',yesno:'نعم/لا',choice:'قائمة'})[tp]||tp}
 
 // ===== answer setters =====
 function ensureA(key){ const it=keyItem(key); answers[key]=answers[key]||{type:itemType(it)}; if(!answers[key].type)answers[key].type=itemType(it); return answers[key]; }
 function keyItem(key){ const[si,ci,ii]=key.split('_').map(Number); return TPL[si].secs[ci].items[ii]; }
 window.setOKNA=function(key,v,btn){buzz(12);const a=ensureA(key);a.status=(a.status===v?null:v);const seg=btn.parentNode;seg.querySelectorAll('button').forEach(b=>b.classList.remove('on'));if(a.status)btn.classList.add('on');refreshNC(key);upd();};
+window.setAudit=function(key,v,btn){buzz(12);const a=ensureA(key);a.status=(a.status===v?null:v);const seg=btn.parentNode;seg.querySelectorAll('button').forEach(b=>b.classList.remove('on'));if(a.status)btn.classList.add('on');refreshNC(key);upd();if(typeof renderAuditDash==='function')renderAuditDash();};
 window.setYN=function(key,v,btn){buzz(12);const a=ensureA(key);a.yn=(a.yn===v?null:v);const seg=btn.parentNode;seg.querySelectorAll('button').forEach(b=>b.classList.remove('on'));if(a.yn)btn.classList.add('on');refreshNC(key);upd();};
 window.setRating=function(key,n){const a=ensureA(key);a.rating=(a.rating===n?0:n);paintStars(key);upd();};
 function paintStars(key){const box=$('rt_'+key);if(!box)return;const a=answers[key]||{};box.querySelectorAll('.star').forEach(s=>{s.classList.toggle('on',Number(s.dataset.n)<=(a.rating||0));});}
@@ -1180,12 +1255,14 @@ function refreshNC(key){ // re-render just this item to show/hide NC box
   // restore visual state
   const tp=itemType(it);
   if(tp==='okna'){const seg=document.querySelector('.seg[data-k="'+key+'"]');if(seg&&a.status){const b=seg.querySelector('[data-v="'+a.status+'"]');if(b)b.classList.add('on');}}
+  if(tp==='audit'){const seg=document.querySelector('.auditSeg[data-k="'+key+'"]');if(seg&&a.status){const b=seg.querySelector('[data-v="'+a.status+'"]');if(b)b.classList.add('on');}}
   if(tp==='yesno'){const seg=document.querySelector('.qtype-yn[data-k="'+key+'"]');if(seg&&a.yn){const b=seg.querySelector('[data-v="'+a.yn+'"]');if(b)b.classList.add('on');}}
 }
 function restoreAnswers(){
   TPL.forEach((st,si)=>st.secs.forEach((sec,ci)=>sec.items.forEach((it,ii)=>{
     const key=kk(si,ci,ii); const a=answers[key]; if(!a)return; const tp=itemType(it);
     if(tp==='okna'&&a.status){const seg=document.querySelector('.seg[data-k="'+key+'"]');if(seg){const b=seg.querySelector('[data-v="'+a.status+'"]');if(b)b.classList.add('on');}}
+    if(tp==='audit'&&a.status){const seg=document.querySelector('.auditSeg[data-k="'+key+'"]');if(seg){const b=seg.querySelector('[data-v="'+a.status+'"]');if(b)b.classList.add('on');}}
     if(tp==='yesno'&&a.yn){const seg=document.querySelector('.qtype-yn[data-k="'+key+'"]');if(seg){const b=seg.querySelector('[data-v="'+a.yn+'"]');if(b)b.classList.add('on');}}
     if(tp==='rating')paintStars(key);
   })));
@@ -1984,6 +2061,7 @@ function templateListPanel(){
      '<label class="fld">'+(LANG==='ar'?'اسم القالب الجديد':'New template name')+'</label>'+
      '<input id="newTplName" placeholder="'+(LANG==='ar'?'مثال: فحص أنظمة الإنذار':'e.g. Fire Alarm Inspection')+'">'+
      '<button class="btn" style="width:100%;margin-top:10px" onclick="addTemplate()">＋ '+(LANG==='ar'?'قالب جديد (فارغ)':'New template (empty)')+'</button>'+
+     '<button class="btn" style="width:100%;margin-top:8px;background:var(--orange)" onclick="addAuditTemplate()">📋 '+(LANG==='ar'?'إضافة قالب «تدقيق شهري — أداء العقد» جاهز':'Add ready "Monthly Audit — Contract Performance" template')+'</button>'+
      '</div></div></div>';
   return h;
 }
@@ -2295,9 +2373,21 @@ window.addSystemSections=async function(){
   toast(LANG==='ar'?'أُضيفت أقسام الأنظمة ✓':'System sections added ✓');
 };
 
+// ===== add ready Monthly Audit template =====
+window.addAuditTemplate=async function(){
+  if(!confirm(LANG==='ar'?'إضافة قالب «تدقيق شهري — أداء العقد» الجاهز؟':'Add the ready Monthly Audit — Contract Performance template?'))return;
+  if(!CFG.templates)CFG.templates=[];
+  const id='audit'+Date.now();
+  const stages=JSON.parse(JSON.stringify(AUDIT_TEMPLATE_STAGES));
+  CFG.templates.push({id:id,name:(LANG==='ar'?'تدقيق شهري — أداء العقد':'Monthly Audit — Contract Performance'),stages:stages});
+  await saveConfig(); renderAdminBody();
+  toast(LANG==='ar'?'أُضيف قالب التدقيق ✓':'Audit template added ✓');
+};
+
 function answerDisplay(a,it){
   const tp=itemType(it);
   if(tp==='okna'){const s=a&&a.status||'—';const cl=s==='OK'?'ok':s==='Not OK'?'no':s==='N/A'?'na':'';return {txt:s,cl};}
+  if(tp==='audit'){const m={C:'Compliant / مطابق',minor:'Minor NC / صغرى',major:'Major NC / كبرى',critical:'Critical NC / حرجة',NA:'N/A / غير متوفر'};const s=a&&a.status;const cl=s==='C'?'ok':s==='minor'?'na':s==='major'?'maj':s==='critical'?'no':'';return {txt:s?m[s]:'—',cl};}
   if(tp==='yesno'){const s=a&&a.yn?(a.yn==='Yes'?'Yes / نعم':'No / لا'):'—';return {txt:s,cl:a&&a.yn==='Yes'?'ok':a&&a.yn==='No'?'no':''};}
   if(tp==='rating'){const r=a&&a.rating||0;return {txt:'★'.repeat(r)+'☆'.repeat(5-r)+' ('+r+'/5)',cl:r>=4?'ok':r>=2?'na':r>0?'no':''};}
   if(tp==='text'){return {txt:esc(a&&a.text||'—'),cl:''};}
@@ -2328,18 +2418,57 @@ function buildReport(f){
         if(a.remark)extra+='<div class="rm">↳ '+esc(a.remark)+'</div>';
         if(a.photo)extra+='<div style="margin-top:4px"><img src="'+a.photo+'" style="height:80px;border-radius:5px;border:1px solid #ddd"></div>';
         rows+='<tr><td>'+esc(it[0])+'<div class="ar">'+esc(it[1])+'</div>'+extra+'</td><td class="cr">'+esc(it[2])+'</td><td class="pill '+disp.cl+'">'+disp.txt+'</td></tr>';
-        // collect findings
-        if((itemType(it)==='okna'&&a.status==='Not OK')||(itemType(it)==='yesno'&&a.yn==='No')){
-          ncList+='<tr><td>'+esc(it[0])+'</td><td>'+esc(a.finding||'-')+'</td><td>'+esc(a.action||'-')+'</td></tr>';
+        // collect findings (okna Not OK, yesno No, or audit minor/major/critical)
+        const isAuditNC=itemType(it)==='audit'&&['minor','major','critical'].indexOf(a.status)>=0;
+        if((itemType(it)==='okna'&&a.status==='Not OK')||(itemType(it)==='yesno'&&a.yn==='No')||isAuditNC){
+          const sevMap={minor:'Minor / صغرى',major:'Major / كبرى',critical:'Critical / حرجة'};
+          const sev=isAuditNC?sevMap[a.status]:'NC';
+          ncList+='<tr><td>'+esc(it[0])+'</td><td>'+esc(sev)+'</td><td>'+esc(a.finding||'-')+'</td><td>'+esc(a.action||'-')+'</td><td>'+esc(a.closeDate||'-')+'</td></tr>';
         }
       });
     });
   });
-  const ncSection = ncList? '<div class="h2">Findings & Required Actions / الملاحظات والإجراءات</div><table class="nctab"><tr><th>البند / Item</th><th>Finding / الملاحظة</th><th>Required Action / الإجراء</th></tr>'+ncList+'</table>' : '';
+  const ncSection = ncList? '<div class="h2">Findings & Required Actions / الملاحظات والإجراءات</div><table class="nctab"><tr><th>البند / Item</th><th>Severity / التصنيف</th><th>Finding / حالة عدم المطابقة</th><th>Required Action / الإجراء</th><th>Closure / تاريخ الإغلاق</th></tr>'+ncList+'</table>' : '';
   let pics=photos.map(p=>'<div class="pc"><img src="'+p.dataUrl+'"><div class="pcap">'+esc(p.time)+'</div></div>').join('');
   const dash='<div class="dash"><div class="donut" style="background:conic-gradient('+ORANGE+' 0 '+pct+'%, #e6e6ee '+pct+'% 100%)"><div class="hole"><b>'+pct+'%</b><span>Compliance</span></div></div>'+
     '<div class="bars">'+bar('OK / Yes',c.ok,c.total,'#1B8A3A')+bar('Not OK / No',c.no,c.total,'#C0392B')+bar('N/A',c.na,c.total,'#8a8a93')+'</div></div>';
   const sigBlock=sig?'<img src="'+sig+'" style="height:70px;max-width:240px;border-bottom:1px solid #333">':'______________________';
+  // ----- audit dashboard + legend (only when audit items exist) -----
+  let hasAudit=false; TPL.forEach(st=>st.secs.forEach(sec=>sec.items.forEach(it=>{ if(itemType(it)==='audit')hasAudit=true; })));
+  let auditBlock='';
+  if(hasAudit && typeof auditCounts==='function'){
+    const ac=auditCounts();
+    const aseg=function(n,col){const p=ac.total?(n/ac.total*100):0;return p?'<div style="width:'+p+'%;background:'+col+'"></div>':'';};
+    const rcol=ac.critical>0?'#C0392B':ac.major>0?'#E67E22':ac.minor>0?'#D4A017':'#1B8A3A';
+    const rlab=ac.critical>0?'CRITICAL / حرجة':ac.major>0?'High / مرتفعة':ac.minor>0?'Medium / متوسطة':'Low / منخفضة';
+    auditBlock='<div class="h2">Audit Summary / ملخّص التدقيق</div>'+
+      '<div class="adash"><div class="adscore" style="border-color:'+rcol+'"><b style="color:'+rcol+'">'+ac.score+'%</b><span>Compliance / الامتثال</span></div>'+
+      '<div class="adcells">'+
+        '<div class="adc"><b style="color:#1B8A3A">'+ac.C+'</b><span>Compliant / مطابق</span></div>'+
+        '<div class="adc"><b style="color:#D4A017">'+ac.minor+'</b><span>Minor / صغرى</span></div>'+
+        '<div class="adc"><b style="color:#E67E22">'+ac.major+'</b><span>Major / كبرى</span></div>'+
+        '<div class="adc"><b style="color:#C0392B">'+ac.critical+'</b><span>Critical / حرجة</span></div>'+
+        '<div class="adc"><b style="color:#8a8a93">'+ac.NA+'</b><span>N/A / غير متوفر</span></div>'+
+      '</div></div>'+
+      '<div class="adbar">'+aseg(ac.C,'#1B8A3A')+aseg(ac.minor,'#D4A017')+aseg(ac.major,'#E67E22')+aseg(ac.critical,'#C0392B')+aseg(ac.NA,'#8a8a93')+'</div>'+
+      '<div class="adrisk">Risk Level / مستوى المخاطر: <b style="color:'+rcol+'">'+rlab+'</b></div>';
+  }
+  // legend explaining how to read the report
+  const legend=hasAudit?('<div class="legend"><div class="h2">How to Read This Report / كيفية قراءة التقرير</div>'+
+    '<ul>'+
+    '<li><span class="lg" style="background:#1B8A3A"></span><b>Compliant / مطابق:</b> '+(LANG==='ar'?'البند مطابق للمتطلّبات.':'Item meets requirements.')+'</li>'+
+    '<li><span class="lg" style="background:#D4A017"></span><b>Minor NC / عدم مطابقة صغرى:</b> '+(LANG==='ar'?'مخالفة بسيطة لا تؤثّر على الأداء، تُصحَّح في وقت معقول.':'Minor deviation, low impact, corrected in due course.')+'</li>'+
+    '<li><span class="lg" style="background:#E67E22"></span><b>Major NC / عدم مطابقة كبرى:</b> '+(LANG==='ar'?'مخالفة مؤثّرة تتطلّب إجراءً تصحيحياً مخطّطاً.':'Significant deviation requiring planned corrective action.')+'</li>'+
+    '<li><span class="lg" style="background:#C0392B"></span><b>Critical NC / عدم مطابقة حرجة:</b> '+(LANG==='ar'?'مخالفة خطيرة تمسّ السلامة/الامتثال، تتطلّب إجراءً فورياً.':'Serious safety/compliance breach requiring immediate action.')+'</li>'+
+    '<li><span class="lg" style="background:#8a8a93"></span><b>N/A / غير متوفر:</b> '+(LANG==='ar'?'البند غير منطبق أو غير متوفر.':'Item not applicable or not available.')+'</li>'+
+    '</ul></div>'):'';
+  // dual signatures
+  const dualSign='<div class="sign"><div class="h2">Approvals / الاعتماد</div>'+
+    '<div class="sg2">'+
+      '<div class="sgbox"><div class="sgrole">'+(LANG==='ar'?'مدير المشروع':'Project Manager')+'</div><div class="sgline">______________________</div><div class="sgname">'+(LANG==='ar'?'الاسم / التوقيع / التاريخ':'Name / Signature / Date')+'</div></div>'+
+      '<div class="sgbox"><div class="sgrole">'+(LANG==='ar'?'مهندس الجودة (QA/QC)':'QA/QC Engineer')+'</div>'+(sig?('<img src="'+sig+'" style="height:54px;max-width:200px">'):'<div class="sgline">______________________</div>')+'<div class="sgname">'+esc(f.by||SESSION.name)+'</div></div>'+
+    '</div>'+
+    '<p style="color:#888;font-size:11px;margin-top:10px">Generated: '+new Date().toLocaleString('en-GB')+'</p></div>';
   const rep=
   '<!DOCTYPE html><html lang="ar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QAQC Report</title><style>'+
   '*{box-sizing:border-box}body{font-family:Arial,Tahoma,sans-serif;margin:0;color:#1c1c28;font-size:13px}'+
@@ -2354,7 +2483,12 @@ function buildReport(f){
   'table{width:100%;border-collapse:collapse;margin-top:6px}td,th{border-bottom:1px solid #eee;padding:7px 8px;vertical-align:top;font-size:12px;text-align:start}'+
   '.stg{background:'+ORANGE+';color:#fff;font-weight:800}.secr{background:#FCE4D6;color:'+NAVY+';font-weight:800;font-size:11.5px}'+
   '.ar{color:#666;font-size:11px}.rm{color:#777;font-size:11px;margin-top:3px}.cr{color:#999;font-size:11px;width:80px}'+
-  '.pill{font-weight:800;text-align:center;color:#555}.pill.ok{color:#1B8A3A}.pill.no{color:#C0392B}.pill.na{color:#8a8a93}'+
+  '.pill{font-weight:800;text-align:center;color:#555}.pill.ok{color:#1B8A3A}.pill.no{color:#C0392B}.pill.na{color:#8a8a93}.pill.maj{color:#E67E22}'+
+  '.adash{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin:6px 0}.adscore{width:96px;height:96px;border:5px solid #ccc;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center}.adscore b{font-size:22px}.adscore span{font-size:8px;color:#888;text-align:center}'+
+  '.adcells{display:flex;gap:10px;flex-wrap:wrap;flex:1}.adc{text-align:center;min-width:70px;background:#f7f7fb;border-radius:8px;padding:8px 6px}.adc b{display:block;font-size:20px}.adc span{font-size:9px;color:#777}'+
+  '.adbar{display:flex;height:16px;border-radius:8px;overflow:hidden;background:#eee;margin:10px 0}.adbar div{height:100%}.adrisk{font-size:12.5px;font-weight:700;margin-bottom:6px}'+
+  '.legend{margin-top:14px}.legend ul{list-style:none;padding:0;margin:0}.legend li{margin:6px 0;font-size:11.5px}.lg{display:inline-block;width:12px;height:12px;border-radius:3px;margin-inline-end:7px;vertical-align:middle}'+
+  '.sg2{display:flex;gap:30px;flex-wrap:wrap;margin-top:8px}.sgbox{flex:1;min-width:200px}.sgrole{font-weight:800;color:'+NAVY+';margin-bottom:30px;font-size:12.5px}.sgline{font-size:13px}.sgname{font-size:11px;color:#888;margin-top:4px}'+
   '.nctab th{background:#fbeae6;color:'+NAVY+';font-weight:800;font-size:11px}'+
   '.wd{background:#f7f7fb;border-inline-start:4px solid '+ORANGE+';padding:10px 12px;border-radius:6px;font-size:12.5px;white-space:pre-wrap}'+
   '.pics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}.pc img{width:100%;border:1px solid #ddd;border-radius:6px}.pcap{font-size:10px;color:#888}'+
@@ -2374,12 +2508,12 @@ function buildReport(f){
   '<div class="h2">Inspection Summary / ملخص التدقيق</div>'+dash+
   (f.workdone?'<div class="h2">Work Done / وصف العمل</div><div class="wd">'+esc(f.workdone)+'</div>':'')+
   ncSection+
+  auditBlock+
   '<div class="h2">Detailed Results / النتائج التفصيلية</div><table>'+rows+'</table>'+
   (f.notes?'<div class="h2">Site Notes / ملاحظات</div><div>'+esc(f.notes)+'</div>':'')+
   (pics?'<div class="h2">Site Photos / الصور</div><div class="pics">'+pics+'</div>':'')+
-  '<div class="sign"><div class="h2">Sign-off / الاعتماد</div><p><b>Performed by / نفّذ:</b> '+esc(f.by||SESSION.name)+' ('+esc(SESSION.email)+')</p>'+
-  '<div><b>التوقيع / Signature:</b><br>'+sigBlock+'</div>'+
-  '<p style="color:#888;font-size:11px;margin-top:10px">Generated: '+new Date().toLocaleString('en-GB')+'</p></div></div>'+
+  legend+
+  dualSign+'</div>'+
   '<script>function sendMail(){var s=encodeURIComponent("Maintenance QA\\/QC Report - '+esc(f.site)+' - '+esc(f.date)+'");var b=encodeURIComponent("Site: '+esc(f.site)+'\\nLOA: '+esc(f.loa)+'\\nProject: '+esc(f.project)+'\\nClient: '+esc(f.client)+'\\nContract: '+esc(f.contract)+'\\nBy: '+esc(f.by||SESSION.name)+'\\nCompliance: '+pct+'%\\n\\nالرجاء إرفاق ملف الـPDF بعد حفظه.");location.href="mailto:'+rec+'?subject="+s+"&body="+b;}<\/script>'+
   '</body></html>';
   const w=window.open('','_blank');
