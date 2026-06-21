@@ -328,6 +328,18 @@
   .adCells{display:flex;gap:8px;flex-wrap:wrap}
   .adCell{flex:1;min-width:58px;text-align:center;background:var(--light);border-radius:9px;padding:8px 4px}
   .adCell b{display:block;font-size:19px;line-height:1.1}.adCell span{font-size:10px;color:var(--muted)}
+  /* audit dashboard header + stat widgets */
+  .auditDash .adHd{font-weight:800;color:var(--navy);font-size:14px;margin-bottom:10px}
+  html[data-theme=dark] .auditDash .adHd{color:#fff}
+  .adStats{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+  .adStat{flex:1;min-width:140px;background:var(--light);border-radius:11px;padding:11px}
+  .adStatHd{font-size:11px;font-weight:800;color:var(--muted);margin-bottom:4px}
+  .adStatNums{font-size:13px;color:var(--navy)}.adStatNums b{font-size:24px}
+  html[data-theme=dark] .adStatNums{color:#fff}
+  .adProg{height:8px;background:var(--surface);border-radius:5px;overflow:hidden;margin:6px 0 4px}.adProg div{height:100%;border-radius:5px}
+  .adStatPct{font-size:10px;color:var(--muted)}
+  .auditStats{margin-top:14px;border-top:1px dashed var(--line);padding-top:12px}
+  .auditStats .asTitle{font-weight:800;color:var(--orange);font-size:13px;margin-bottom:8px}
 </style></head><body>
 <div id="app"><div class="loadwrap"><div class="spinner"></div>Loading...</div></div>
 <script>window.onerror=function(m,s,l,c){var a=document.getElementById('app');if(a)a.innerHTML='<div style="padding:22px;text-align:left"><h3 style="color:#EC5020">Error</h3><pre style="background:#f4f4f4;padding:12px;white-space:pre-wrap">'+m+'\n'+l+':'+c+'</pre></div>';};</script>
@@ -559,7 +571,7 @@ function systemsList(){
 }
 // backward-compat alias used across the app
 let SYSTEMS=DEFAULT_SYSTEMS.slice();
-const AUDIT_TEMPLATE_STAGES=[{"en": "MONTHLY CONTRACT PERFORMANCE AUDIT", "ar": "التدقيق الشهري على أداء العقد", "secs": [{"en": "1. Scope of Work Compliance", "ar": "١. الالتزام بنطاق العمل", "sys": "", "items": [["All contracted maintenance activities performed", "تنفيذ كل أعمال الصيانة المتعاقد عليها", "", {"type": "audit", "required": true}], ["Work executed per approved monthly plan", "تنفيذ العمل حسب الخطة الشهرية المعتمدة", "", {"type": "audit", "required": true}], ["No scope omissions or unauthorized changes", "لا إغفال للنطاق ولا تغييرات غير معتمدة", "", {"type": "audit", "required": true}]]}, {"en": "2. Service Level (SLA)", "ar": "٢. مستوى الخدمة", "sys": "", "items": [["Response time to requests within SLA", "زمن الاستجابة للطلبات ضمن المتعاقد عليه", "", {"type": "audit", "required": true}], ["Work orders completed within target time", "إنجاز أوامر العمل ضمن المدة المستهدفة", "", {"type": "audit", "required": true}], ["Closed work-order ratio meets target", "نسبة أوامر العمل المغلقة ضمن المستهدف", "", {"type": "audit", "required": true}], ["Emergency/breakdown response acceptable", "الاستجابة للطوارئ/الأعطال مقبولة", "", {"type": "audit", "required": true}]]}, {"en": "3. Quality of Execution", "ar": "٣. جودة التنفيذ", "sys": "", "items": [["Repairs conform to technical specifications", "الإصلاحات مطابقة للمواصفات الفنية", "", {"type": "audit", "required": true}], ["Genuine/approved spare parts used", "استخدام قطع غيار أصلية/معتمدة", "", {"type": "audit", "required": true}], ["Systems returned to service after each job", "إعادة الأنظمة للخدمة بعد كل عمل", "", {"type": "audit", "required": true}], ["Repeat-failure rate within acceptable limit", "معدّل تكرار الأعطال ضمن الحد المقبول", "", {"type": "audit", "required": true}], ["Before/after evidence (photos) documented", "توثيق الأعمال بالصور قبل/بعد", "", {"type": "audit", "required": true}]]}, {"en": "4. HSE / Safety", "ar": "٤. السلامة والصحة المهنية", "sys": "", "items": [["Permit to Work (PTW) used for all tasks", "استخدام تصاريح العمل لكل المهام", "", {"type": "audit", "required": true}], ["LOTO (isolation) procedures applied", "تطبيق إجراءات العزل والتأمين LOTO", "", {"type": "audit", "required": true}], ["PPE worn and adequate", "استخدام معدّات الحماية الشخصية وكفايتها", "", {"type": "audit", "required": true}], ["Incidents / near-misses reported", "الإبلاغ عن الحوادث/الحوادث الوشيكة", "", {"type": "audit", "required": true}], ["Risk assessments present & updated on site", "تقييمات المخاطر موجودة ومُحدَّثة بالموقع", "", {"type": "audit", "required": true}]]}, {"en": "5. Team & Competency", "ar": "٥. الفريق والكفاءة", "sys": "", "items": [["Personnel qualified & certified for the work", "المهندسون/الفنيون مؤهّلون ومعتمدون", "", {"type": "audit", "required": true}], ["Training certificates valid", "شهادات التدريب سارية المفعول", "", {"type": "audit", "required": true}], ["Adequate manpower per contract", "العدد الكافي من الفريق حسب العقد", "", {"type": "audit", "required": true}], ["Attendance & coverage records complete", "سجلّ الحضور والتغطية مكتمل", "", {"type": "audit", "required": true}]]}, {"en": "6. Documentation & Equipment", "ar": "٦. التوثيق والمعدّات", "sys": "", "items": [["Maintenance records complete & updated", "سجلّات الصيانة مكتملة ومُحدَّثة", "", {"type": "audit", "required": true}], ["Calibration of test equipment valid", "معايرة أجهزة القياس سارية", "", {"type": "audit", "required": true}], ["Materials/stock available per requirements", "المواد/المخزون متوفّرة حسب المتطلّبات", "", {"type": "audit", "required": true}], ["Vehicle & equipment register updated", "سجلّ المركبات والمعدّات مُحدَّث", "", {"type": "audit", "required": true}]]}, {"en": "7. KPIs & Reporting", "ar": "٧. مؤشّرات الأداء والتقارير", "sys": "", "items": [["Periodic progress reports submitted on time", "تقديم التقارير الدورية في موعدها", "", {"type": "audit", "required": true}], ["KPIs within contractual targets", "مؤشّرات الأداء ضمن المستهدف التعاقدي", "", {"type": "audit", "required": true}], ["Data accuracy in reports", "دقّة البيانات في التقارير", "", {"type": "audit", "required": true}]]}, {"en": "8. Client Satisfaction", "ar": "٨. رضا العميل", "sys": "", "items": [["Client complaints addressed & closed", "معالجة وإغلاق ملاحظات/شكاوى العميل", "", {"type": "audit", "required": true}], ["Coordination with client representative", "التنسيق مع ممثّل العميل", "", {"type": "audit", "required": true}], ["Overall client satisfaction acceptable", "الرضا العام للعميل مقبول", "", {"type": "audit", "required": true}]]}]}];
+const AUDIT_TEMPLATE_STAGES=[{"en": "MONTHLY QA AUDIT — CONTRACT PERFORMANCE", "ar": "التدقيق الشهري للجودة — أداء العقد", "secs": [{"en": "1. Workforce & Competency", "ar": "١. القوى العاملة والكفاءة", "sys": "", "items": [["Employees qualified for assigned scope", "الموظفون مؤهّلون للنطاق المُكلّفين به", "", {"type": "audit", "required": true}], ["Valid training certificates on file", "شهادات تدريب سارية محفوظة", "", {"type": "audit", "required": true}], ["SEC ID available & valid for ALL staff", "هوية SEC متوفّرة وسارية لجميع الموظفين", "", {"type": "audit", "required": true}], ["Adequate manpower per contract", "عدد القوى العاملة كافٍ حسب العقد", "", {"type": "audit", "required": true}], ["On-call duty coverage maintained", "تغطية المناوبات والطوارئ قائمة", "", {"type": "audit", "required": true}]]}, {"en": "2. HSE & Safety Compliance", "ar": "٢. السلامة والصحة المهنية", "sys": "", "items": [["PPE available, correct & used", "معدّات الحماية متوفّرة وصحيحة ومُستخدَمة", "", {"type": "audit", "required": true}], ["Permit to Work (PTW) followed", "الالتزام بتصاريح العمل", "", {"type": "audit", "required": true}], ["LOTO / isolation procedures applied", "تطبيق إجراءات العزل والتأمين", "", {"type": "audit", "required": true}], ["Tool-box talks & periodic safety inspections done", "اجتماعات السلامة والفحوص الدورية منفّذة", "", {"type": "audit", "required": true}], ["Incidents / near-misses reported & closed", "الحوادث/الحوادث الوشيكة مُبلّغة ومُغلقة", "", {"type": "audit", "required": true}]]}, {"en": "3. Maintenance Execution & Timeliness", "ar": "٣. تنفيذ الصيانة والالتزام بالوقت", "sys": "", "items": [["Maintenance works completed on time", "أعمال الصيانة مُنجزة في الوقت", "", {"type": "audit", "required": true}], ["Inspections performed on schedule", "الفحوص منفّذة حسب الجدول", "", {"type": "audit", "required": true}], ["Testing performed on schedule", "الاختبارات منفّذة حسب الجدول", "", {"type": "audit", "required": true}], ["Corrective actions closed within SLA", "الإجراءات التصحيحية مُغلقة ضمن المدة", "", {"type": "audit", "required": true}], ["Repeat-failure rate within acceptable limit", "معدّل تكرار الأعطال ضمن الحد المقبول", "", {"type": "audit", "required": true}]]}, {"en": "4. Materials, Spares & Equipment", "ar": "٤. المواد وقطع الغيار والمعدّات", "sys": "", "items": [["Material storage proper & compliant", "تخزين المواد سليم ومطابق", "", {"type": "audit", "required": true}], ["Spare parts availability adequate", "توفّر قطع الغيار كافٍ", "", {"type": "audit", "required": true}], ["Material quality conforms to spec", "جودة المواد مطابقة للمواصفات", "", {"type": "audit", "required": true}], ["On-time material supply", "توريد المواد في الوقت", "", {"type": "audit", "required": true}], ["Test equipment & tools calibration valid", "معايرة أجهزة وأدوات الاختبار سارية", "", {"type": "audit", "required": true}], ["Vehicles available & fit for tasks", "المركبات متوفّرة وصالحة للمهام", "", {"type": "audit", "required": true}]]}, {"en": "5. Documentation & Reporting", "ar": "٥. التوثيق والتقارير", "sys": "", "items": [["Maintenance records complete & accurate", "سجلّات الصيانة مكتملة ودقيقة", "", {"type": "audit", "required": true}], ["Reports submitted on time", "التقارير مُقدّمة في الوقت", "", {"type": "audit", "required": true}], ["Technical reports prepared correctly", "التقارير الفنية مُعدّة بشكل صحيح", "", {"type": "audit", "required": true}], ["Log entries in substations complete", "إدخالات السجل بالمحطات مكتملة", "", {"type": "audit", "required": true}], ["Record management & filing adequate", "إدارة السجلّات والحفظ كافية", "", {"type": "audit", "required": true}]]}, {"en": "6. Communication & Coordination", "ar": "٦. التواصل والتنسيق", "sys": "", "items": [["Communication standards met", "معايير التواصل مُستوفاة", "", {"type": "audit", "required": true}], ["Coordination with client representative", "التنسيق مع ممثّل العميل", "", {"type": "audit", "required": true}], ["No miscommunication incidents", "لا حوادث سوء تواصل", "", {"type": "audit", "required": true}], ["Client concerns addressed", "معالجة ملاحظات العميل", "", {"type": "audit", "required": true}]]}, {"en": "7. Overall Performance & KPIs", "ar": "٧. الأداء العام ومؤشّرات الأداء", "sys": "", "items": [["KPIs within contractual targets", "مؤشّرات الأداء ضمن المستهدف", "", {"type": "audit", "required": true}], ["Overall contractor performance acceptable", "الأداء العام للمقاول مقبول", "", {"type": "audit", "required": true}], ["Adherence to standards & project requirements", "الالتزام بالمعايير ومتطلّبات المشروع", "", {"type": "audit", "required": true}]]}]}];
 const SYSTEM_SECTIONS=[{"en": "E1. Sprinkler — Technical Checks", "ar": "هـ١. الرشاشات — الفحوص الفنية", "sys": "Sprinkler System", "items": [["Component repaired/replaced (type & ref)", "المكوّن المُصلَّح/المُستبدَل (النوع والرقم)", "Recorded", {"type": "text"}], ["System pressure after repair", "ضغط النظام بعد الإصلاح", "Within range", {"type": "measure", "unit": "bar"}], ["No leakage after repair", "لا تسريب بعد الإصلاح", "No leaks", {"type": "okna", "required": true}], ["Sprinkler heads intact & clear (45cm)", "رؤوس الرشاشات سليمة وخالية من العوائق (45 سم)", "Compliant", {"type": "okna", "required": true}], ["Flow switch signals panel after repair", "مفتاح التدفق يرسل إشارة للوحة بعد الإصلاح", "Signal OK", {"type": "okna", "required": true}], ["Alarm/check valve test", "اختبار صمام الإنذار", "Pass", {"type": "okna", "required": true}], ["Main control valve OPEN & chained", "الصمام الرئيسي مفتوح ومقفول بالسلسلة", "Open & locked", {"type": "okna", "required": true}], ["System restored to service", "النظام أُعيد للخدمة", "Restored", {"type": "okna", "required": true}]]}, {"en": "E2. Gas Suppression (FM-200/CO2) — Technical Checks", "ar": "هـ٢. الإطفاء الغازي — الفحوص الفنية", "sys": "Gas Suppression (FM-200/CO2/Inert)", "items": [["Component repaired/replaced (type & ref)", "المكوّن المُصلَّح/المُستبدَل (النوع والرقم)", "Recorded", {"type": "text"}], ["Cylinder weight/pressure correct", "وزن/ضغط الأسطوانة صحيح", "Within limits", {"type": "okna", "required": true}], ["Discharge nozzles clear & aimed", "المنفّذات غير مسدودة وموجّهة صح", "Clear", {"type": "okna", "required": true}], ["Detectors in protected area tested", "كواشف المنطقة المحمية تعمل", "Pass", {"type": "okna", "required": true}], ["Panel NORMAL (no faults)", "اللوحة Normal بلا أعطال", "Normal", {"type": "okna", "required": true}], ["Manual release & abort tested", "اختبار التفريغ والتعطيل اليدوي", "Pass", {"type": "okna", "required": true}], ["Safety pins removed after work", "أختام الأمان أُزيلت بعد العمل", "Removed", {"type": "okna", "required": true}], ["System ARMED / automatic mode", "النظام مسلّح وعاد للوضع التلقائي", "Armed", {"type": "okna", "required": true}]]}, {"en": "E3. Fire Alarm — Technical Checks", "ar": "هـ٣. الإنذار — الفحوص الفنية", "sys": "Fire Alarm System", "items": [["Component repaired/replaced (type & ref)", "المكوّن المُصلَّح/المُستبدَل (النوع والرقم)", "Recorded", {"type": "text"}], ["Repaired device tested OK", "اختبار المكوّن المُصلَّح ناجح", "Pass", {"type": "okna", "required": true}], ["Sounders/strobes operate", "الأجراس/الفلاشرات تعمل", "Operational", {"type": "okna", "required": true}], ["Backup battery voltage", "جهد البطارية الاحتياطية", "Within range", {"type": "measure", "unit": "V"}], ["Signal to control room/civil defense", "الإشارة لغرفة التحكّم/الدفاع المدني", "Confirmed", {"type": "okna", "required": true}], ["Panel NORMAL (no trouble)", "اللوحة Normal بلا أعطال", "Normal", {"type": "okna", "required": true}], ["Zone isolation removed, points in service", "أُلغي عزل المنطقة وكل النقاط بالخدمة", "Restored", {"type": "okna", "required": true}]]}, {"en": "E4. Fire Pump — Technical Checks", "ar": "هـ٤. مضخة الحريق — الفحوص الفنية", "sys": "Fire Pump", "items": [["Component repaired/replaced (type & ref)", "المكوّن المُصلَّح/المُستبدَل (النوع والرقم)", "Recorded", {"type": "text"}], ["Pump start test after repair", "اختبار تشغيل المضخة بعد الإصلاح", "Pass", {"type": "okna", "required": true}], ["Start/stop pressure correct", "ضغط التشغيل/الإيقاف صحيح", "Within setpoint", {"type": "measure", "unit": "bar"}], ["Suction & discharge valves OPEN", "صمامات الشفط والطرد مفتوحة", "Open", {"type": "okna", "required": true}], ["No leakage from packing/seals", "لا تسريب من الحشوات", "No leaks", {"type": "okna", "required": true}], ["Controller returned to AUTO", "لوحة التحكّم عادت لوضع Auto", "Auto", {"type": "okna", "required": true}], ["Pump restored & ready (standby)", "المضخة عادت للخدمة وجاهزة", "Ready", {"type": "okna", "required": true}]]}, {"en": "E5. Foam / Water Mist — Technical Checks", "ar": "هـ٥. الرغوة / Water Mist — الفحوص الفنية", "sys": "Foam/Water Mist", "items": [["Component repaired/replaced (type & ref)", "المكوّن المُصلَّح/المُستبدَل (النوع والرقم)", "Recorded", {"type": "text"}], ["Foam concentrate level & validity", "مستوى وصلاحية مركّز الرغوة", "OK", {"type": "okna", "required": true}], ["Proportioning ratio correct", "نسبة الخلط صحيحة", "Correct", {"type": "okna", "required": true}], ["Valves & nozzles intact", "الصمامات والمنفّذات سليمة", "Intact", {"type": "okna", "required": true}], ["System restored to service", "النظام أُعيد للخدمة", "Restored", {"type": "okna", "required": true}]]}];
 // deterministic distinct color per system name (for chips + sections)
 const SYS_PALETTE=["#EC5020","#1B7FB8","#1B8A3A","#8E44AD","#D4A017","#C0392B","#16A085","#E67E22","#2C3E50","#AD1457"];
@@ -618,7 +630,7 @@ async function loadConfig(){
     CFG.templates=[{id:'default', name:'صيانة الحريق / Fire Maintenance', stages:baseStages}];
   } else {
     // deserialize each template's stages
-    CFG.templates=CFG.templates.map(tp=>({id:tp.id,name:tp.name,stages:tplFromStore(tp.stages)||DEFAULT_STAGES}));
+    CFG.templates=CFG.templates.map(tp=>({id:tp.id,name:tp.name,kind:tp.kind||'',stages:tplFromStore(tp.stages)||DEFAULT_STAGES}));
   }
   delete CFG.template; // drop legacy field from memory
   // persist migration once (admin only)
@@ -628,7 +640,7 @@ function templateById(id){ return (CFG.templates||[]).find(t=>t.id===id) || CFG.
 async function saveConfig(){
   if(SESSION.role!=='admin')return;
   const out=Object.assign({},CFG);
-  out.templates=(CFG.templates||[]).map(tp=>({id:tp.id,name:tp.name,stages:tplToStore(tp.stages)}));
+  out.templates=(CFG.templates||[]).map(tp=>({id:tp.id,name:tp.name,kind:tp.kind||'',stages:tplToStore(tp.stages)}));
   delete out.template;
   await setDoc(doc(db,'config','app'),out);
 }
@@ -951,7 +963,7 @@ async function createReportFromTemplate(templateId){
   const refNo=nextRefNo();
   const rep={id,owner:SESSION.uid,ownerName:SESSION.name,ownerEmail:SESSION.email,status:'draft',
     refNo:refNo,
-    templateId:tp.id, templateName:tp.name,
+    templateId:tp.id, templateName:tp.name, kind:tp.kind||'',
     createdMs:Date.now(),updatedMs:Date.now(),updated:serverTimestamp(),
     form:{},answers:{},photos:[],sig:null,counts:{done:0,total:0},
     tpl:tplToStore(tp.stages), rules:CFG.rules};
@@ -1046,19 +1058,37 @@ function renderReport(){
   let h='<header class="bar"><button class="menubtn" onclick="goHome()">‹</button>'+
    '<img src="'+LOGO+'"><div class="t"><b>'+(ro?t('report_locked'):t('report_open'))+'</b><span>'+(CUR.refNo?esc(CUR.refNo)+' · ':'')+esc(f.site||t('site'))+'</span></div></header><div class="stripe"></div><div class="wrap">';
   const projOpts='<option value="">— اختر المشروع —</option>'+CFG.projects.map((p,i)=>'<option value="'+i+'"'+(f.projIdx==i?' selected':'')+'>'+esc(p.name)+'</option>').join('');
-  h+='<div class="card"><h3>'+t('wo_info')+' <small></small></h3><div class="body">'+
+  const isAudit=(CUR.kind==='audit');
+  h+='<div class="card"><h3>'+(isAudit?(LANG==='ar'?'بيانات التدقيق':'Audit Information'):t('wo_info'))+' <small></small></h3><div class="body">'+
     '<label class="fld">'+t('project')+'</label><select id="f_proj" onchange="onProj()">'+projOpts+'</select>'+
-    '<div id="projInfo" class="projinfo"></div>'+
-    '<div class="grid2" style="margin-top:10px">'+
-    fld('f_site','Substation / Site — المحطة','',f.site)+
-    fld('f_loa','Work Order / LOA No. — رقم LOA','',f.loa)+
-    sel('f_service','Service Type / نوع الخدمة',SERVICE,f.service)+
-    fld('f_team','Team / Engineer — الفريق','',f.team)+
-    fld('f_date','Date / التاريخ','',f.date||today,'date')+
-    '</div>'+
-    '<label class="fld" style="margin-top:12px">'+(LANG==='ar'?'الأنظمة التي تعملون عليها (اختر واحداً أو أكثر) / Systems being serviced':'Systems being serviced (select one or more)')+'</label>'+
-    sysChips(f)+
-    '<input type="hidden" id="f_by" value="'+esc(f.by||SESSION.name)+'"></div></div>';
+    '<div id="projInfo" class="projinfo"></div>';
+  if(isAudit){
+    const au=f.audit||{};
+    h+='<div class="grid2" style="margin-top:10px">'+
+      fld('f_pm','Project Manager / مدير المشروع','',f.pm)+
+      fld('f_by2','QA/QC Engineer / مهندس الجودة','',f.by||SESSION.name)+
+      fld('f_month','Audit Month / شهر التدقيق','',f.month||today.slice(0,7),'month')+
+      fld('f_date','Date / التاريخ','',f.date||today,'date')+
+      '</div>'+
+      '<div class="auditStats"><div class="asTitle">'+(LANG==='ar'?'إحصائيات الأداء':'Performance Statistics')+'</div><div class="grid2">'+
+        fld('f_wo_recv','Work Orders Received / أوامر عمل مستلمة','',au.woRecv,'number')+
+        fld('f_wo_closed','Work Orders Closed / أوامر عمل مقفلة','',au.woClosed,'number')+
+        fld('f_tr_req','Trainings Required / دورات مطلوبة','',au.trReq,'number')+
+        fld('f_tr_done','Trainings Completed / دورات منفّذة','',au.trDone,'number')+
+      '</div></div>'+
+      '<input type="hidden" id="f_by" value="'+esc(f.by||SESSION.name)+'"></div></div>';
+  } else {
+    h+='<div class="grid2" style="margin-top:10px">'+
+      fld('f_site','Substation / Site — المحطة','',f.site)+
+      fld('f_loa','Work Order / LOA No. — رقم LOA','',f.loa)+
+      sel('f_service','Service Type / نوع الخدمة',SERVICE,f.service)+
+      fld('f_team','Team / Engineer — الفريق','',f.team)+
+      fld('f_date','Date / التاريخ','',f.date||today,'date')+
+      '</div>'+
+      '<label class="fld" style="margin-top:12px">'+(LANG==='ar'?'الأنظمة التي تعملون عليها (اختر واحداً أو أكثر) / Systems being serviced':'Systems being serviced (select one or more)')+'</label>'+
+      sysChips(f)+
+      '<input type="hidden" id="f_by" value="'+esc(f.by||SESSION.name)+'"></div></div>';
+  }
   h+='<div id="secFilterNote" class="filterNote"></div>';
   h+='<div id="auditDash"></div>';
   TPL.forEach((st,si)=>{
@@ -1075,7 +1105,7 @@ function renderReport(){
     });
   });
   h+='<div class="card"><h3>'+t('work_done')+' <small></small></h3><div class="body"><textarea id="f_workdone" rows="3" placeholder="اكتب وصف ما تم عمله اليوم">'+esc(f.workdone||'')+'</textarea></div></div>';
-  h+='<div class="card"><h3>'+t('photos')+' <small></small></h3><div class="body"><div class="photos" id="ph"></div><p class="note">الكاميرا تطلب إذن الموقع لختم الإحداثيات والوقت.</p></div></div>';
+  if(!isAudit) h+='<div class="card"><h3>'+t('photos')+' <small></small></h3><div class="body"><div class="photos" id="ph"></div><p class="note">الكاميرا تطلب إذن الموقع لختم الإحداثيات والوقت.</p></div></div>';
   h+='<div class="card"><h3>'+t('site_notes')+' <small></small></h3><div class="body"><textarea id="f_notes" rows="2" placeholder="ملاحظات عامة">'+esc(f.notes||'')+'</textarea></div></div>';
   h+='<div class="card"><h3>'+t('signature')+' <small></small></h3><div class="body"><div class="sigwrap"><canvas id="sig"></canvas><button class="clr" onclick="clearSig()">'+t('clear')+'</button><div class="sighint" id="sighint">وقّع هنا بإصبعك</div></div></div></div>';
   h+='</div>';
@@ -1088,8 +1118,8 @@ function renderReport(){
   restoreAnswers();
   renderPhotos(); initSig(); upd(true);
   // auto-save on work-order field edits
-  ['f_site','f_loa','f_service','f_team','f_date'].forEach(function(id){
-    const el=$(id); if(el){ el.addEventListener('change',function(){ autoSave(); }); el.addEventListener('input',function(){ autoSave(); }); }
+  ['f_site','f_loa','f_service','f_team','f_date','f_pm','f_month','f_wo_recv','f_wo_closed','f_tr_req','f_tr_done'].forEach(function(id){
+    const el=$(id); if(el){ el.addEventListener('change',function(){ autoSave(); if(typeof renderAuditDash==='function')renderAuditDash(); }); el.addEventListener('input',function(){ autoSave(); }); }
   });
   setSaveStatus('saved');
   filterSections();
@@ -1155,16 +1185,36 @@ function renderAuditDash(){
   const box=$('auditDash'); if(!box)return;
   if(!hasAuditItems()){ box.innerHTML=''; return; }
   const a=auditCounts();
-  const seg=function(n,col){ const pct=a.total?Math.round(n/a.total*100):0; return pct?('<div style="width:'+pct+'%;background:'+col+'"></div>'):''; };
+  const seg=function(n,col){ const pct=a.total?Math.round(n/a.total*100):0; return pct?('<div style="width:'+pct+'%;background:'+col+'" title="'+n+'"></div>'):''; };
   const riskLabel = a.critical>0?(LANG==='ar'?'حرجة — إجراء فوري':'CRITICAL — immediate action')
     : a.major>0?(LANG==='ar'?'مرتفعة':'High')
     : a.minor>0?(LANG==='ar'?'متوسطة':'Medium')
     : (LANG==='ar'?'منخفضة':'Low');
   const riskCol = a.critical>0?'#C0392B':a.major>0?'#E67E22':a.minor>0?'#D4A017':'#1B8A3A';
+  // stat widgets (work orders + trainings) for audit reports
+  let stats='';
+  if(CUR&&CUR.kind==='audit'){
+    const g=id=>{const e=$(id);return e?(parseFloat(e.value)||0):0;};
+    const woR=g('f_wo_recv'),woC=g('f_wo_closed'),trR=g('f_tr_req'),trD=g('f_tr_done');
+    const woPct=woR?Math.round(woC/woR*100):0;
+    const trPct=trR?Math.round(trD/trR*100):0;
+    stats='<div class="adStats">'+
+      '<div class="adStat"><div class="adStatHd">'+(LANG==='ar'?'أوامر العمل':'Work Orders')+'</div>'+
+        '<div class="adStatNums"><b>'+woC+'</b> / '+woR+'</div>'+
+        '<div class="adProg"><div style="width:'+Math.min(woPct,100)+'%;background:'+(woPct>=90?'#1B8A3A':woPct>=70?'#D4A017':'#C0392B')+'"></div></div>'+
+        '<span class="adStatPct">'+woPct+'% '+(LANG==='ar'?'مقفلة':'closed')+'</span></div>'+
+      '<div class="adStat"><div class="adStatHd">'+(LANG==='ar'?'التدريب':'Trainings')+'</div>'+
+        '<div class="adStatNums"><b>'+trD+'</b> / '+trR+'</div>'+
+        '<div class="adProg"><div style="width:'+Math.min(trPct,100)+'%;background:'+(trPct>=90?'#1B8A3A':trPct>=70?'#D4A017':'#C0392B')+'"></div></div>'+
+        '<span class="adStatPct">'+trPct+'% '+(LANG==='ar'?'منفّذة':'completed')+'</span></div>'+
+      '</div>';
+  }
   box.innerHTML=
    '<div class="auditDash">'+
+     '<div class="adHd">'+(LANG==='ar'?'لوحة أداء التدقيق':'Audit Performance Dashboard')+'</div>'+
      '<div class="adTop"><div class="adScore" style="border-color:'+riskCol+'"><b style="color:'+riskCol+'">'+a.score+'%</b><span>'+(LANG==='ar'?'الامتثال':'Compliance')+'</span></div>'+
-       '<div class="adRisk"><span>'+(LANG==='ar'?'مستوى المخاطر':'Risk level')+'</span><b style="color:'+riskCol+'">'+riskLabel+'</b></div></div>'+
+       '<div class="adRisk"><span>'+(LANG==='ar'?'مستوى المخاطر':'Risk level')+'</span><b style="color:'+riskCol+'">'+riskLabel+'</b>'+
+         '<span style="margin-top:6px">'+(LANG==='ar'?'مُقيّم':'Assessed')+': '+a.assessed+' / '+a.total+'</span></div></div>'+
      '<div class="adBar">'+seg(a.C,'#1B8A3A')+seg(a.minor,'#D4A017')+seg(a.major,'#E67E22')+seg(a.critical,'#C0392B')+seg(a.NA,'#8a8a93')+'</div>'+
      '<div class="adCells">'+
        '<div class="adCell"><b style="color:#1B8A3A">'+a.C+'</b><span>'+(LANG==='ar'?'مطابق':'Compliant')+'</span></div>'+
@@ -1172,7 +1222,9 @@ function renderAuditDash(){
        '<div class="adCell"><b style="color:#E67E22">'+a.major+'</b><span>'+(LANG==='ar'?'كبرى':'Major')+'</span></div>'+
        '<div class="adCell"><b style="color:#C0392B">'+a.critical+'</b><span>'+(LANG==='ar'?'حرجة':'Critical')+'</span></div>'+
        '<div class="adCell"><b style="color:#8a8a93">'+a.NA+'</b><span>'+(LANG==='ar'?'غير متوفر':'N/A')+'</span></div>'+
-     '</div></div>';
+     '</div>'+
+     stats+
+   '</div>';
 }
 window.renderAuditDash=renderAuditDash;
 // hex + alpha -> rgba string
@@ -1280,7 +1332,7 @@ function upd(skipSave){
 function fld(id,label,ph,val,type){return '<div><label class="fld">'+label+'</label><input id="'+id+'" type="'+(type||'text')+'" placeholder="'+(ph||'')+'" value="'+esc(val||'')+'"></div>'}
 function sel(id,label,arr,val){return '<div><label class="fld">'+label+'</label><select id="'+id+'">'+arr.map(o=>'<option'+(o===val?' selected':'')+'>'+o+'</option>').join('')+'</select></div>'}
 window.onProj=function(){const s=$('f_proj');if(!s)return;const i=s.value;const box=$('projInfo');if(i===''||!CFG.projects[i]){if(box)box.innerHTML='';return;}const p=CFG.projects[i];if(box)box.innerHTML='<b>'+esc(p.client)+'</b> · عقد '+esc(p.contract)+' · '+esc(p.city);};
-function form(){const g=id=>{const e=$(id);return e?e.value:''};const pi=g('f_proj');const p=(pi!==''&&CFG.projects[pi])?CFG.projects[pi]:null;const sysArr=(typeof currentChosenSystems==='function')?currentChosenSystems():[];return{projIdx:pi,project:p?p.name:'',client:p?p.client:'',contract:p?p.contract:'',city:p?p.city:'',site:g('f_site'),loa:g('f_loa'),service:g('f_service'),systems:sysArr,system:sysArr.join(', '),team:g('f_team'),date:g('f_date'),by:g('f_by'),workdone:g('f_workdone'),notes:g('f_notes')}}
+function form(){const g=id=>{const e=$(id);return e?e.value:''};const pi=g('f_proj');const p=(pi!==''&&CFG.projects[pi])?CFG.projects[pi]:null;const sysArr=(typeof currentChosenSystems==='function')?currentChosenSystems():[];const base={projIdx:pi,project:p?p.name:'',client:p?p.client:'',contract:p?p.contract:'',city:p?p.city:'',site:g('f_site'),loa:g('f_loa'),service:g('f_service'),systems:sysArr,system:sysArr.join(', '),team:g('f_team'),date:g('f_date'),by:g('f_by'),workdone:g('f_workdone'),notes:g('f_notes')};if(CUR&&CUR.kind==='audit'){base.pm=g('f_pm');base.month=g('f_month');base.audit={woRecv:g('f_wo_recv'),woClosed:g('f_wo_closed'),trReq:g('f_tr_req'),trDone:g('f_tr_done')};}return base;}
 window.goHome=async function(){await saveCur(false);CUR=null;renderHome();};
 window.saveCur=saveCur;
 
@@ -2379,7 +2431,7 @@ window.addAuditTemplate=async function(){
   if(!CFG.templates)CFG.templates=[];
   const id='audit'+Date.now();
   const stages=JSON.parse(JSON.stringify(AUDIT_TEMPLATE_STAGES));
-  CFG.templates.push({id:id,name:(LANG==='ar'?'تدقيق شهري — أداء العقد':'Monthly Audit — Contract Performance'),stages:stages});
+  CFG.templates.push({id:id,name:(LANG==='ar'?'تدقيق شهري — أداء العقد':'Monthly Audit — Contract Performance'),kind:'audit',stages:stages});
   await saveConfig(); renderAdminBody();
   toast(LANG==='ar'?'أُضيف قالب التدقيق ✓':'Audit template added ✓');
 };
@@ -2432,6 +2484,35 @@ function buildReport(f){
   let pics=photos.map(p=>'<div class="pc"><img src="'+p.dataUrl+'"><div class="pcap">'+esc(p.time)+'</div></div>').join('');
   const dash='<div class="dash"><div class="donut" style="background:conic-gradient('+ORANGE+' 0 '+pct+'%, #e6e6ee '+pct+'% 100%)"><div class="hole"><b>'+pct+'%</b><span>Compliance</span></div></div>'+
     '<div class="bars">'+bar('OK / Yes',c.ok,c.total,'#1B8A3A')+bar('Not OK / No',c.no,c.total,'#C0392B')+bar('N/A',c.na,c.total,'#8a8a93')+'</div></div>';
+  // ----- audit header info + stat widgets -----
+  const isAuditRep=(CUR&&CUR.kind==='audit');
+  const reportTitle=isAuditRep?'MONTHLY QA AUDIT REPORT':'MAINTENANCE QA/QC REPORT';
+  let infoBlock,statWidgets='';
+  if(isAuditRep){
+    const au=f.audit||{};
+    const woR=parseFloat(au.woRecv)||0,woC=parseFloat(au.woClosed)||0,trR=parseFloat(au.trReq)||0,trD=parseFloat(au.trDone)||0;
+    const woPct=woR?Math.round(woC/woR*100):0, trPct=trR?Math.round(trD/trR*100):0;
+    infoBlock='<div class="h2">Audit Information / بيانات التدقيق</div>'+
+      '<div class="info"><div><b>Project / المشروع:</b> '+esc(f.project||'-')+'</div><div><b>Client / العميل:</b> '+esc(f.client||'-')+'</div>'+
+      '<div><b>Contract / العقد:</b> '+esc(f.contract||'-')+'</div><div><b>City / المدينة:</b> '+esc(f.city||'-')+'</div>'+
+      '<div><b>Audit Month / الشهر:</b> '+esc(f.month||'-')+'</div><div><b>Date / التاريخ:</b> '+esc(f.date||'-')+'</div>'+
+      '<div><b>Project Manager / مدير المشروع:</b> '+esc(f.pm||'-')+'</div><div><b>QA/QC Engineer / مهندس الجودة:</b> '+esc(f.by||SESSION.name)+'</div></div>'+
+      '<div class="h2">Performance Statistics / إحصائيات الأداء</div>'+
+      '<div class="statg">'+
+        '<div class="statbox"><span>Work Orders Received<br>أوامر عمل مستلمة</span><b>'+woR+'</b></div>'+
+        '<div class="statbox"><span>Work Orders Closed<br>أوامر عمل مقفلة</span><b style="color:'+(woPct>=90?'#1B8A3A':woPct>=70?'#D4A017':'#C0392B')+'">'+woC+'</b><i>'+woPct+'%</i></div>'+
+        '<div class="statbox"><span>Trainings Required<br>دورات مطلوبة</span><b>'+trR+'</b></div>'+
+        '<div class="statbox"><span>Trainings Completed<br>دورات منفّذة</span><b style="color:'+(trPct>=90?'#1B8A3A':trPct>=70?'#D4A017':'#C0392B')+'">'+trD+'</b><i>'+trPct+'%</i></div>'+
+      '</div>';
+  } else {
+    infoBlock='<div class="h2">Work Order Information / بيانات أمر العمل</div>'+
+      '<div class="info"><div><b>Project:</b> '+esc(f.project||'-')+'</div><div><b>Client:</b> '+esc(f.client||'-')+'</div>'+
+      '<div><b>Contract:</b> '+esc(f.contract||'-')+'</div><div><b>City:</b> '+esc(f.city||'-')+'</div>'+
+      '<div><b>Site:</b> '+esc(f.site)+'</div><div><b>LOA:</b> '+esc(f.loa)+'</div>'+
+      '<div><b>Service:</b> '+esc(f.service)+'</div><div><b>System:</b> '+esc(f.system)+'</div>'+
+      '<div><b>Team:</b> '+esc(f.team)+'</div><div><b>Date:</b> '+esc(f.date)+'</div>'+
+      '<div><b>By:</b> '+esc(f.by||SESSION.name)+'</div></div>';
+  }
   const sigBlock=sig?'<img src="'+sig+'" style="height:70px;max-width:240px;border-bottom:1px solid #333">':'______________________';
   // ----- audit dashboard + legend (only when audit items exist) -----
   let hasAudit=false; TPL.forEach(st=>st.secs.forEach(sec=>sec.items.forEach(it=>{ if(itemType(it)==='audit')hasAudit=true; })));
@@ -2465,7 +2546,7 @@ function buildReport(f){
   // dual signatures
   const dualSign='<div class="sign"><div class="h2">Approvals / الاعتماد</div>'+
     '<div class="sg2">'+
-      '<div class="sgbox"><div class="sgrole">'+(LANG==='ar'?'مدير المشروع':'Project Manager')+'</div><div class="sgline">______________________</div><div class="sgname">'+(LANG==='ar'?'الاسم / التوقيع / التاريخ':'Name / Signature / Date')+'</div></div>'+
+      '<div class="sgbox"><div class="sgrole">'+(LANG==='ar'?'مدير المشروع':'Project Manager')+'</div><div class="sgline">______________________</div><div class="sgname">'+esc(f.pm||(LANG==='ar'?'الاسم / التوقيع / التاريخ':'Name / Signature / Date'))+'</div></div>'+
       '<div class="sgbox"><div class="sgrole">'+(LANG==='ar'?'مهندس الجودة (QA/QC)':'QA/QC Engineer')+'</div>'+(sig?('<img src="'+sig+'" style="height:54px;max-width:200px">'):'<div class="sgline">______________________</div>')+'<div class="sgname">'+esc(f.by||SESSION.name)+'</div></div>'+
     '</div>'+
     '<p style="color:#888;font-size:11px;margin-top:10px">Generated: '+new Date().toLocaleString('en-GB')+'</p></div>';
@@ -2489,6 +2570,7 @@ function buildReport(f){
   '.adbar{display:flex;height:16px;border-radius:8px;overflow:hidden;background:#eee;margin:10px 0}.adbar div{height:100%}.adrisk{font-size:12.5px;font-weight:700;margin-bottom:6px}'+
   '.legend{margin-top:14px}.legend ul{list-style:none;padding:0;margin:0}.legend li{margin:6px 0;font-size:11.5px}.lg{display:inline-block;width:12px;height:12px;border-radius:3px;margin-inline-end:7px;vertical-align:middle}'+
   '.sg2{display:flex;gap:30px;flex-wrap:wrap;margin-top:8px}.sgbox{flex:1;min-width:200px}.sgrole{font-weight:800;color:'+NAVY+';margin-bottom:30px;font-size:12.5px}.sgline{font-size:13px}.sgname{font-size:11px;color:#888;margin-top:4px}'+
+  '.statg{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0}.statbox{flex:1;min-width:120px;background:#f7f7fb;border-radius:9px;padding:10px;text-align:center}.statbox span{font-size:10px;color:#777;display:block;line-height:1.3}.statbox b{font-size:26px;display:block;color:'+NAVY+';margin-top:4px}.statbox i{font-size:11px;color:#888;font-style:normal}'+
   '.nctab th{background:#fbeae6;color:'+NAVY+';font-weight:800;font-size:11px}'+
   '.wd{background:#f7f7fb;border-inline-start:4px solid '+ORANGE+';padding:10px 12px;border-radius:6px;font-size:12.5px;white-space:pre-wrap}'+
   '.pics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}.pc img{width:100%;border:1px solid #ddd;border-radius:6px}.pcap{font-size:10px;color:#888}'+
@@ -2497,16 +2579,10 @@ function buildReport(f){
   '.toolbar button{flex:1;padding:13px;border:0;border-radius:10px;font-size:15px;font-weight:800;color:#fff;cursor:pointer}.tp{background:'+ORANGE+'}.te{background:'+NAVY+'}'+
   '@media print{.toolbar{display:none}}</style></head><body>'+
   '<div class="toolbar"><button class="tp" onclick="window.print()">حفظ PDF / طباعة</button><button class="te" onclick="sendMail()">إرسال بالإيميل</button></div>'+
-  '<div class="hd"><img src="'+LOGO+'"><div class="ti"><b>MAINTENANCE QA/QC REPORT</b><br><span>'+(CUR&&CUR.refNo?esc(CUR.refNo)+' · ':'')+'Equipment & Technical Services Co. (ETECHS)</span></div></div><div class="or"></div>'+
-  '<div class="sec1"><div class="h2">Work Order Information / بيانات أمر العمل</div>'+
-  '<div class="info"><div><b>Project:</b> '+esc(f.project||'-')+'</div><div><b>Client:</b> '+esc(f.client||'-')+'</div>'+
-  '<div><b>Contract:</b> '+esc(f.contract||'-')+'</div><div><b>City:</b> '+esc(f.city||'-')+'</div>'+
-  '<div><b>Site:</b> '+esc(f.site)+'</div><div><b>LOA:</b> '+esc(f.loa)+'</div>'+
-  '<div><b>Service:</b> '+esc(f.service)+'</div><div><b>System:</b> '+esc(f.system)+'</div>'+
-  '<div><b>Team:</b> '+esc(f.team)+'</div><div><b>Date:</b> '+esc(f.date)+'</div>'+
-  '<div><b>By:</b> '+esc(f.by||SESSION.name)+'</div></div>'+
-  '<div class="h2">Inspection Summary / ملخص التدقيق</div>'+dash+
-  (f.workdone?'<div class="h2">Work Done / وصف العمل</div><div class="wd">'+esc(f.workdone)+'</div>':'')+
+  '<div class="hd"><img src="'+LOGO+'"><div class="ti"><b>'+reportTitle+'</b><br><span>'+(CUR&&CUR.refNo?esc(CUR.refNo)+' · ':'')+'Equipment & Technical Services Co. (ETECHS)</span></div></div><div class="or"></div>'+
+  '<div class="sec1">'+infoBlock+
+  (isAuditRep?'':'<div class="h2">Inspection Summary / ملخص التدقيق</div>'+dash)+
+  (f.workdone?'<div class="h2">'+(isAuditRep?'Executive Summary / الملخّص التنفيذي':'Work Done / وصف العمل')+'</div><div class="wd">'+esc(f.workdone)+'</div>':'')+
   ncSection+
   auditBlock+
   '<div class="h2">Detailed Results / النتائج التفصيلية</div><table>'+rows+'</table>'+
