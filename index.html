@@ -293,12 +293,9 @@
   .actTime{font-size:11px;color:var(--muted);white-space:nowrap}
   /* system-based section filtering */
   .filterNote{margin:10px 4px;padding:9px 12px;border-radius:9px;background:var(--blue);color:var(--navy);font-size:12.5px;font-weight:700}
-  .secGroup.secMatch{position:relative;border:2px solid var(--orange);background:rgba(236,80,32,.06);border-radius:12px;padding:4px 8px 8px;margin:10px 0}
-  .secGroup.secMatch .sec{background:var(--orange);color:#fff;margin-top:8px}
-  .secSysTag{display:inline-block;margin-inline-start:8px;font-size:10px;font-weight:800;color:var(--orange);background:#fff;padding:2px 8px;border-radius:10px;vertical-align:middle;border:1px solid var(--orange)}
-  .secGroup.secMatch .secSysTag{color:var(--orange);background:#fff}
-  html[data-theme=dark] .secGroup.secMatch{background:rgba(236,80,32,.14)}
-  html[data-theme=dark] .secGroup.secMatch .sec{background:var(--orange);color:#fff}
+  .secGroup.secMatch{position:relative;border:2px solid var(--orange);border-radius:12px;padding:4px 8px 8px;margin:10px 0}
+  .secGroup.secMatch .sec{margin-top:8px}
+  .secSysTag{display:inline-block;margin-inline-start:8px;font-size:10px;font-weight:800;background:#fff;padding:2px 8px;border-radius:10px;vertical-align:middle;border:1px solid currentColor}
   /* admin section editor head */
   .secEditHead{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0 6px;padding:8px;background:var(--light);border-radius:9px}
   .secEditHead .secNameEn,.secEditHead .secNameAr{flex:1;min-width:120px;font-weight:700;font-size:13px}
@@ -308,6 +305,10 @@
   .sysChip{font-size:13px;font-weight:700;padding:10px 14px;border-radius:22px;border:2px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer;transition:.15s;min-height:42px}
   .sysChip.on{background:var(--orange);color:#fff;border-color:var(--orange);box-shadow:0 2px 8px rgba(236,80,32,.3)}
   .sysChip:active{transform:scale(.95)}
+  /* system chip dot + hints + pills */
+  .sysDot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-inline-end:6px;vertical-align:middle}
+  .sysChip .noSecHint{font-size:10px;opacity:.7;font-weight:600}
+  .sysPill{display:inline-block;color:#fff;font-size:11px;font-weight:800;padding:2px 9px;border-radius:11px;margin:2px}
 </style></head><body>
 <div id="app"><div class="loadwrap"><div class="spinner"></div>Loading...</div></div>
 <script>window.onerror=function(m,s,l,c){var a=document.getElementById('app');if(a)a.innerHTML='<div style="padding:22px;text-align:left"><h3 style="color:#EC5020">Error</h3><pre style="background:#f4f4f4;padding:12px;white-space:pre-wrap">'+m+'\n'+l+':'+c+'</pre></div>';};</script>
@@ -539,6 +540,13 @@ function systemsList(){
 }
 // backward-compat alias used across the app
 let SYSTEMS=DEFAULT_SYSTEMS.slice();
+// deterministic distinct color per system name (for chips + sections)
+const SYS_PALETTE=["#EC5020","#1B7FB8","#1B8A3A","#8E44AD","#D4A017","#C0392B","#16A085","#E67E22","#2C3E50","#AD1457"];
+function sysColor(name){
+  name=(name||'').trim(); if(!name) return '#8a8a93';
+  let h=0; for(let i=0;i<name.length;i++){ h=(h*31+name.charCodeAt(i))>>>0; }
+  return SYS_PALETTE[h%SYS_PALETTE.length];
+}
 const CITIES=["Jeddah / جدة","Makkah / مكة","Riyadh / الرياض","Madinah / المدينة","Dammam / الدمام","Other / أخرى"];
 
 // Answer types
@@ -971,14 +979,24 @@ function selectedSystems(f){
 function sysChips(f){
   const sel=selectedSystems(f);
   const all=systemsList();
+  // count how many sections are tagged to each system in the current template
+  const secCountBySys={};
+  (TPL||[]).forEach(st=>(st.secs||[]).forEach(sec=>{ const tg=(sec.sys||'').trim(); if(tg) secCountBySys[tg]=(secCountBySys[tg]||0)+1; }));
   let chips=all.map(function(s){
     const on=sel.indexOf(s)>=0;
-    return '<button type="button" class="sysChip'+(on?' on':'')+'" data-sysname="'+esc(s)+'" onclick="toggleSysChip(this)">'+esc(s)+'</button>';
+    const col=sysColor(s);
+    const has=secCountBySys[s]||0;
+    const style=on?('style="background:'+col+';border-color:'+col+';color:#fff"'):('style="border-color:'+col+';color:'+col+'"');
+    const dot='<span class="sysDot" style="background:'+col+'"></span>';
+    return '<button type="button" class="sysChip'+(on?' on':'')+'" data-sysname="'+esc(s)+'" data-syscolor="'+col+'" '+style+' onclick="toggleSysChip(this)">'+dot+esc(s)+(has?'':' <span class="noSecHint">('+(LANG==='ar'?'لا أقسام':'no sections')+')</span>')+'</button>';
   }).join('');
   return '<div class="sysChips" id="sysChips">'+chips+'</div>';
 }
 window.toggleSysChip=function(btn){
-  btn.classList.toggle('on');
+  const on=btn.classList.toggle('on');
+  const col=btn.getAttribute('data-syscolor')||'#EC5020';
+  if(on){ btn.style.background=col; btn.style.borderColor=col; btn.style.color='#fff'; }
+  else { btn.style.background=''; btn.style.borderColor=col; btn.style.color=col; }
   if(typeof buzz==='function') buzz(10);
   filterSections();
   autoSave();
@@ -1007,8 +1025,9 @@ function renderReport(){
     h+='<div class="stage" data-stage="'+si+'">'+esc(st.en)+' — '+esc(st.ar)+'</div>';
     st.secs.forEach((sec,ci)=>{
       const sysTag=(sec.sys||'').trim();
-      const sysAttr=sysTag?(' data-sys="'+esc(sysTag)+'"'):' data-sys=""';
-      const sysLabel=sysTag?('<span class="secSysTag">'+esc(sysTag)+'</span>'):'';
+      const col=sysTag?sysColor(sysTag):'';
+      const sysAttr=sysTag?(' data-sys="'+esc(sysTag)+'" data-syscolor="'+col+'"'):' data-sys=""';
+      const sysLabel=sysTag?('<span class="secSysTag" style="color:'+col+';border-color:'+col+'">'+esc(sysTag)+'</span>'):'';
       h+='<div class="secGroup" data-stage="'+si+'"'+sysAttr+'>';
       h+='<div class="sec">'+esc(sec.en)+' / '+esc(sec.ar)+sysLabel+'</div>';
       sec.items.forEach((it,ii)=>{ h+=itemHTML(st,sec,it,si,ci,ii); });
@@ -1038,14 +1057,23 @@ function renderReport(){
 // show only general sections + sections matching any chosen system; color-code matches
 function filterSections(){
   const chosen=currentChosenSystems(); // array
+  // how many systems in the whole template are taggable
+  let taggedSecs=0;
   document.querySelectorAll('.secGroup').forEach(function(g){
     const tag=(g.getAttribute('data-sys')||'').trim();
-    if(!tag){ // general -> always show
+    if(tag) taggedSecs++;
+    const col=g.getAttribute('data-syscolor')||'';
+    if(!tag){ // general -> always show, neutral
       g.style.display=''; g.classList.remove('secMatch');
+      g.style.borderColor=''; g.style.background='';
+      const sh=g.querySelector('.sec'); if(sh){ sh.style.background=''; sh.style.color=''; }
       return;
     }
     if(chosen.indexOf(tag)>=0){
       g.style.display=''; g.classList.add('secMatch');
+      // apply the system's own color
+      g.style.borderColor=col; g.style.background=hexA(col,0.06);
+      const sh=g.querySelector('.sec'); if(sh){ sh.style.background=col; sh.style.color='#fff'; }
     }else{
       g.style.display='none'; g.classList.remove('secMatch');
     }
@@ -1058,14 +1086,31 @@ function filterSections(){
     groups.forEach(function(g){ if(g.style.display!=='none') anyVisible=true; });
     stg.style.display=(groups.length>0 && !anyVisible)?'none':'';
   });
+  // counter: how many questions are visible after filtering
+  const c=(typeof counts==='function')?counts():{total:0};
   const note=$('secFilterNote');
   if(note){
-    if(chosen.length) note.innerHTML='🔧 '+(LANG==='ar'?'عرض الأقسام العامة + أنظمة: ':'Showing general + systems: ')+esc(chosen.join('، '));
-    else note.innerHTML=(LANG==='ar'?'اختر الأنظمة التي تعملون عليها لعرض أقسامها':'Select the systems being serviced to show their sections');
+    let msg='';
+    if(taggedSecs===0){
+      msg=(LANG==='ar'?'ℹ️ لا توجد أقسام مربوطة بأنظمة في هذا القالب. اربط الأقسام من: لوحة التحكّم ← الأسئلة ← تعديل القالب.':'ℹ️ No sections are linked to systems in this template. Link them in: Control Panel → Questions → Edit template.');
+    } else if(chosen.length){
+      const tags=chosen.map(function(s){return '<span class="sysPill" style="background:'+sysColor(s)+'">'+esc(s)+'</span>';}).join(' ');
+      msg='🔧 '+(LANG==='ar'?'الأقسام العامة + ':'General + ')+tags+' &nbsp;·&nbsp; <b>'+c.total+'</b> '+(LANG==='ar'?'سؤال ظاهر':'questions shown');
+    } else {
+      msg=(LANG==='ar'?'اختر الأنظمة التي تعملون عليها لعرض أقسامها · ':'Select systems being serviced · ')+'<b>'+c.total+'</b> '+(LANG==='ar'?'سؤال عام ظاهر':'general questions shown');
+    }
+    note.innerHTML=msg;
   }
   if(typeof upd==='function') upd(true);
 }
 window.filterSections=filterSections;
+// hex + alpha -> rgba string
+function hexA(hex,a){
+  hex=(hex||'#EC5020').replace('#','');
+  if(hex.length===3) hex=hex.split('').map(x=>x+x).join('');
+  const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);
+  return 'rgba('+r+','+g+','+b+','+a+')';
+}
 // read currently ticked system chips from the DOM
 function currentChosenSystems(){
   const out=[];
