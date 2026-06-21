@@ -540,6 +540,7 @@ function systemsList(){
 }
 // backward-compat alias used across the app
 let SYSTEMS=DEFAULT_SYSTEMS.slice();
+const SYSTEM_SECTIONS=[{"en": "E1. Sprinkler — Technical Checks", "ar": "هـ١. الرشاشات — الفحوص الفنية", "sys": "Sprinkler System", "items": [["Component repaired/replaced (type & ref)", "المكوّن المُصلَّح/المُستبدَل (النوع والرقم)", "Recorded", {"type": "text"}], ["System pressure after repair", "ضغط النظام بعد الإصلاح", "Within range", {"type": "measure", "unit": "bar"}], ["No leakage after repair", "لا تسريب بعد الإصلاح", "No leaks", {"type": "okna", "required": true}], ["Sprinkler heads intact & clear (45cm)", "رؤوس الرشاشات سليمة وخالية من العوائق (45 سم)", "Compliant", {"type": "okna", "required": true}], ["Flow switch signals panel after repair", "مفتاح التدفق يرسل إشارة للوحة بعد الإصلاح", "Signal OK", {"type": "okna", "required": true}], ["Alarm/check valve test", "اختبار صمام الإنذار", "Pass", {"type": "okna", "required": true}], ["Main control valve OPEN & chained", "الصمام الرئيسي مفتوح ومقفول بالسلسلة", "Open & locked", {"type": "okna", "required": true}], ["System restored to service", "النظام أُعيد للخدمة", "Restored", {"type": "okna", "required": true}]]}, {"en": "E2. Gas Suppression (FM-200/CO2) — Technical Checks", "ar": "هـ٢. الإطفاء الغازي — الفحوص الفنية", "sys": "Gas Suppression (FM-200/CO2/Inert)", "items": [["Component repaired/replaced (type & ref)", "المكوّن المُصلَّح/المُستبدَل (النوع والرقم)", "Recorded", {"type": "text"}], ["Cylinder weight/pressure correct", "وزن/ضغط الأسطوانة صحيح", "Within limits", {"type": "okna", "required": true}], ["Discharge nozzles clear & aimed", "المنفّذات غير مسدودة وموجّهة صح", "Clear", {"type": "okna", "required": true}], ["Detectors in protected area tested", "كواشف المنطقة المحمية تعمل", "Pass", {"type": "okna", "required": true}], ["Panel NORMAL (no faults)", "اللوحة Normal بلا أعطال", "Normal", {"type": "okna", "required": true}], ["Manual release & abort tested", "اختبار التفريغ والتعطيل اليدوي", "Pass", {"type": "okna", "required": true}], ["Safety pins removed after work", "أختام الأمان أُزيلت بعد العمل", "Removed", {"type": "okna", "required": true}], ["System ARMED / automatic mode", "النظام مسلّح وعاد للوضع التلقائي", "Armed", {"type": "okna", "required": true}]]}, {"en": "E3. Fire Alarm — Technical Checks", "ar": "هـ٣. الإنذار — الفحوص الفنية", "sys": "Fire Alarm System", "items": [["Component repaired/replaced (type & ref)", "المكوّن المُصلَّح/المُستبدَل (النوع والرقم)", "Recorded", {"type": "text"}], ["Repaired device tested OK", "اختبار المكوّن المُصلَّح ناجح", "Pass", {"type": "okna", "required": true}], ["Sounders/strobes operate", "الأجراس/الفلاشرات تعمل", "Operational", {"type": "okna", "required": true}], ["Backup battery voltage", "جهد البطارية الاحتياطية", "Within range", {"type": "measure", "unit": "V"}], ["Signal to control room/civil defense", "الإشارة لغرفة التحكّم/الدفاع المدني", "Confirmed", {"type": "okna", "required": true}], ["Panel NORMAL (no trouble)", "اللوحة Normal بلا أعطال", "Normal", {"type": "okna", "required": true}], ["Zone isolation removed, points in service", "أُلغي عزل المنطقة وكل النقاط بالخدمة", "Restored", {"type": "okna", "required": true}]]}, {"en": "E4. Fire Pump — Technical Checks", "ar": "هـ٤. مضخة الحريق — الفحوص الفنية", "sys": "Fire Pump", "items": [["Component repaired/replaced (type & ref)", "المكوّن المُصلَّح/المُستبدَل (النوع والرقم)", "Recorded", {"type": "text"}], ["Pump start test after repair", "اختبار تشغيل المضخة بعد الإصلاح", "Pass", {"type": "okna", "required": true}], ["Start/stop pressure correct", "ضغط التشغيل/الإيقاف صحيح", "Within setpoint", {"type": "measure", "unit": "bar"}], ["Suction & discharge valves OPEN", "صمامات الشفط والطرد مفتوحة", "Open", {"type": "okna", "required": true}], ["No leakage from packing/seals", "لا تسريب من الحشوات", "No leaks", {"type": "okna", "required": true}], ["Controller returned to AUTO", "لوحة التحكّم عادت لوضع Auto", "Auto", {"type": "okna", "required": true}], ["Pump restored & ready (standby)", "المضخة عادت للخدمة وجاهزة", "Ready", {"type": "okna", "required": true}]]}, {"en": "E5. Foam / Water Mist — Technical Checks", "ar": "هـ٥. الرغوة / Water Mist — الفحوص الفنية", "sys": "Foam/Water Mist", "items": [["Component repaired/replaced (type & ref)", "المكوّن المُصلَّح/المُستبدَل (النوع والرقم)", "Recorded", {"type": "text"}], ["Foam concentrate level & validity", "مستوى وصلاحية مركّز الرغوة", "OK", {"type": "okna", "required": true}], ["Proportioning ratio correct", "نسبة الخلط صحيحة", "Correct", {"type": "okna", "required": true}], ["Valves & nozzles intact", "الصمامات والمنفّذات سليمة", "Intact", {"type": "okna", "required": true}], ["System restored to service", "النظام أُعيد للخدمة", "Restored", {"type": "okna", "required": true}]]}];
 // deterministic distinct color per system name (for chips + sections)
 const SYS_PALETTE=["#EC5020","#1B7FB8","#1B8A3A","#8E44AD","#D4A017","#C0392B","#16A085","#E67E22","#2C3E50","#AD1457"];
 function sysColor(name){
@@ -2027,6 +2028,9 @@ function templateEditPanel(){
     h+='</div></div>';
   });
   h+='<button class="btn ghost" style="width:100%;flex:1" onclick="addStage()">＋ '+(LANG==='ar'?'مرحلة جديدة':'New stage')+'</button>';
+  h+='<button class="btn" style="width:100%;margin-top:8px;background:var(--orange)" onclick="addSystemSections()">🔧 '+(LANG==='ar'?'إضافة أقسام فحص الأنظمة (تصحيحية)':'Add system inspection sections (corrective)')+'</button>';
+  h+='<div class="note" style="margin-top:6px">'+(LANG==='ar'?'يضيف أقسام الفحص الفني لكل نظام (رشاشات، FM-200، إنذار، مضخة، رغوة) مربوطة بأنظمتها وملوّنة. أقسامك الحالية لا تتأثر.':'Adds technical inspection sections per system (Sprinkler, FM-200, Alarm, Pump, Foam), linked & colored. Your current sections are untouched.')+'</div>';
+  h+='<button class="btn" style="width:100%;margin-top:8px;background:var(--ok)" onclick="addSystemSections()">🧩 '+(LANG==='ar'?'إضافة أقسام الأنظمة الجاهزة (تصحيحية)':'Add ready-made system sections (corrective)')+'</button>';
   return h;
 }
 function curStages(){ return CFG.templates[EDIT_TPL].stages; }
@@ -2272,6 +2276,23 @@ window.delSystem=async function(name){
   const i=CFG.systems.indexOf(name); if(i<0)return;
   if(!confirm((LANG==='ar'?'حذف النظام «':'Remove system "')+name+(LANG==='ar'?'» من قائمة الفلتر؟':'" from filter list?')))return;
   CFG.systems.splice(i,1); SYSTEMS=systemsList(); await saveConfig(); renderAdminBody(); toast(LANG==='ar'?'حُذف':'Removed');
+};
+
+// ===== add ready-made per-system inspection sections =====
+window.addSystemSections=async function(){
+  if(!confirm(LANG==='ar'?'إضافة أقسام فحص الأنظمة الخمسة إلى هذا القالب؟':'Add the 5 system inspection sections to this template?'))return;
+  const stages=curStages();
+  // build a new stage holding the system sections (deep copy to avoid shared refs)
+  const secs=JSON.parse(JSON.stringify(SYSTEM_SECTIONS)).map(function(s){
+    return {en:s.en,ar:s.ar,sys:s.sys||'',items:(s.items||[]).map(function(it){return [it[0],it[1],it[2],it[3]||{type:'okna'}];})};
+  });
+  stages.push({en:'EQUIPMENT-SPECIFIC CHECKS',ar:'فحوص المعدات حسب النظام',secs:secs});
+  // make sure these systems exist in the managed filter list
+  if(!Array.isArray(CFG.systems))CFG.systems=[];
+  secs.forEach(function(s){ const t=(s.sys||'').trim(); if(t && DEFAULT_SYSTEMS.indexOf(t)<0 && CFG.systems.indexOf(t)<0) CFG.systems.push(t); });
+  SYSTEMS=systemsList();
+  await saveConfig(); renderAdminBody();
+  toast(LANG==='ar'?'أُضيفت أقسام الأنظمة ✓':'System sections added ✓');
 };
 
 function answerDisplay(a,it){
