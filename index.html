@@ -291,6 +291,16 @@
   .actRow{display:flex;align-items:flex-start;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);font-size:12.5px}
   .actRow .ui{flex:1}.actRow .ui b{color:var(--navy)}.actRow .ui span{color:var(--muted)}
   .actTime{font-size:11px;color:var(--muted);white-space:nowrap}
+  /* system-based section filtering */
+  .filterNote{margin:10px 4px;padding:9px 12px;border-radius:9px;background:var(--blue);color:var(--navy);font-size:12.5px;font-weight:700}
+  .secGroup.secMatch{position:relative;border-inline-start:4px solid var(--orange);background:rgba(236,80,32,.05);border-radius:10px;padding-inline-start:8px;margin-bottom:8px}
+  .secGroup.secMatch .sec{color:var(--orange)}
+  .secSysTag{display:inline-block;margin-inline-start:8px;font-size:10px;font-weight:800;color:#fff;background:var(--orange);padding:2px 8px;border-radius:10px;vertical-align:middle}
+  html[data-theme=dark] .secGroup.secMatch{background:rgba(236,80,32,.12)}
+  /* admin section editor head */
+  .secEditHead{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0 6px;padding:8px;background:var(--light);border-radius:9px}
+  .secEditHead .secNameEn,.secEditHead .secNameAr{flex:1;min-width:120px;font-weight:700;font-size:13px}
+  .secEditHead .secSysSel{flex:1;min-width:150px;font-size:12px;font-weight:700;color:var(--orange)}
 </style></head><body>
 <div id="app"><div class="loadwrap"><div class="spinner"></div>Loading...</div></div>
 <script>window.onerror=function(m,s,l,c){var a=document.getElementById('app');if(a)a.innerHTML='<div style="padding:22px;text-align:left"><h3 style="color:#EC5020">Error</h3><pre style="background:#f4f4f4;padding:12px;white-space:pre-wrap">'+m+'\n'+l+':'+c+'</pre></div>';};</script>
@@ -577,20 +587,26 @@ async function saveConfig(){
 
 // Firestore rejects nested arrays. Items are [en,ar,crit,meta]; store as objects.
 function tplToStore(tpl){
-  return (tpl||[]).map(st=>({en:st.en,ar:st.ar,secs:(st.secs||[]).map(sec=>({en:sec.en,ar:sec.ar,
+  return (tpl||[]).map(st=>({en:st.en,ar:st.ar,secs:(st.secs||[]).map(sec=>({en:sec.en,ar:sec.ar,sys:sec.sys||'',
     items:(sec.items||[]).map(it=>({en:it[0]||'',ar:it[1]||'',crit:it[2]||'',meta:it[3]||{type:'okna'}}))}))}));
 }
 function tplFromStore(tpl){
   if(!tpl||!tpl.length) return null;
   try{ if(Array.isArray(tpl[0].secs[0].items[0])) return tpl; }catch(e){}
-  return tpl.map(st=>({en:st.en,ar:st.ar,secs:(st.secs||[]).map(sec=>({en:sec.en,ar:sec.ar,
+  return tpl.map(st=>({en:st.en,ar:st.ar,secs:(st.secs||[]).map(sec=>({en:sec.en,ar:sec.ar,sys:sec.sys||'',
     items:(sec.items||[]).map(o=>[o.en||'',o.ar||'',o.crit||'',o.meta||{type:'okna'}])}))}));
 }
 
 // ===== total/counts respect template =====
-function total(){let n=0;TPL.forEach(s=>s.secs.forEach(c=>n+=c.items.length));return n}
+function secActive(sec){ // section shown if general (no sys) or matches chosen system
+  const tag=(sec&&sec.sys||'').trim();
+  if(!tag) return true;
+  const chosen=(CUR&&CUR.form&&CUR.form.system||(typeof form==='function'&&form().system)||'').trim();
+  return chosen && tag===chosen;
+}
+function total(){let n=0;TPL.forEach(s=>s.secs.forEach(c=>{if(secActive(c))n+=c.items.length}));return n}
 function isAnswered(a){ if(!a)return false; if(a.type==='okna')return !!a.status; if(a.type==='rating')return a.rating>0; if(a.type==='yesno')return !!a.yn; if(a.type==='text')return (a.text||'').trim().length>0; if(a.type==='measure')return (a.measure||'').toString().trim().length>0; if(a.type==='choice')return !!a.choice; return !!a.status; }
-function counts(){let done=0,ok=0,no=0,na=0;TPL.forEach((st,si)=>st.secs.forEach((sec,ci)=>sec.items.forEach((it,ii)=>{const a=answers[kk(si,ci,ii)];if(isAnswered(a)){done++;if(a.type==='okna'){if(a.status==='OK')ok++;else if(a.status==='Not OK')no++;else na++;}else if(a.type==='yesno'){if(a.yn==='Yes')ok++;else no++;}}})));return{done,ok,no,na,total:total()}}
+function counts(){let done=0,ok=0,no=0,na=0;TPL.forEach((st,si)=>st.secs.forEach((sec,ci)=>{if(!secActive(sec))return;sec.items.forEach((it,ii)=>{const a=answers[kk(si,ci,ii)];if(isAnswered(a)){done++;if(a.type==='okna'){if(a.status==='OK')ok++;else if(a.status==='Not OK')no++;else na++;}else if(a.type==='yesno'){if(a.yn==='Yes')ok++;else no++;}}})}));return{done,ok,no,na,total:total()}}
 function itemType(it){ return (it[3]&&it[3].type)||'okna'; }
 function itemReqPhoto(it){ return !!(it[3]&&it[3].photo); }
 function itemRequired(it){ return it[3]?it[3].required!==false:true; }
@@ -937,11 +953,17 @@ function renderReport(){
     fld('f_team','Team / Engineer — الفريق','',f.team)+
     fld('f_date','Date / التاريخ','',f.date||today,'date')+
     '</div><input type="hidden" id="f_by" value="'+esc(f.by||SESSION.name)+'"></div></div>';
+  h+='<div id="secFilterNote" class="filterNote"></div>';
   TPL.forEach((st,si)=>{
-    h+='<div class="stage">'+esc(st.en)+' — '+esc(st.ar)+'</div>';
+    h+='<div class="stage" data-stage="'+si+'">'+esc(st.en)+' — '+esc(st.ar)+'</div>';
     st.secs.forEach((sec,ci)=>{
-      h+='<div class="sec">'+esc(sec.en)+' / '+esc(sec.ar)+'</div>';
+      const sysTag=(sec.sys||'').trim();
+      const sysAttr=sysTag?(' data-sys="'+esc(sysTag)+'"'):' data-sys=""';
+      const sysLabel=sysTag?('<span class="secSysTag">'+esc(sysTag)+'</span>'):'';
+      h+='<div class="secGroup" data-stage="'+si+'"'+sysAttr+'>';
+      h+='<div class="sec">'+esc(sec.en)+' / '+esc(sec.ar)+sysLabel+'</div>';
       sec.items.forEach((it,ii)=>{ h+=itemHTML(st,sec,it,si,ci,ii); });
+      h+='</div>';
     });
   });
   h+='<div class="card"><h3>'+t('work_done')+' <small></small></h3><div class="body"><textarea id="f_workdone" rows="3" placeholder="اكتب وصف ما تم عمله اليوم">'+esc(f.workdone||'')+'</textarea></div></div>';
@@ -962,7 +984,44 @@ function renderReport(){
     const el=$(id); if(el){ el.addEventListener('change',function(){ autoSave(); }); el.addEventListener('input',function(){ autoSave(); }); }
   });
   setSaveStatus('saved');
+  // section filtering by selected system
+  const sysSel=$('f_system');
+  if(sysSel){ sysSel.addEventListener('change',function(){ filterSections(); autoSave(); }); }
+  filterSections();
 }
+// show only general sections + sections matching the chosen system; color-code matches
+function filterSections(){
+  const sysSel=$('f_system'); if(!sysSel)return;
+  const chosen=(sysSel.value||'').trim();
+  let hiddenCount=0, matchCount=0;
+  document.querySelectorAll('.secGroup').forEach(function(g){
+    const tag=(g.getAttribute('data-sys')||'').trim();
+    if(!tag){ // general -> always show
+      g.style.display=''; g.classList.remove('secMatch');
+      return;
+    }
+    if(chosen && tag===chosen){
+      g.style.display=''; g.classList.add('secMatch'); matchCount++;
+    }else{
+      g.style.display='none'; g.classList.remove('secMatch'); hiddenCount++;
+    }
+  });
+  // hide a stage header if all its sections are hidden
+  document.querySelectorAll('.stage').forEach(function(stg){
+    const si=stg.getAttribute('data-stage');
+    const groups=document.querySelectorAll('.secGroup[data-stage="'+si+'"]');
+    let anyVisible=false;
+    groups.forEach(function(g){ if(g.style.display!=='none') anyVisible=true; });
+    stg.style.display=(groups.length>0 && !anyVisible)?'none':'';
+  });
+  const note=$('secFilterNote');
+  if(note){
+    if(chosen) note.innerHTML='🔧 '+(LANG==='ar'?'عرض أقسام «':'Showing sections for "')+esc(chosen)+(LANG==='ar'?'» + الأقسام العامة':'" + general sections');
+    else note.innerHTML=(LANG==='ar'?'اختر النظام لعرض أقسامه المخصّصة':'Select a system to show its specific sections');
+  }
+  if(typeof upd==='function') upd(true);
+}
+window.filterSections=filterSections;
 function itemHTML(st,sec,it,si,ci,ii){
   const key=kk(si,ci,ii); const tp=itemType(it); const a=answers[key]||{};
   const badge='<span class="typebadge">'+typeLabel(tp)+'</span>';
@@ -1827,7 +1886,16 @@ function templateEditPanel(){
   tp.stages.forEach((st,si)=>{
     h+='<div class="card"><h3>'+esc(st.en)+' <small>'+esc(st.ar)+'</small></h3><div class="body">';
     st.secs.forEach((sec,ci)=>{
-      h+='<div class="sec" style="margin-top:6px">'+esc(sec.en)+'</div>';
+      const curSys=sec.sys||'';
+      h+='<div class="secEditHead">'+
+        '<input class="secNameEn" value="'+esc(sec.en)+'" placeholder="Section name" onchange="editSecName('+si+','+ci+',0,this.value)">'+
+        '<input class="secNameAr" value="'+esc(sec.ar)+'" placeholder="اسم القسم" onchange="editSecName('+si+','+ci+',1,this.value)">'+
+        '<select class="secSysSel" onchange="editSecSys('+si+','+ci+',this.value)">'+
+          '<option value="">'+(LANG==='ar'?'⦿ عام (يظهر دائماً)':'⦿ General (always shown)')+'</option>'+
+          SYSTEMS.map(s=>'<option value="'+esc(s)+'"'+(curSys===s?' selected':'')+'>'+esc(s)+'</option>').join('')+
+        '</select>'+
+        '<button class="udel" onclick="delSection('+si+','+ci+')">🗑</button>'+
+      '</div>';
       sec.items.forEach((it,ii)=>{
         const m=it[3]||{}; const tpe=m.type||'okna';
         h+='<div class="qedit">'+
@@ -1879,7 +1947,7 @@ window.editMeta=async function(si,ci,ii,k,val){const m=ensureMeta(si,ci,ii);m[k]
 window.editOptions=async function(si,ci,ii,val){const m=ensureMeta(si,ci,ii);m.options=val.split(',').map(s=>s.trim()).filter(Boolean);await saveConfig();};
 window.addQ=async function(si,ci){curStages()[si].secs[ci].items.push(["New item","بند جديد","",{type:'okna',required:true}]);await saveConfig();renderAdminBody();};
 window.delQ=async function(si,ci,ii){if(!confirm(LANG==='ar'?'حذف البند؟':'Delete item?'))return;curStages()[si].secs[ci].items.splice(ii,1);await saveConfig();renderAdminBody();};
-window.addSection=async function(si){curStages()[si].secs.push({en:'New Section',ar:'قسم جديد',items:[["New item","بند جديد","",{type:'okna',required:true}]]});await saveConfig();renderAdminBody();};
+window.addSection=async function(si){curStages()[si].secs.push({en:'New Section',ar:'قسم جديد',sys:'',items:[["New item","بند جديد","",{type:'okna',required:true}]]});await saveConfig();renderAdminBody();};
 window.addStage=async function(){curStages().push({en:'NEW STAGE',ar:'مرحلة جديدة',secs:[{en:'Items',ar:'البنود',items:[["New item","بند جديد","",{type:'okna',required:true}]]}]});await saveConfig();renderAdminBody();};
 
 
@@ -2077,6 +2145,11 @@ window.archExport=function(){
   const w=window.open('','_blank'); if(w){w.document.open();w.document.write(rep);w.document.close();toast(LANG==='ar'?'افتح «حفظ PDF»':'Tap Save PDF');}
 };
 
+// ===== section system tagging =====
+window.editSecName=async function(si,ci,col,val){const sec=curStages()[si].secs[ci];if(col===0)sec.en=val;else sec.ar=val;await saveConfig();};
+window.editSecSys=async function(si,ci,val){curStages()[si].secs[ci].sys=val;await saveConfig();renderAdminBody();};
+window.delSection=async function(si,ci){if(!confirm(LANG==='ar'?'حذف هذا القسم وكل بنوده؟':'Delete this section and all its items?'))return;curStages()[si].secs.splice(ci,1);await saveConfig();renderAdminBody();};
+
 function answerDisplay(a,it){
   const tp=itemType(it);
   if(tp==='okna'){const s=a&&a.status||'—';const cl=s==='OK'?'ok':s==='Not OK'?'no':s==='N/A'?'na':'';return {txt:s,cl};}
@@ -2092,10 +2165,18 @@ function buildReport(f){
   const pct=c.done?Math.round(c.ok/c.done*100):0;
   const rec=CFG.recipient;
   let rows='', ncList='';
+  const chosenSys=(f.system||'').trim();
   TPL.forEach((st,si)=>{
+    // determine which sections of this stage are visible under the chosen system
+    const visSecs=st.secs.map((sec,ci)=>({sec,ci})).filter(o=>{
+      const tag=(o.sec.sys||'').trim();
+      return (!tag) || (chosenSys && tag===chosenSys);
+    });
+    if(!visSecs.length) return; // skip stage entirely if nothing visible
     rows+='<tr><td colspan="3" class="stg">'+esc(st.en)+'</td></tr>';
-    st.secs.forEach((sec,ci)=>{
-      rows+='<tr><td colspan="3" class="secr">'+esc(sec.en)+'</td></tr>';
+    visSecs.forEach(({sec,ci})=>{
+      const tag=(sec.sys||'').trim();
+      rows+='<tr><td colspan="3" class="secr">'+esc(sec.en)+(tag?' — '+esc(tag):'')+'</td></tr>';
       sec.items.forEach((it,ii)=>{
         const a=answers[kk(si,ci,ii)]||{};const disp=answerDisplay(a,it);
         let extra='';
