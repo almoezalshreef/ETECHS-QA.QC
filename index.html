@@ -293,14 +293,21 @@
   .actTime{font-size:11px;color:var(--muted);white-space:nowrap}
   /* system-based section filtering */
   .filterNote{margin:10px 4px;padding:9px 12px;border-radius:9px;background:var(--blue);color:var(--navy);font-size:12.5px;font-weight:700}
-  .secGroup.secMatch{position:relative;border-inline-start:4px solid var(--orange);background:rgba(236,80,32,.05);border-radius:10px;padding-inline-start:8px;margin-bottom:8px}
-  .secGroup.secMatch .sec{color:var(--orange)}
-  .secSysTag{display:inline-block;margin-inline-start:8px;font-size:10px;font-weight:800;color:#fff;background:var(--orange);padding:2px 8px;border-radius:10px;vertical-align:middle}
-  html[data-theme=dark] .secGroup.secMatch{background:rgba(236,80,32,.12)}
+  .secGroup.secMatch{position:relative;border:2px solid var(--orange);background:rgba(236,80,32,.06);border-radius:12px;padding:4px 8px 8px;margin:10px 0}
+  .secGroup.secMatch .sec{background:var(--orange);color:#fff;margin-top:8px}
+  .secSysTag{display:inline-block;margin-inline-start:8px;font-size:10px;font-weight:800;color:var(--orange);background:#fff;padding:2px 8px;border-radius:10px;vertical-align:middle;border:1px solid var(--orange)}
+  .secGroup.secMatch .secSysTag{color:var(--orange);background:#fff}
+  html[data-theme=dark] .secGroup.secMatch{background:rgba(236,80,32,.14)}
+  html[data-theme=dark] .secGroup.secMatch .sec{background:var(--orange);color:#fff}
   /* admin section editor head */
   .secEditHead{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:12px 0 6px;padding:8px;background:var(--light);border-radius:9px}
   .secEditHead .secNameEn,.secEditHead .secNameAr{flex:1;min-width:120px;font-weight:700;font-size:13px}
   .secEditHead .secSysSel{flex:1;min-width:150px;font-size:12px;font-weight:700;color:var(--orange)}
+  /* multi-select system chips in report */
+  .sysChips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .sysChip{font-size:13px;font-weight:700;padding:10px 14px;border-radius:22px;border:2px solid var(--line);background:var(--surface);color:var(--muted);cursor:pointer;transition:.15s;min-height:42px}
+  .sysChip.on{background:var(--orange);color:#fff;border-color:var(--orange);box-shadow:0 2px 8px rgba(236,80,32,.3)}
+  .sysChip:active{transform:scale(.95)}
 </style></head><body>
 <div id="app"><div class="loadwrap"><div class="spinner"></div>Loading...</div></div>
 <script>window.onerror=function(m,s,l,c){var a=document.getElementById('app');if(a)a.innerHTML='<div style="padding:22px;text-align:left"><h3 style="color:#EC5020">Error</h3><pre style="background:#f4f4f4;padding:12px;white-space:pre-wrap">'+m+'\n'+l+':'+c+'</pre></div>';};</script>
@@ -522,7 +529,16 @@ const NAVY="#0F0A44", ORANGE="#EC5020";
 // ===== default checklist template =====
 const DEFAULT_STAGES = [{"en": "BEFORE WORK", "ar": "قبل بدء أعمال الصيانة", "secs": [{"en": "A. Authorization & Documents", "ar": "أ. التصاريح والوثائق", "items": [["Letter of Authorization (LOA) issued & valid", "خطاب التفويض (LOA) صادر وساري", "Valid LOA", {"type": "okna", "required": true}], ["Method Statement & Risk Assessment on site", "بيان الطريقة وتقييم المخاطر بالموقع", "Approved", {"type": "okna", "required": true}], ["Work Permit obtained (if required)", "تصريح العمل صادر (عند الحاجة)", "Valid", {"type": "okna", "required": true}], ["LOTO advance notice given", "إشعار LOTO المسبق مقدّم", "48 hrs", {"type": "okna", "required": true}], ["MIR approved for new material", "MIR معتمد للمواد الجديدة", "Approved", {"type": "okna", "required": true}]]}, {"en": "B. Team & Competency", "ar": "ب. الفريق والكفاءة", "items": [["Assigned engineer & technicians present", "المهندس والفنيون حاضرون", "Att. IV", {"type": "okna", "required": true}], ["Team qualified (certificates valid)", "الفريق مؤهل (شهادات سارية)", "Att. IV", {"type": "okna", "required": true}], ["Toolbox Talk done", "تعريف الفريق بالمخاطر (TBT)", "Recorded", {"type": "okna", "required": true}]]}, {"en": "C. Tools, Equipment & PPE", "ar": "ج. الأدوات والمعدات و PPE", "items": [["Required tools available & good condition", "الأدوات متوفرة وبحالة جيدة", "Visual", {"type": "okna", "required": true}], ["Instruments have valid calibration", "أجهزة القياس معايرتها سارية", "Valid cert", {"type": "okna", "required": true}], ["PPE worn by all crew", "معدات الوقاية مرتداة بالكامل", "100%", {"type": "okna", "required": true}], ["Spare parts ready (approved)", "قطع الغيار جاهزة (معتمدة)", "MIR ref", {"type": "okna", "required": true}]]}]}, {"en": "DURING WORK", "ar": "أثناء أعمال الصيانة", "secs": [{"en": "D. Execution & Compliance", "ar": "د. التنفيذ والالتزام", "items": [["Work follows approved Method Statement", "العمل يتبع بيان الطريقة المعتمد", "MS", {"type": "okna", "required": true}], ["Manufacturer procedures followed", "اتباع إجراءات المصنّع", "OEM", {"type": "okna", "required": true}], ["Authority to stop work respected", "احترام صلاحية إيقاف العمل", "MS 5.5", {"type": "okna", "required": true}], ["Isolation / LOTO maintained", "الحفاظ على العزل / LOTO", "Maintained", {"type": "okna", "required": true}], ["Hold Points not bypassed w/o sign-off", "عدم تجاوز نقاط التوقف", "HP", {"type": "okna", "required": true}]]}, {"en": "E. Equipment-Specific (as applicable)", "ar": "هـ. فحوص المعدة (حسب الحالة)", "items": [["Gas cylinder weight/pressure in tolerance", "وزن/ضغط الاسطوانة ضمن الحد", "±5%", {"type": "okna", "required": true}], ["Fire pump flow performance", "أداء تدفق المضخة", "≥90%", {"type": "okna", "required": true}], ["Diesel start cycles within limit", "دورات تشغيل الديزل", "≤3", {"type": "okna", "required": true}], ["Pump runtime achieved", "زمن تشغيل المضخة", "≥30 min", {"type": "okna", "required": true}], ["Sounder sound level", "مستوى صوت الصفّارات", "≥75 dBA", {"type": "okna", "required": true}], ["Cable insulation resistance", "مقاومة عزل الكابلات", "≥1 MΩ", {"type": "okna", "required": true}], ["Battery reserve / autonomy", "احتياطي البطارية", "24h+5m", {"type": "okna", "required": true}], ["Detectors respond on test", "استجابة الكواشف بالاختبار", "Pass", {"type": "okna", "required": true}]]}, {"en": "F. Housekeeping & Safety", "ar": "و. النظافة والسلامة", "items": [["Work area clean & access maintained", "المنطقة نظيفة والممرات سالكة", "Maintained", {"type": "okna", "required": true}], ["No uncontrolled hazards by crew", "لا مخاطر غير مضبوطة من الفريق", "None", {"type": "okna", "required": true}]]}]}, {"en": "AFTER WORK", "ar": "بعد إنهاء أعمال الصيانة", "secs": [{"en": "G. Restoration & Functional", "ar": "ز. الإرجاع والتأكيد الوظيفي", "items": [["Equipment restored to normal mode", "إرجاع المعدة لوضع التشغيل", "Normal", {"type": "okna", "required": true}], ["LOTO / isolation removed correctly", "إزالة العزل / LOTO بشكل صحيح", "Cleared", {"type": "okna", "required": true}], ["System set back to auto / armed", "إعادة النظام لوضع Auto", "Auto", {"type": "okna", "required": true}], ["Functional test after maintenance passed", "اجتياز الاختبار الوظيفي", "Pass", {"type": "okna", "required": true}], ["No faults left on panel from our work", "لا أعطال متبقية من عملنا", "Clear", {"type": "okna", "required": true}]]}, {"en": "H. Materials & Equipment Close-out", "ar": "ح. إغلاق المواد والمعدات", "items": [["Old / replaced parts removed & recorded", "إزالة وتسجيل القطع المستبدلة", "Recorded", {"type": "okna", "required": true}], ["Used quantities logged in inventory", "تسجيل الكميات المستخدمة", "Logged", {"type": "okna", "required": true}], ["All ETECHS tools collected", "تجميع كل أدوات ETECHS", "All back", {"type": "okna", "required": true}], ["Work area cleaned & handed back", "تنظيف المنطقة وتسليمها", "Clean", {"type": "okna", "required": true}]]}, {"en": "I. Documentation & Sign-off", "ar": "ط. التوثيق والاعتماد", "items": [["Maintenance report / checklist completed", "استكمال التقرير / القائمة", "Complete", {"type": "okna", "required": true}], ["WIR submitted for client inspection", "تقديم WIR لمعاينة العميل", "Submitted", {"type": "okna", "required": true}], ["Any non-conformance raised as NCR", "تسجيل أي عدم مطابقة كـ NCR", "If found", {"type": "okna", "required": true}], ["Photos before/after attached", "إرفاق صور قبل/بعد", "Attached", {"type": "okna", "required": true}], ["Records updated", "تحديث السجلات", "Updated", {"type": "okna", "required": true}]]}]}];
 const SERVICE=["Preventive Maintenance","Corrective Maintenance (FIRE SYSTEM FAIL)","Full System Maintenance","System Upgrade / Modification"];
-const SYSTEMS=["Fire Fighting System","Fire Alarm System","Gas Suppression (FM-200/CO2/Inert)","Sprinkler System","Foam/Water Mist","Fire Pump","Other"];
+const DEFAULT_SYSTEMS=["Fire Fighting System","Fire Alarm System","Gas Suppression (FM-200/CO2/Inert)","Sprinkler System","Foam/Water Mist","Fire Pump","Other"];
+function systemsList(){
+  // merge defaults with any custom systems the admin added, dedup, keep order
+  const custom=(CFG&&Array.isArray(CFG.systems))?CFG.systems:[];
+  const all=DEFAULT_SYSTEMS.slice();
+  custom.forEach(s=>{ s=(s||'').trim(); if(s && all.indexOf(s)<0) all.push(s); });
+  return all;
+}
+// backward-compat alias used across the app
+let SYSTEMS=DEFAULT_SYSTEMS.slice();
 const CITIES=["Jeddah / جدة","Makkah / مكة","Riyadh / الرياض","Madinah / المدينة","Dammam / الدمام","Other / أخرى"];
 
 // Answer types
@@ -561,6 +577,8 @@ async function loadConfig(){
   }
   if(!CFG.rules) CFG.rules={allItems:true,photo:true,signature:true};
   if(!CFG.projects) CFG.projects=[];
+  if(!Array.isArray(CFG.systems)) CFG.systems=[];
+  SYSTEMS=systemsList();
   // ---- migrate to multi-template model ----
   // New model: CFG.templates = [{id,name,stages:[...arrays...]}]
   if(!Array.isArray(CFG.templates) || !CFG.templates.length){
@@ -598,11 +616,18 @@ function tplFromStore(tpl){
 }
 
 // ===== total/counts respect template =====
-function secActive(sec){ // section shown if general (no sys) or matches chosen system
+function chosenSystemsArr(){
+  // prefer live chips, then saved form array, then legacy single
+  try{ if(typeof currentChosenSystems==='function'){ const a=currentChosenSystems(); if(a&&a.length) return a; } }catch(e){}
+  const f=(CUR&&CUR.form)||{};
+  if(Array.isArray(f.systems)) return f.systems;
+  if(f.system) return String(f.system).split(',').map(s=>s.trim()).filter(Boolean);
+  return [];
+}
+function secActive(sec){ // section shown if general (no sys) or matches any chosen system
   const tag=(sec&&sec.sys||'').trim();
   if(!tag) return true;
-  const chosen=(CUR&&CUR.form&&CUR.form.system||(typeof form==='function'&&form().system)||'').trim();
-  return chosen && tag===chosen;
+  return chosenSystemsArr().indexOf(tag)>=0;
 }
 function total(){let n=0;TPL.forEach(s=>s.secs.forEach(c=>{if(secActive(c))n+=c.items.length}));return n}
 function isAnswered(a){ if(!a)return false; if(a.type==='okna')return !!a.status; if(a.type==='rating')return a.rating>0; if(a.type==='yesno')return !!a.yn; if(a.type==='text')return (a.text||'').trim().length>0; if(a.type==='measure')return (a.measure||'').toString().trim().length>0; if(a.type==='choice')return !!a.choice; return !!a.status; }
@@ -936,6 +961,28 @@ function openReportObj(rep){
   CUR=rep; TPL=tplFromStore(rep.tpl)||(CFG.templates[0]&&CFG.templates[0].stages)||DEFAULT_STAGES; answers=rep.answers||{}; photos=rep.photos||[]; sig=rep.sig||null;
   renderReport();
 }
+// multi-select system chips (general + per-system filtering)
+function selectedSystems(f){
+  f=f||(CUR&&CUR.form)||{};
+  if(Array.isArray(f.systems)) return f.systems.slice();
+  if(f.system) return [f.system]; // migrate legacy single value
+  return [];
+}
+function sysChips(f){
+  const sel=selectedSystems(f);
+  const all=systemsList();
+  let chips=all.map(function(s){
+    const on=sel.indexOf(s)>=0;
+    return '<button type="button" class="sysChip'+(on?' on':'')+'" data-sysname="'+esc(s)+'" onclick="toggleSysChip(this)">'+esc(s)+'</button>';
+  }).join('');
+  return '<div class="sysChips" id="sysChips">'+chips+'</div>';
+}
+window.toggleSysChip=function(btn){
+  btn.classList.toggle('on');
+  if(typeof buzz==='function') buzz(10);
+  filterSections();
+  autoSave();
+};
 function renderReport(){
   const r=CUR; const f=r.form||{}; const ro=(r.status==='done');
   const today=new Date().toISOString().slice(0,10);
@@ -949,10 +996,12 @@ function renderReport(){
     fld('f_site','Substation / Site — المحطة','',f.site)+
     fld('f_loa','Work Order / LOA No. — رقم LOA','',f.loa)+
     sel('f_service','Service Type / نوع الخدمة',SERVICE,f.service)+
-    sel('f_system','System / النظام',SYSTEMS,f.system)+
     fld('f_team','Team / Engineer — الفريق','',f.team)+
     fld('f_date','Date / التاريخ','',f.date||today,'date')+
-    '</div><input type="hidden" id="f_by" value="'+esc(f.by||SESSION.name)+'"></div></div>';
+    '</div>'+
+    '<label class="fld" style="margin-top:12px">'+(LANG==='ar'?'الأنظمة التي تعملون عليها (اختر واحداً أو أكثر) / Systems being serviced':'Systems being serviced (select one or more)')+'</label>'+
+    sysChips(f)+
+    '<input type="hidden" id="f_by" value="'+esc(f.by||SESSION.name)+'"></div></div>';
   h+='<div id="secFilterNote" class="filterNote"></div>';
   TPL.forEach((st,si)=>{
     h+='<div class="stage" data-stage="'+si+'">'+esc(st.en)+' — '+esc(st.ar)+'</div>';
@@ -980,30 +1029,25 @@ function renderReport(){
   restoreAnswers();
   renderPhotos(); initSig(); upd(true);
   // auto-save on work-order field edits
-  ['f_site','f_loa','f_service','f_system','f_team','f_date'].forEach(function(id){
+  ['f_site','f_loa','f_service','f_team','f_date'].forEach(function(id){
     const el=$(id); if(el){ el.addEventListener('change',function(){ autoSave(); }); el.addEventListener('input',function(){ autoSave(); }); }
   });
   setSaveStatus('saved');
-  // section filtering by selected system
-  const sysSel=$('f_system');
-  if(sysSel){ sysSel.addEventListener('change',function(){ filterSections(); autoSave(); }); }
   filterSections();
 }
-// show only general sections + sections matching the chosen system; color-code matches
+// show only general sections + sections matching any chosen system; color-code matches
 function filterSections(){
-  const sysSel=$('f_system'); if(!sysSel)return;
-  const chosen=(sysSel.value||'').trim();
-  let hiddenCount=0, matchCount=0;
+  const chosen=currentChosenSystems(); // array
   document.querySelectorAll('.secGroup').forEach(function(g){
     const tag=(g.getAttribute('data-sys')||'').trim();
     if(!tag){ // general -> always show
       g.style.display=''; g.classList.remove('secMatch');
       return;
     }
-    if(chosen && tag===chosen){
-      g.style.display=''; g.classList.add('secMatch'); matchCount++;
+    if(chosen.indexOf(tag)>=0){
+      g.style.display=''; g.classList.add('secMatch');
     }else{
-      g.style.display='none'; g.classList.remove('secMatch'); hiddenCount++;
+      g.style.display='none'; g.classList.remove('secMatch');
     }
   });
   // hide a stage header if all its sections are hidden
@@ -1016,12 +1060,21 @@ function filterSections(){
   });
   const note=$('secFilterNote');
   if(note){
-    if(chosen) note.innerHTML='🔧 '+(LANG==='ar'?'عرض أقسام «':'Showing sections for "')+esc(chosen)+(LANG==='ar'?'» + الأقسام العامة':'" + general sections');
-    else note.innerHTML=(LANG==='ar'?'اختر النظام لعرض أقسامه المخصّصة':'Select a system to show its specific sections');
+    if(chosen.length) note.innerHTML='🔧 '+(LANG==='ar'?'عرض الأقسام العامة + أنظمة: ':'Showing general + systems: ')+esc(chosen.join('، '));
+    else note.innerHTML=(LANG==='ar'?'اختر الأنظمة التي تعملون عليها لعرض أقسامها':'Select the systems being serviced to show their sections');
   }
   if(typeof upd==='function') upd(true);
 }
 window.filterSections=filterSections;
+// read currently ticked system chips from the DOM
+function currentChosenSystems(){
+  const out=[];
+  document.querySelectorAll('#sysChips .sysChip.on').forEach(function(b){
+    const n=(b.getAttribute('data-sysname')||'').trim(); if(n)out.push(n);
+  });
+  return out;
+}
+window.currentChosenSystems=currentChosenSystems;
 function itemHTML(st,sec,it,si,ci,ii){
   const key=kk(si,ci,ii); const tp=itemType(it); const a=answers[key]||{};
   const badge='<span class="typebadge">'+typeLabel(tp)+'</span>';
@@ -1104,7 +1157,7 @@ function upd(skipSave){
 function fld(id,label,ph,val,type){return '<div><label class="fld">'+label+'</label><input id="'+id+'" type="'+(type||'text')+'" placeholder="'+(ph||'')+'" value="'+esc(val||'')+'"></div>'}
 function sel(id,label,arr,val){return '<div><label class="fld">'+label+'</label><select id="'+id+'">'+arr.map(o=>'<option'+(o===val?' selected':'')+'>'+o+'</option>').join('')+'</select></div>'}
 window.onProj=function(){const s=$('f_proj');if(!s)return;const i=s.value;const box=$('projInfo');if(i===''||!CFG.projects[i]){if(box)box.innerHTML='';return;}const p=CFG.projects[i];if(box)box.innerHTML='<b>'+esc(p.client)+'</b> · عقد '+esc(p.contract)+' · '+esc(p.city);};
-function form(){const g=id=>{const e=$(id);return e?e.value:''};const pi=g('f_proj');const p=(pi!==''&&CFG.projects[pi])?CFG.projects[pi]:null;return{projIdx:pi,project:p?p.name:'',client:p?p.client:'',contract:p?p.contract:'',city:p?p.city:'',site:g('f_site'),loa:g('f_loa'),service:g('f_service'),system:g('f_system'),team:g('f_team'),date:g('f_date'),by:g('f_by'),workdone:g('f_workdone'),notes:g('f_notes')}}
+function form(){const g=id=>{const e=$(id);return e?e.value:''};const pi=g('f_proj');const p=(pi!==''&&CFG.projects[pi])?CFG.projects[pi]:null;const sysArr=(typeof currentChosenSystems==='function')?currentChosenSystems():[];return{projIdx:pi,project:p?p.name:'',client:p?p.client:'',contract:p?p.contract:'',city:p?p.city:'',site:g('f_site'),loa:g('f_loa'),service:g('f_service'),systems:sysArr,system:sysArr.join(', '),team:g('f_team'),date:g('f_date'),by:g('f_by'),workdone:g('f_workdone'),notes:g('f_notes')}}
 window.goHome=async function(){await saveCur(false);CUR=null;renderHome();};
 window.saveCur=saveCur;
 
@@ -1859,6 +1912,18 @@ function questionsPanel(){
 }
 function templateListPanel(){
   let h='<div class="note" style="margin-bottom:10px">'+(LANG==='ar'?'القوالب = أنواع التقارير. أنشئ قالباً لكل نوع تقرير، وكل قالب له أسئلته.':'Templates = report types. Create a template per report type; each has its own questions.')+'</div>';
+  // ---- managed filter systems ----
+  if(!Array.isArray(CFG.systems)) CFG.systems=[];
+  const allSys=systemsList();
+  let sysChips=allSys.map(function(s){
+    const isDefault=DEFAULT_SYSTEMS.indexOf(s)>=0;
+    return '<span class="chip">'+esc(s)+(isDefault?'':'<button onclick="delSystem(\''+esc(s).replace(/'/g,"\\'")+'\')">✕</button>')+'</span>';
+  }).join('');
+  h+='<div class="card"><h3>'+(LANG==='ar'?'أنظمة الفلتر':'Filter Systems')+' <small>'+(LANG==='ar'?'تُستخدم لفلترة الأقسام':'used to filter sections')+'</small></h3><div class="body">'+
+    '<div class="note" style="margin-bottom:8px">'+(LANG==='ar'?'هذه قائمة الأنظمة التي تظهر في قائمة «النظام» وعند ربط الأقسام. أضف أنظمتك الخاصة. (الافتراضية لا تُحذف)':'These appear in the "System" dropdown and when tagging sections. Add your own. (Defaults can\'t be removed)')+'</div>'+
+    '<div class="chips">'+sysChips+'</div>'+
+    '<div style="display:flex;gap:8px;margin-top:10px"><input id="newSystem" placeholder="'+(LANG==='ar'?'أضف نظاماً جديداً':'Add a new system')+'" style="flex:1"><button class="btn ghost" style="flex:0 0 auto;width:auto;padding:0 16px" onclick="addSystem()">＋</button></div>'+
+    '</div></div>';
   h+='<div class="card"><h3>'+(LANG==='ar'?'القوالب':'Templates')+' <small>Report Templates</small></h3><div class="body">';
   (CFG.templates||[]).forEach((tp,i)=>{
     const count=(tp.stages||[]).reduce((n,st)=>n+(st.secs||[]).reduce((m,s)=>m+(s.items||[]).length,0),0);
@@ -2150,6 +2215,20 @@ window.editSecName=async function(si,ci,col,val){const sec=curStages()[si].secs[
 window.editSecSys=async function(si,ci,val){curStages()[si].secs[ci].sys=val;await saveConfig();renderAdminBody();};
 window.delSection=async function(si,ci){if(!confirm(LANG==='ar'?'حذف هذا القسم وكل بنوده؟':'Delete this section and all its items?'))return;curStages()[si].secs.splice(ci,1);await saveConfig();renderAdminBody();};
 
+// ===== manage filter systems list =====
+window.addSystem=async function(){
+  const el=$('newSystem'); const v=(el&&el.value||'').trim(); if(!v)return;
+  if(!Array.isArray(CFG.systems))CFG.systems=[];
+  if(DEFAULT_SYSTEMS.indexOf(v)>=0 || CFG.systems.indexOf(v)>=0){ toast(LANG==='ar'?'موجود بالفعل':'Already exists'); return; }
+  CFG.systems.push(v); SYSTEMS=systemsList(); await saveConfig(); renderAdminBody(); toast(LANG==='ar'?'أُضيف':'Added');
+};
+window.delSystem=async function(name){
+  if(!Array.isArray(CFG.systems))return;
+  const i=CFG.systems.indexOf(name); if(i<0)return;
+  if(!confirm((LANG==='ar'?'حذف النظام «':'Remove system "')+name+(LANG==='ar'?'» من قائمة الفلتر؟':'" from filter list?')))return;
+  CFG.systems.splice(i,1); SYSTEMS=systemsList(); await saveConfig(); renderAdminBody(); toast(LANG==='ar'?'حُذف':'Removed');
+};
+
 function answerDisplay(a,it){
   const tp=itemType(it);
   if(tp==='okna'){const s=a&&a.status||'—';const cl=s==='OK'?'ok':s==='Not OK'?'no':s==='N/A'?'na':'';return {txt:s,cl};}
@@ -2165,12 +2244,12 @@ function buildReport(f){
   const pct=c.done?Math.round(c.ok/c.done*100):0;
   const rec=CFG.recipient;
   let rows='', ncList='';
-  const chosenSys=(f.system||'').trim();
+  const chosenSysArr = Array.isArray(f.systems)?f.systems:(f.system?String(f.system).split(',').map(s=>s.trim()).filter(Boolean):[]);
   TPL.forEach((st,si)=>{
-    // determine which sections of this stage are visible under the chosen system
+    // determine which sections of this stage are visible under the chosen systems
     const visSecs=st.secs.map((sec,ci)=>({sec,ci})).filter(o=>{
       const tag=(o.sec.sys||'').trim();
-      return (!tag) || (chosenSys && tag===chosenSys);
+      return (!tag) || (chosenSysArr.indexOf(tag)>=0);
     });
     if(!visSecs.length) return; // skip stage entirely if nothing visible
     rows+='<tr><td colspan="3" class="stg">'+esc(st.en)+'</td></tr>';
