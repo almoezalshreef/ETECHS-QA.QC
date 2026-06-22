@@ -1097,6 +1097,11 @@ function renderReport(){
         fld('f_sec_expired','SEC IDs Expired / هويات منتهية','',au.secExpired,'number')+
         fld('f_sec_missing','Employees without SEC ID / موظفون بلا هوية','',au.secMissing,'number')+
       '</div></div>'+
+      '<div class="auditStats"><div class="asTitle">'+(LANG==='ar'?'معتمِد التقرير (يظهر في خانة التوقيع فقط)':'Report Approver (shows in signature only)')+'</div><div class="grid2">'+
+        fld('f_appr_name','Approved By (Name) / المعتمِد','',f.apprName)+
+        fld('f_appr_title','Job Title / المسمّى الوظيفي','',f.apprTitle)+
+        fld('f_appr_date','Approval Date / تاريخ الاعتماد','',f.apprDate||today,'date')+
+      '</div></div>'+
       '</div></div>';
   } else {
     h+='<div class="grid2" style="margin-top:10px">'+
@@ -1140,7 +1145,7 @@ function renderReport(){
   restoreAnswers();
   renderPhotos(); initSig(); upd(true);
   // auto-save on work-order field edits
-  ['f_site','f_loa','f_service','f_team','f_date','f_pm','f_by','f_month','f_wo_recv','f_wo_closed','f_tr_req','f_tr_done','f_emp_total','f_sec_total','f_sec_expired','f_sec_missing'].forEach(function(id){
+  ['f_site','f_loa','f_service','f_team','f_date','f_pm','f_by','f_month','f_wo_recv','f_wo_closed','f_tr_req','f_tr_done','f_emp_total','f_sec_total','f_sec_expired','f_sec_missing','f_appr_name','f_appr_title','f_appr_date'].forEach(function(id){
     const el=$(id); if(el){ el.addEventListener('change',function(){ autoSave(); if(typeof renderAuditDash==='function')renderAuditDash(); }); el.addEventListener('input',function(){ autoSave(); }); }
   });
   setSaveStatus('saved');
@@ -1366,7 +1371,7 @@ function upd(skipSave){
 function fld(id,label,ph,val,type){return '<div><label class="fld">'+label+'</label><input id="'+id+'" type="'+(type||'text')+'" placeholder="'+(ph||'')+'" value="'+esc(val||'')+'"></div>'}
 function sel(id,label,arr,val){return '<div><label class="fld">'+label+'</label><select id="'+id+'">'+arr.map(o=>'<option'+(o===val?' selected':'')+'>'+o+'</option>').join('')+'</select></div>'}
 window.onProj=function(){const s=$('f_proj');if(!s)return;const i=s.value;const box=$('projInfo');if(i===''||!CFG.projects[i]){if(box)box.innerHTML='';return;}const p=CFG.projects[i];if(box)box.innerHTML='<b>'+esc(p.client)+'</b> · عقد '+esc(p.contract)+' · '+esc(p.city);};
-function form(){const g=id=>{const e=$(id);return e?e.value:''};const pi=g('f_proj');const p=(pi!==''&&CFG.projects[pi])?CFG.projects[pi]:null;const sysArr=(typeof currentChosenSystems==='function')?currentChosenSystems():[];const base={projIdx:pi,project:p?p.name:'',client:p?p.client:'',contract:p?p.contract:'',city:p?p.city:'',site:g('f_site'),loa:g('f_loa'),service:g('f_service'),systems:sysArr,system:sysArr.join(', '),team:g('f_team'),date:g('f_date'),by:g('f_by'),workdone:g('f_workdone'),notes:g('f_notes')};if(CUR&&CUR.kind==='audit'){base.pm=g('f_pm');base.month=g('f_month');base.audit={woRecv:g('f_wo_recv'),woClosed:g('f_wo_closed'),trReq:g('f_tr_req'),trDone:g('f_tr_done'),empTotal:g('f_emp_total'),secTotal:g('f_sec_total'),secExpired:g('f_sec_expired'),secMissing:g('f_sec_missing')};}return base;}
+function form(){const g=id=>{const e=$(id);return e?e.value:''};const pi=g('f_proj');const p=(pi!==''&&CFG.projects[pi])?CFG.projects[pi]:null;const sysArr=(typeof currentChosenSystems==='function')?currentChosenSystems():[];const base={projIdx:pi,project:p?p.name:'',client:p?p.client:'',contract:p?p.contract:'',city:p?p.city:'',site:g('f_site'),loa:g('f_loa'),service:g('f_service'),systems:sysArr,system:sysArr.join(', '),team:g('f_team'),date:g('f_date'),by:g('f_by'),workdone:g('f_workdone'),notes:g('f_notes')};if(CUR&&CUR.kind==='audit'){base.pm=g('f_pm');base.month=g('f_month');base.apprName=g('f_appr_name');base.apprTitle=g('f_appr_title');base.apprDate=g('f_appr_date');base.audit={woRecv:g('f_wo_recv'),woClosed:g('f_wo_closed'),trReq:g('f_tr_req'),trDone:g('f_tr_done'),empTotal:g('f_emp_total'),secTotal:g('f_sec_total'),secExpired:g('f_sec_expired'),secMissing:g('f_sec_missing')};}return base;}
 window.goHome=async function(){await saveCur(false);CUR=null;renderHome();};
 window.saveCur=saveCur;
 
@@ -2045,6 +2050,11 @@ window.openSet=async function(){
     '<label class="fld">إيميل استلام التقارير / Reports email</label>'+
     '<input id="s_rec" type="email" inputmode="email" autocapitalize="off" value="'+esc(CFG.recipient||'')+'">'+
     '<p class="note">عند الإقفال يُفتح بريد المهندس وهذا الإيميل جاهز كمستلم.</p>'+
+    '<label class="fld" style="margin-top:10px">معتمِد التقرير — الاسم / Approver name</label>'+
+    '<input id="s_apprName" value="'+esc(CFG.approverName||'')+'" placeholder="Engr. Mohammad F al-barakati">'+
+    '<label class="fld" style="margin-top:8px">معتمِد التقرير — المسمّى / Approver title</label>'+
+    '<input id="s_apprTitle" value="'+esc(CFG.approverTitle||'')+'" placeholder="Fire System Maintenance, Div Mngr.">'+
+    '<p class="note">يظهر كخانة توقيع «Approved By» في أسفل تقرير التدقيق فقط.</p>'+
     usersHtml+
     '<button class="btn" style="width:100%;margin-top:16px" onclick="saveSet()">حفظ / Save</button>'+
     '<button class="btn ghost" style="width:100%;margin-top:8px;flex:1" onclick="closeSet()">إغلاق</button>'+
@@ -2053,7 +2063,7 @@ window.openSet=async function(){
   if(SESSION.role==='admin') loadUserList();
 };
 window.closeSet=function(){const m=$('setm');if(m)m.remove();};
-window.saveSet=async function(){CFG.recipient=($('s_rec').value||'').trim();try{await saveConfig();toast('تم الحفظ');}catch(e){toast('تعذّر الحفظ');}closeSet();};
+window.saveSet=async function(){CFG.recipient=($('s_rec').value||'').trim();const an=$('s_apprName'),at=$('s_apprTitle');if(an)CFG.approverName=(an.value||'').trim();if(at)CFG.approverTitle=(at.value||'').trim();try{await saveConfig();toast('تم الحفظ');}catch(e){toast('تعذّر الحفظ');}closeSet();};
 async function loadUserList(){
   try{
     const snap=await getDocs(collection(db,'users'));
@@ -2589,11 +2599,13 @@ function buildReport(f){
   if(hasAudit && typeof auditCounts==='function'){
     const ac=auditCounts();
     const aseg=function(n,col){const p=ac.total?(n/ac.total*100):0;return p?'<div style="width:'+p+'%;background:'+col+'" title="'+n+'"></div>':'';};
-    const rcol=ac.critical>0?'#C0392B':ac.major>0?'#E67E22':ac.minor>0?'#D4A017':'#1B8A3A';
-    const rlab=ac.critical>0?'CRITICAL':ac.major>0?'HIGH':ac.minor>0?'MEDIUM':'LOW';
-    const rlabAr=ac.critical>0?'حرجة':ac.major>0?'مرتفعة':ac.minor>0?'متوسطة':'منخفضة';
     // SVG donut: green arc proportional to score
     const score=ac.score, circ=2*Math.PI*42, dash=circ*score/100;
+    // risk level strictly by compliance %
+    const riskHigh=score<70, riskMed=score>=70&&score<=90;
+    const rcol=riskHigh?'#C0392B':riskMed?'#E67E22':'#1B8A3A';
+    const rlab=riskHigh?'HIGH':riskMed?'MEDIUM':'LOW';
+    const rlabAr=riskHigh?'مرتفعة':riskMed?'متوسطة':'منخفضة';
     const donut='<svg width="104" height="104" viewBox="0 0 104 104">'+
       '<circle cx="52" cy="52" r="42" fill="none" stroke="#eef0f5" stroke-width="11"/>'+
       '<circle cx="52" cy="52" r="42" fill="none" stroke="'+rcol+'" stroke-width="11" stroke-linecap="round" stroke-dasharray="'+dash.toFixed(1)+' '+circ.toFixed(1)+'" transform="rotate(-90 52 52)"/>'+
@@ -2609,7 +2621,13 @@ function buildReport(f){
         '<div class="adc"><b style="color:#8a8a93">'+ac.NA+'</b><span>N/A<br>غير متوفر</span></div>'+
       '</div></div>'+
       '<div class="adbar">'+aseg(ac.C,'#1B8A3A')+aseg(ac.minor,'#D4A017')+aseg(ac.major,'#E67E22')+aseg(ac.critical,'#C0392B')+aseg(ac.NA,'#8a8a93')+'</div>'+
-      '<div class="adrisk">Risk Level / مستوى المخاطر: <b style="color:'+rcol+'">'+rlab+' · '+rlabAr+'</b> &nbsp;·&nbsp; Assessed / مُقيّم: <b>'+ac.assessed+'/'+ac.total+'</b></div>';
+      '<div class="adrisk">Risk Level / مستوى المخاطر: <b style="color:'+rcol+'">'+rlab+' · '+rlabAr+'</b> &nbsp;·&nbsp; Assessed / مُقيّم: <b>'+ac.assessed+'/'+ac.total+'</b><div style="font-size:9.5px;color:#7a8499;font-weight:600;margin-top:5px">Criteria / المعيار: &lt;70% = HIGH (مرتفعة) · 70–90% = MEDIUM (متوسطة) · &gt;90% = LOW (منخفضة)</div></div>'+
+      '<div class="riskcrit"><b>Risk Level Criteria / معايير تحديد مستوى المخاطر:</b>'+
+        '<span><i style="background:#C0392B"></i> CRITICAL / حرجة — '+(LANG==='ar'?'وجود أي عدم مطابقة حرجة واحدة على الأقل':'one or more Critical NC')+'</span>'+
+        '<span><i style="background:#E67E22"></i> HIGH / مرتفعة — '+(LANG==='ar'?'وجود عدم مطابقة كبرى (بدون حرجة)':'one or more Major NC (no Critical)')+'</span>'+
+        '<span><i style="background:#D4A017"></i> MEDIUM / متوسطة — '+(LANG==='ar'?'وجود عدم مطابقة صغرى فقط':'only Minor NC present')+'</span>'+
+        '<span><i style="background:#1B8A3A"></i> LOW / منخفضة — '+(LANG==='ar'?'لا توجد حالات عدم مطابقة':'no non-conformities')+'</span>'+
+      '</div>';
   }
   // legend explaining how to read the report
   const legend=hasAudit?('<div class="legend">'+H2('How to Read This Report','كيفية قراءة التقرير')+
@@ -2620,16 +2638,22 @@ function buildReport(f){
     '<li><span class="lg" style="background:#C0392B"></span><b>Critical NC / عدم مطابقة حرجة:</b> '+(LANG==='ar'?'مخالفة خطيرة تمسّ السلامة/الامتثال، تتطلّب إجراءً فورياً.':'Serious safety/compliance breach requiring immediate action.')+'</li>'+
     '<li><span class="lg" style="background:#8a8a93"></span><b>N/A / غير متوفر:</b> '+(LANG==='ar'?'البند غير منطبق أو غير متوفر.':'Item not applicable or not available.')+'</li>'+
     '</ul></div>'):'';
-  // dual signatures
+  // dual/triple signatures — approver entered per-report (shows only here, not in header)
+  const apprName=(f.apprName||'').trim();
+  const apprTitle=(f.apprTitle||'').trim();
+  const apprDate=(f.apprDate||'').trim();
+  const apprBox=(isAuditRep&&(apprName||apprTitle))?('<div class="sgbox"><div class="sgrole">'+(LANG==='ar'?'اعتماد / Approved By':'Approved By')+'</div><div class="sgline"></div><div class="sgname">'+esc(apprName||'')+(apprTitle?'<br><span style="font-weight:600;color:#7a8499">'+esc(apprTitle)+'</span>':'')+(apprDate?'<br><span style="font-weight:600;color:#7a8499">Date / التاريخ: '+esc(apprDate)+'</span>':'')+'</div></div>'):'';
   const dualSign='<div class="sign">'+H2('Approvals','الاعتماد والتوقيعات')+
     '<div class="sg2">'+
-      '<div class="sgbox"><div class="sgrole">'+(LANG==='ar'?'مدير المشروع':'Project Manager')+'</div><div class="sgline">______________________</div><div class="sgname">'+esc(f.pm||(LANG==='ar'?'الاسم / التوقيع / التاريخ':'Name / Signature / Date'))+'</div></div>'+
-      '<div class="sgbox"><div class="sgrole">'+(LANG==='ar'?'مهندس الجودة (QA/QC)':'QA/QC Engineer')+'</div>'+(sig?('<img src="'+sig+'" style="height:54px;max-width:200px">'):'<div class="sgline">______________________</div>')+'<div class="sgname">'+esc(f.by||SESSION.name)+'</div></div>'+
+      '<div class="sgbox"><div class="sgrole">'+(LANG==='ar'?'مدير المشروع':'Project Manager')+'</div><div class="sgline"></div><div class="sgname">'+esc(f.pm||(LANG==='ar'?'الاسم / التوقيع / التاريخ':'Name / Signature / Date'))+'</div></div>'+
+      '<div class="sgbox"><div class="sgrole">'+(LANG==='ar'?'مهندس الجودة (QA/QC)':'QA/QC Engineer')+'</div>'+(sig?('<img src="'+sig+'" style="height:54px;max-width:200px">'):'<div class="sgline"></div>')+'<div class="sgname">'+esc(f.by||SESSION.name)+'</div></div>'+
+      apprBox+
     '</div></div>';
   const rep=
   '<!DOCTYPE html><html lang="ar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QAQC Report</title><style>'+
-  '*{box-sizing:border-box}'+
-  'body{font-family:"Segoe UI","Helvetica Neue",Arial,"Noto Kufi Arabic","Geeza Pro",Tahoma,sans-serif;margin:0;color:#1c2433;font-size:12.5px;line-height:1.55;-webkit-font-smoothing:antialiased}'+
+  '*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+  'body{font-family:"Segoe UI","Helvetica Neue",Arial,"Noto Kufi Arabic","Geeza Pro",Tahoma,sans-serif;margin:0;color:#1c2433;font-size:12.5px;line-height:1.55;-webkit-font-smoothing:antialiased;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+  '*{-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
   '.doc{max-width:920px;margin:0 auto;background:#fff}'+
   '.hd{background:linear-gradient(135deg,'+NAVY+' 0%,#1a2f5c 100%);color:#fff;padding:20px 26px;display:flex;align-items:center;gap:16px}'+
   '.hd img{height:52px;background:#fff;border-radius:8px;padding:5px}.hd .ti{margin-inline-start:auto;text-align:end}.hd b{font-size:19px;letter-spacing:.3px;display:block}.hd span{font-size:11px;opacity:.8;letter-spacing:.4px}'+
@@ -2667,8 +2691,8 @@ function buildReport(f){
   '.itemEn{font-weight:600;color:#1c2433;direction:ltr;unicode-bidi:isolate}'+
   '.ar{color:#6a7488;font-size:10.5px;direction:rtl;unicode-bidi:isolate;display:block;margin-top:3px;text-align:right}'+
   '.rm{color:#7a8499;font-size:10.5px;margin-top:3px}.cr{color:#5a6478;font-size:10.5px;width:120px}.crit-tag{display:block;color:#8a93a6;font-size:10px;margin-top:2px}'+
-  '.pill{font-weight:800;text-align:center;font-size:10.5px;padding:4px 7px;border-radius:20px;white-space:nowrap;color:#fff}'+
-  '.pill.ok{background:#1B8A3A}.pill.no{background:#C0392B}.pill.na{background:#8a8a93}.pill.maj{background:#E67E22}.pill.min{background:#D4A017}'+
+  '.pill{font-weight:800;text-align:center;font-size:10.5px;padding:4px 9px;border-radius:20px;white-space:nowrap;color:#fff;display:inline-block;border:1.5px solid transparent}'+
+  '.pill.ok{background:#1B8A3A;border-color:#15702f}.pill.no{background:#C0392B;border-color:#a02f23}.pill.na{background:#8a8a93;border-color:#73737b}.pill.maj{background:#E67E22;border-color:#cf6f1b}.pill.min{background:#D4A017;border-color:#b88a13}'+
   // legend
   '.legend{margin-top:16px;background:#fafbfd;border:1px solid #e8ebf2;border-radius:10px;padding:14px 16px}.legend ul{list-style:none;padding:0;margin:0}'+
   '.legend li{margin:8px 0;font-size:11px;display:flex;align-items:flex-start;gap:8px;line-height:1.5}.lg{flex:0 0 auto;width:13px;height:13px;border-radius:4px;margin-top:2px}'+
