@@ -2479,7 +2479,7 @@ window.addAuditTemplate=async function(){
 function answerDisplay(a,it){
   const tp=itemType(it);
   if(tp==='okna'){const s=a&&a.status||'—';const cl=s==='OK'?'ok':s==='Not OK'?'no':s==='N/A'?'na':'';return {txt:s,cl};}
-  if(tp==='audit'){const m={C:'Compliant / مطابق',minor:'Minor NC / صغرى',major:'Major NC / كبرى',critical:'Critical NC / حرجة',NA:'N/A / غير متوفر'};const s=a&&a.status;const cl=s==='C'?'ok':s==='minor'?'na':s==='major'?'maj':s==='critical'?'no':'';return {txt:s?m[s]:'—',cl};}
+  if(tp==='audit'){const m={C:'Compliant',minor:'Minor NC',major:'Major NC',critical:'Critical NC',NA:'N/A'};const s=a&&a.status;const cl=s==='C'?'ok':s==='minor'?'min':s==='major'?'maj':s==='critical'?'no':'na';return {txt:s?m[s]:'—',cl};}
   if(tp==='yesno'){const s=a&&a.yn?(a.yn==='Yes'?'Yes / نعم':'No / لا'):'—';return {txt:s,cl:a&&a.yn==='Yes'?'ok':a&&a.yn==='No'?'no':''};}
   if(tp==='rating'){const r=a&&a.rating||0;return {txt:'★'.repeat(r)+'☆'.repeat(5-r)+' ('+r+'/5)',cl:r>=4?'ok':r>=2?'na':r>0?'no':''};}
   if(tp==='text'){return {txt:esc(a&&a.text||'—'),cl:''};}
@@ -2488,6 +2488,7 @@ function answerDisplay(a,it){
   return {txt:'—',cl:''};
 }
 function buildReport(f){
+  const H2=function(en,ar){return '<div class="h2"><span class="en">'+en+'</span>'+(ar?'<span class="ar">'+ar+'</span>':'')+'</div>';};
   const c=counts();
   const pct=c.done?Math.round(c.ok/c.done*100):0;
   const rec=CFG.recipient;
@@ -2513,7 +2514,7 @@ function buildReport(f){
         let extra='';
         if(a.remark)extra+='<div class="rm">↳ '+esc(a.remark)+'</div>';
         if(a.photo)extra+='<div style="margin-top:4px"><img src="'+a.photo+'" style="height:80px;border-radius:5px;border:1px solid #ddd"></div>';
-        rows+='<tr><td><span class="qn">'+qn+'</span> '+esc(it[0])+'<div class="ar">'+esc(it[1])+'</div>'+extra+'</td><td class="cr">'+esc(it[2])+'</td><td class="pill '+disp.cl+'">'+disp.txt+'</td></tr>';
+        rows+='<tr><td><span class="qn">'+qn+'</span><span class="itemEn">'+esc(it[0])+'</span><span class="ar">'+esc(it[1])+'</span>'+(it[2]?'<span class="crit-tag">✓ Acceptance / المعيار: '+esc(it[2])+'</span>':'')+extra+'</td><td class="cr">'+esc(it[2]||'-')+'</td><td><span class="pill '+disp.cl+'">'+disp.txt+'</span></td></tr>';
         // collect findings (okna Not OK, yesno No, or audit minor/major/critical)
         const isAuditNC=itemType(it)==='audit'&&['minor','major','critical'].indexOf(a.status)>=0;
         if((itemType(it)==='okna'&&a.status==='Not OK')||(itemType(it)==='yesno'&&a.yn==='No')||isAuditNC){
@@ -2524,13 +2525,14 @@ function buildReport(f){
       });
     });
   });
-  const ncSection = ncList? '<div class="h2">Findings & Required Actions / الملاحظات والإجراءات</div><table class="nctab"><tr><th>#</th><th>البند / Item</th><th>Severity / التصنيف</th><th>Finding / حالة عدم المطابقة</th><th>Required Action / الإجراء</th><th>Closure / الإغلاق</th></tr>'+ncList+'</table>' : '';
+  const ncSection = ncList? H2('Findings & Required Actions','الملاحظات والإجراءات التصحيحية')+'<table class="nctab"><tr><th>#</th><th>Item / البند</th><th>Severity / التصنيف</th><th>Finding / عدم المطابقة</th><th>Action / الإجراء</th><th>Closure / الإغلاق</th></tr>'+ncList+'</table>' : '';
   let pics=photos.map(p=>'<div class="pc"><img src="'+p.dataUrl+'"><div class="pcap">'+esc(p.time)+'</div></div>').join('');
   const dash='<div class="dash"><div class="donut" style="background:conic-gradient('+ORANGE+' 0 '+pct+'%, #e6e6ee '+pct+'% 100%)"><div class="hole"><b>'+pct+'%</b><span>Compliance</span></div></div>'+
     '<div class="bars">'+bar('OK / Yes',c.ok,c.total,'#1B8A3A')+bar('Not OK / No',c.no,c.total,'#C0392B')+bar('N/A',c.na,c.total,'#8a8a93')+'</div></div>';
   // ----- audit header info + stat widgets -----
   const isAuditRep=(CUR&&CUR.kind==='audit');
   const reportTitle=isAuditRep?'MONTHLY QA AUDIT REPORT':'MAINTENANCE QA/QC REPORT';
+  const reportTitleAr=isAuditRep?'تقرير التدقيق الشهري للجودة':'تقرير ضمان الجودة للصيانة';
   let infoBlock,statWidgets='';
   if(isAuditRep){
     const au=f.audit||{};
@@ -2538,33 +2540,47 @@ function buildReport(f){
     const woPct=woR?Math.round(woC/woR*100):0, trPct=trR?Math.round(trD/trR*100):0;
     const empT=parseFloat(au.empTotal)||0,secT=parseFloat(au.secTotal)||0,secExp=parseFloat(au.secExpired)||0,secMiss=parseFloat(au.secMissing)||0;
     const validSec=Math.max(secT-secExp,0);
-    const secInfo=(empT||secT||secExp||secMiss)?('<div class="h2">SEC ID Compliance / الالتزام بهويات SEC</div>'+
+    const secInfo=(empT||secT||secExp||secMiss)?(H2('SEC ID Compliance','')+
       '<div class="statg">'+
-        '<div class="statbox"><span>Total Employees<br>إجمالي الموظفين</span><b>'+empT+'</b></div>'+
-        '<div class="statbox"><span>Valid SEC IDs<br>هويات سارية</span><b style="color:#1B8A3A">'+validSec+'</b></div>'+
-        '<div class="statbox"><span>Expired<br>منتهية</span><b style="color:'+(secExp>0?'#C0392B':'#1B8A3A')+'">'+secExp+'</b></div>'+
-        '<div class="statbox"><span>Without SEC ID<br>بلا هوية</span><b style="color:'+(secMiss>0?'#C0392B':'#1B8A3A')+'">'+secMiss+'</b></div>'+
+        '<div class="statbox"><div class="lbl">Total Employees</div><b>'+empT+'</b></div>'+
+        '<div class="statbox"><div class="lbl">Valid SEC IDs</div><b style="color:#1B8A3A">'+validSec+'</b></div>'+
+        '<div class="statbox"><div class="lbl">Expired</div><b style="color:'+(secExp>0?'#C0392B':'#1B8A3A')+'">'+secExp+'</b></div>'+
+        '<div class="statbox"><div class="lbl">Without SEC ID</div><b style="color:'+(secMiss>0?'#C0392B':'#1B8A3A')+'">'+secMiss+'</b></div>'+
       '</div>'):'';
-    infoBlock='<div class="h2">Audit Information / بيانات التدقيق</div>'+
-      '<div class="info"><div><b>Project / المشروع:</b> '+esc(f.project||'-')+'</div><div><b>Client / العميل:</b> '+esc(f.client||'-')+'</div>'+
-      '<div><b>Contract / العقد:</b> '+esc(f.contract||'-')+'</div><div><b>City / المدينة:</b> '+esc(f.city||'-')+'</div>'+
-      '<div><b>Audit Month / الشهر:</b> '+esc(f.month||'-')+'</div><div><b>Date / التاريخ:</b> '+esc(f.date||'-')+'</div>'+
-      '<div><b>Project Manager / مدير المشروع:</b> '+esc(f.pm||'-')+'</div><div><b>QA/QC Engineer / مهندس الجودة:</b> '+esc(f.by||SESSION.name)+'</div></div>'+
-      '<div class="h2">Performance Statistics / إحصائيات الأداء</div>'+
+    const woCol=woPct>=90?'#1B8A3A':woPct>=70?'#D4A017':'#C0392B';
+    const trCol=trPct>=90?'#1B8A3A':trPct>=70?'#D4A017':'#C0392B';
+    infoBlock=H2('Audit Information','بيانات التدقيق')+
+      '<div class="info">'+
+      '<div class="row"><span class="k">Project / المشروع</span><span class="v">'+esc(f.project||'-')+'</span></div>'+
+      '<div class="row"><span class="k">Client / العميل</span><span class="v">'+esc(f.client||'-')+'</span></div>'+
+      '<div class="row"><span class="k">Contract / العقد</span><span class="v">'+esc(f.contract||'-')+'</span></div>'+
+      '<div class="row"><span class="k">City / المدينة</span><span class="v">'+esc(f.city||'-')+'</span></div>'+
+      '<div class="row"><span class="k">Audit Month / الشهر</span><span class="v">'+esc(f.month||'-')+'</span></div>'+
+      '<div class="row"><span class="k">Date / التاريخ</span><span class="v">'+esc(f.date||'-')+'</span></div>'+
+      '<div class="row"><span class="k">Project Manager / مدير المشروع</span><span class="v">'+esc(f.pm||'-')+'</span></div>'+
+      '<div class="row"><span class="k">QA/QC Engineer / مهندس الجودة</span><span class="v">'+esc(f.by||SESSION.name)+'</span></div>'+
+      '</div>'+
+      H2('Performance Statistics','إحصائيات الأداء')+
       '<div class="statg">'+
-        '<div class="statbox"><span>Work Orders Received<br>أوامر عمل مستلمة</span><b>'+woR+'</b></div>'+
-        '<div class="statbox"><span>Work Orders Closed<br>أوامر عمل مقفلة</span><b style="color:'+(woPct>=90?'#1B8A3A':woPct>=70?'#D4A017':'#C0392B')+'">'+woC+'</b><i>'+woPct+'%</i></div>'+
-        '<div class="statbox"><span>Trainings Required<br>دورات مطلوبة</span><b>'+trR+'</b></div>'+
-        '<div class="statbox"><span>Trainings Completed<br>دورات منفّذة</span><b style="color:'+(trPct>=90?'#1B8A3A':trPct>=70?'#D4A017':'#C0392B')+'">'+trD+'</b><i>'+trPct+'%</i></div>'+
+        '<div class="statbox"><div class="lbl">Work Orders Received</div><b>'+woR+'</b></div>'+
+        '<div class="statbox"><div class="lbl">Work Orders Closed</div><b style="color:'+woCol+'">'+woC+'</b><div class="spro"><div style="width:'+Math.min(woPct,100)+'%;background:'+woCol+'"></div></div><i>'+woPct+'% closed</i></div>'+
+        '<div class="statbox"><div class="lbl">Trainings Required</div><b>'+trR+'</b></div>'+
+        '<div class="statbox"><div class="lbl">Trainings Completed</div><b style="color:'+trCol+'">'+trD+'</b><div class="spro"><div style="width:'+Math.min(trPct,100)+'%;background:'+trCol+'"></div></div><i>'+trPct+'% done</i></div>'+
       '</div>'+secInfo;
   } else {
-    infoBlock='<div class="h2">Work Order Information / بيانات أمر العمل</div>'+
-      '<div class="info"><div><b>Project:</b> '+esc(f.project||'-')+'</div><div><b>Client:</b> '+esc(f.client||'-')+'</div>'+
-      '<div><b>Contract:</b> '+esc(f.contract||'-')+'</div><div><b>City:</b> '+esc(f.city||'-')+'</div>'+
-      '<div><b>Site:</b> '+esc(f.site)+'</div><div><b>LOA:</b> '+esc(f.loa)+'</div>'+
-      '<div><b>Service:</b> '+esc(f.service)+'</div><div><b>System:</b> '+esc(f.system)+'</div>'+
-      '<div><b>Team:</b> '+esc(f.team)+'</div><div><b>Date:</b> '+esc(f.date)+'</div>'+
-      '<div><b>By:</b> '+esc(f.by||SESSION.name)+'</div></div>';
+    infoBlock=H2('Work Order Information','بيانات أمر العمل')+
+      '<div class="info">'+
+      '<div class="row"><span class="k">Project / المشروع</span><span class="v">'+esc(f.project||'-')+'</span></div>'+
+      '<div class="row"><span class="k">Client / العميل</span><span class="v">'+esc(f.client||'-')+'</span></div>'+
+      '<div class="row"><span class="k">Contract / العقد</span><span class="v">'+esc(f.contract||'-')+'</span></div>'+
+      '<div class="row"><span class="k">City / المدينة</span><span class="v">'+esc(f.city||'-')+'</span></div>'+
+      '<div class="row"><span class="k">Site / المحطة</span><span class="v">'+esc(f.site||'-')+'</span></div>'+
+      '<div class="row"><span class="k">LOA / رقم الأمر</span><span class="v">'+esc(f.loa||'-')+'</span></div>'+
+      '<div class="row"><span class="k">Service / الخدمة</span><span class="v">'+esc(f.service||'-')+'</span></div>'+
+      '<div class="row"><span class="k">Systems / الأنظمة</span><span class="v">'+esc(f.system||'-')+'</span></div>'+
+      '<div class="row"><span class="k">Team / الفريق</span><span class="v">'+esc(f.team||'-')+'</span></div>'+
+      '<div class="row"><span class="k">Date / التاريخ</span><span class="v">'+esc(f.date||'-')+'</span></div>'+
+      '</div>';
   }
   const sigBlock=sig?'<img src="'+sig+'" style="height:70px;max-width:240px;border-bottom:1px solid #333">':'______________________';
   // ----- audit dashboard + legend (only when audit items exist) -----
@@ -2572,23 +2588,31 @@ function buildReport(f){
   let auditBlock='';
   if(hasAudit && typeof auditCounts==='function'){
     const ac=auditCounts();
-    const aseg=function(n,col){const p=ac.total?(n/ac.total*100):0;return p?'<div style="width:'+p+'%;background:'+col+'"></div>':'';};
+    const aseg=function(n,col){const p=ac.total?(n/ac.total*100):0;return p?'<div style="width:'+p+'%;background:'+col+'" title="'+n+'"></div>':'';};
     const rcol=ac.critical>0?'#C0392B':ac.major>0?'#E67E22':ac.minor>0?'#D4A017':'#1B8A3A';
-    const rlab=ac.critical>0?'CRITICAL / حرجة':ac.major>0?'High / مرتفعة':ac.minor>0?'Medium / متوسطة':'Low / منخفضة';
-    auditBlock='<div class="h2">Audit Summary / ملخّص التدقيق</div>'+
-      '<div class="adash"><div class="adscore" style="border-color:'+rcol+'"><b style="color:'+rcol+'">'+ac.score+'%</b><span>Compliance / الامتثال</span></div>'+
+    const rlab=ac.critical>0?'CRITICAL':ac.major>0?'HIGH':ac.minor>0?'MEDIUM':'LOW';
+    const rlabAr=ac.critical>0?'حرجة':ac.major>0?'مرتفعة':ac.minor>0?'متوسطة':'منخفضة';
+    // SVG donut: green arc proportional to score
+    const score=ac.score, circ=2*Math.PI*42, dash=circ*score/100;
+    const donut='<svg width="104" height="104" viewBox="0 0 104 104">'+
+      '<circle cx="52" cy="52" r="42" fill="none" stroke="#eef0f5" stroke-width="11"/>'+
+      '<circle cx="52" cy="52" r="42" fill="none" stroke="'+rcol+'" stroke-width="11" stroke-linecap="round" stroke-dasharray="'+dash.toFixed(1)+' '+circ.toFixed(1)+'" transform="rotate(-90 52 52)"/>'+
+      '<text x="52" y="50" text-anchor="middle" font-size="22" font-weight="800" fill="'+NAVY+'">'+score+'%</text>'+
+      '<text x="52" y="65" text-anchor="middle" font-size="8" font-weight="700" fill="#7a8499">COMPLIANCE</text></svg>';
+    auditBlock=H2('Audit Performance Summary','ملخّص أداء التدقيق')+
+      '<div class="adash"><div style="flex:0 0 auto">'+donut+'</div>'+
       '<div class="adcells">'+
-        '<div class="adc"><b style="color:#1B8A3A">'+ac.C+'</b><span>Compliant / مطابق</span></div>'+
-        '<div class="adc"><b style="color:#D4A017">'+ac.minor+'</b><span>Minor / صغرى</span></div>'+
-        '<div class="adc"><b style="color:#E67E22">'+ac.major+'</b><span>Major / كبرى</span></div>'+
-        '<div class="adc"><b style="color:#C0392B">'+ac.critical+'</b><span>Critical / حرجة</span></div>'+
-        '<div class="adc"><b style="color:#8a8a93">'+ac.NA+'</b><span>N/A / غير متوفر</span></div>'+
+        '<div class="adc"><b style="color:#1B8A3A">'+ac.C+'</b><span>Compliant<br>مطابق</span></div>'+
+        '<div class="adc"><b style="color:#D4A017">'+ac.minor+'</b><span>Minor<br>صغرى</span></div>'+
+        '<div class="adc"><b style="color:#E67E22">'+ac.major+'</b><span>Major<br>كبرى</span></div>'+
+        '<div class="adc"><b style="color:#C0392B">'+ac.critical+'</b><span>Critical<br>حرجة</span></div>'+
+        '<div class="adc"><b style="color:#8a8a93">'+ac.NA+'</b><span>N/A<br>غير متوفر</span></div>'+
       '</div></div>'+
       '<div class="adbar">'+aseg(ac.C,'#1B8A3A')+aseg(ac.minor,'#D4A017')+aseg(ac.major,'#E67E22')+aseg(ac.critical,'#C0392B')+aseg(ac.NA,'#8a8a93')+'</div>'+
-      '<div class="adrisk">Risk Level / مستوى المخاطر: <b style="color:'+rcol+'">'+rlab+'</b></div>';
+      '<div class="adrisk">Risk Level / مستوى المخاطر: <b style="color:'+rcol+'">'+rlab+' · '+rlabAr+'</b> &nbsp;·&nbsp; Assessed / مُقيّم: <b>'+ac.assessed+'/'+ac.total+'</b></div>';
   }
   // legend explaining how to read the report
-  const legend=hasAudit?('<div class="legend"><div class="h2">How to Read This Report / كيفية قراءة التقرير</div>'+
+  const legend=hasAudit?('<div class="legend">'+H2('How to Read This Report','كيفية قراءة التقرير')+
     '<ul>'+
     '<li><span class="lg" style="background:#1B8A3A"></span><b>Compliant / مطابق:</b> '+(LANG==='ar'?'البند مطابق للمتطلّبات.':'Item meets requirements.')+'</li>'+
     '<li><span class="lg" style="background:#D4A017"></span><b>Minor NC / عدم مطابقة صغرى:</b> '+(LANG==='ar'?'مخالفة بسيطة لا تؤثّر على الأداء، تُصحَّح في وقت معقول.':'Minor deviation, low impact, corrected in due course.')+'</li>'+
@@ -2597,53 +2621,84 @@ function buildReport(f){
     '<li><span class="lg" style="background:#8a8a93"></span><b>N/A / غير متوفر:</b> '+(LANG==='ar'?'البند غير منطبق أو غير متوفر.':'Item not applicable or not available.')+'</li>'+
     '</ul></div>'):'';
   // dual signatures
-  const dualSign='<div class="sign"><div class="h2">Approvals / الاعتماد</div>'+
+  const dualSign='<div class="sign">'+H2('Approvals','الاعتماد والتوقيعات')+
     '<div class="sg2">'+
       '<div class="sgbox"><div class="sgrole">'+(LANG==='ar'?'مدير المشروع':'Project Manager')+'</div><div class="sgline">______________________</div><div class="sgname">'+esc(f.pm||(LANG==='ar'?'الاسم / التوقيع / التاريخ':'Name / Signature / Date'))+'</div></div>'+
       '<div class="sgbox"><div class="sgrole">'+(LANG==='ar'?'مهندس الجودة (QA/QC)':'QA/QC Engineer')+'</div>'+(sig?('<img src="'+sig+'" style="height:54px;max-width:200px">'):'<div class="sgline">______________________</div>')+'<div class="sgname">'+esc(f.by||SESSION.name)+'</div></div>'+
-    '</div>'+
-    '<p style="color:#888;font-size:11px;margin-top:10px">Generated: '+new Date().toLocaleString('en-GB')+'</p></div>';
+    '</div></div>';
   const rep=
   '<!DOCTYPE html><html lang="ar"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>QAQC Report</title><style>'+
-  '*{box-sizing:border-box}body{font-family:Arial,Tahoma,sans-serif;margin:0;color:#1c1c28;font-size:13px}'+
-  '.hd{background:'+NAVY+';color:#fff;padding:14px 18px;display:flex;align-items:center;gap:14px}'+
-  '.hd img{height:46px;background:#fff;border-radius:6px;padding:3px}.hd .ti{margin-inline-start:auto;text-align:right}.hd b{font-size:17px}.hd span{font-size:11px;opacity:.85}'+
-  '.or{height:5px;background:'+ORANGE+'}.sec1{padding:16px 18px}'+
-  '.h2{color:'+NAVY+';font-size:15px;font-weight:800;border-bottom:2px solid #eee;padding-bottom:5px;margin:14px 0 10px}'+
-  '.info{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px}.info div{font-size:12.5px}.info b{color:'+NAVY+'}'+
-  '.dash{display:flex;align-items:center;gap:24px;margin:6px 0;flex-wrap:wrap}.donut{width:120px;height:120px;border-radius:50%;display:flex;align-items:center;justify-content:center}'+
-  '.hole{width:78px;height:78px;background:#fff;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center}.hole b{font-size:22px;color:'+NAVY+'}.hole span{font-size:9px;color:#888}'+
-  '.bars{flex:1;min-width:220px}.brow{display:flex;align-items:center;gap:8px;margin:7px 0;font-size:12px}.brow .lb{width:84px;font-weight:800}.track{flex:1;height:15px;background:#eee;border-radius:8px;overflow:hidden}.fillb{height:100%;border-radius:8px}'+
-  'table{width:100%;border-collapse:collapse;margin-top:6px}td,th{border-bottom:1px solid #eee;padding:7px 8px;vertical-align:top;font-size:12px;text-align:start}'+
-  '.stg{background:'+ORANGE+';color:#fff;font-weight:800}.secr{background:#FCE4D6;color:'+NAVY+';font-weight:800;font-size:11.5px}'+
-  '.ar{color:#666;font-size:11px}.rm{color:#777;font-size:11px;margin-top:3px}.cr{color:#999;font-size:11px;width:80px}'+
-  '.qn{display:inline-block;background:'+NAVY+';color:#fff;font-size:10px;font-weight:800;padding:1px 6px;border-radius:5px;margin-inline-end:5px}'+
-  '.pill{font-weight:800;text-align:center;color:#555}.pill.ok{color:#1B8A3A}.pill.no{color:#C0392B}.pill.na{color:#8a8a93}.pill.maj{color:#E67E22}'+
-  '.adash{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin:6px 0}.adscore{width:96px;height:96px;border:5px solid #ccc;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center}.adscore b{font-size:22px}.adscore span{font-size:8px;color:#888;text-align:center}'+
-  '.adcells{display:flex;gap:10px;flex-wrap:wrap;flex:1}.adc{text-align:center;min-width:70px;background:#f7f7fb;border-radius:8px;padding:8px 6px}.adc b{display:block;font-size:20px}.adc span{font-size:9px;color:#777}'+
-  '.adbar{display:flex;height:16px;border-radius:8px;overflow:hidden;background:#eee;margin:10px 0}.adbar div{height:100%}.adrisk{font-size:12.5px;font-weight:700;margin-bottom:6px}'+
-  '.legend{margin-top:14px}.legend ul{list-style:none;padding:0;margin:0}.legend li{margin:6px 0;font-size:11.5px}.lg{display:inline-block;width:12px;height:12px;border-radius:3px;margin-inline-end:7px;vertical-align:middle}'+
-  '.sg2{display:flex;gap:30px;flex-wrap:wrap;margin-top:8px}.sgbox{flex:1;min-width:200px}.sgrole{font-weight:800;color:'+NAVY+';margin-bottom:30px;font-size:12.5px}.sgline{font-size:13px}.sgname{font-size:11px;color:#888;margin-top:4px}'+
-  '.statg{display:flex;gap:10px;flex-wrap:wrap;margin:6px 0}.statbox{flex:1;min-width:120px;background:#f7f7fb;border-radius:9px;padding:10px;text-align:center}.statbox span{font-size:10px;color:#777;display:block;line-height:1.3}.statbox b{font-size:26px;display:block;color:'+NAVY+';margin-top:4px}.statbox i{font-size:11px;color:#888;font-style:normal}'+
-  '.nctab th{background:#fbeae6;color:'+NAVY+';font-weight:800;font-size:11px}'+
-  '.wd{background:#f7f7fb;border-inline-start:4px solid '+ORANGE+';padding:10px 12px;border-radius:6px;font-size:12.5px;white-space:pre-wrap}'+
-  '.pics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}.pc img{width:100%;border:1px solid #ddd;border-radius:6px}.pcap{font-size:10px;color:#888}'+
-  '.sign{margin-top:18px;border-top:2px solid #eee;padding-top:12px;font-size:12.5px}.sign p{margin:6px 0}'+
+  '*{box-sizing:border-box}'+
+  'body{font-family:"Segoe UI","Helvetica Neue",Arial,"Noto Kufi Arabic","Geeza Pro",Tahoma,sans-serif;margin:0;color:#1c2433;font-size:12.5px;line-height:1.55;-webkit-font-smoothing:antialiased}'+
+  '.doc{max-width:920px;margin:0 auto;background:#fff}'+
+  '.hd{background:linear-gradient(135deg,'+NAVY+' 0%,#1a2f5c 100%);color:#fff;padding:20px 26px;display:flex;align-items:center;gap:16px}'+
+  '.hd img{height:52px;background:#fff;border-radius:8px;padding:5px}.hd .ti{margin-inline-start:auto;text-align:end}.hd b{font-size:19px;letter-spacing:.3px;display:block}.hd span{font-size:11px;opacity:.8;letter-spacing:.4px}'+
+  '.or{height:4px;background:linear-gradient(90deg,'+ORANGE+' 0%,#f5803e 100%)}.sec1{padding:22px 26px}'+
+  '.h2{color:'+NAVY+';font-size:13.5px;font-weight:800;letter-spacing:.2px;margin:22px 0 12px;display:flex;align-items:center;gap:8px}'+
+  '.h2::before{content:"";width:4px;height:16px;background:'+ORANGE+';border-radius:3px;display:inline-block}'+
+  '.h2 .en{font-weight:800}.h2 .ar{font-weight:700;color:#5a6478;margin-inline-start:auto;font-size:12.5px}'+
+  '.info{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid #e8ebf2;border-radius:10px;overflow:hidden}'+
+  '.info .row{display:flex;padding:9px 13px;border-bottom:1px solid #eef0f5;font-size:12px}.info .row:nth-child(odd){background:#fafbfd}'+
+  '.info .k{color:#5a6478;font-weight:600;min-width:120px}.info .v{color:'+NAVY+';font-weight:700}'+
+  // stat cards
+  '.statg{display:flex;gap:11px;flex-wrap:wrap;margin:4px 0}'+
+  '.statbox{flex:1;min-width:120px;background:#fff;border:1px solid #e8ebf2;border-top:3px solid '+NAVY+';border-radius:10px;padding:13px 11px;text-align:center;box-shadow:0 1px 3px rgba(20,30,60,.04)}'+
+  '.statbox .lbl{font-size:10px;color:#5a6478;font-weight:600;line-height:1.35;min-height:26px}'+
+  '.statbox b{font-size:28px;display:block;color:'+NAVY+';margin-top:6px;line-height:1}.statbox i{font-size:11px;color:#7a8499;font-style:normal;font-weight:700}'+
+  // audit dashboard
+  '.adash{display:flex;align-items:center;gap:22px;flex-wrap:wrap;background:#fafbfd;border:1px solid #e8ebf2;border-radius:12px;padding:18px}'+
+  '.adscore{width:104px;height:104px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:0 0 auto}'+
+  '.adscore .inner{width:80px;height:80px;background:#fff;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center}'+
+  '.adscore b{font-size:23px;line-height:1}.adscore span{font-size:8px;color:#7a8499;font-weight:700;letter-spacing:.3px}'+
+  '.adcells{display:flex;gap:9px;flex-wrap:wrap;flex:1}'+
+  '.adc{text-align:center;min-width:64px;flex:1;background:#fff;border:1px solid #eef0f5;border-radius:9px;padding:10px 6px}'+
+  '.adc b{display:block;font-size:21px;line-height:1.1}.adc span{font-size:9px;color:#5a6478;font-weight:600}'+
+  '.adbar{display:flex;height:14px;border-radius:7px;overflow:hidden;background:#eef0f5;margin:14px 0 8px}.adbar div{height:100%}'+
+  '.adrisk{font-size:12.5px;font-weight:700;padding:8px 13px;border-radius:8px;background:#fafbfd;border:1px solid #e8ebf2}'+
+  // progress mini-bars in stat
+  '.spro{height:7px;background:#eef0f5;border-radius:5px;overflow:hidden;margin:7px 0 3px}.spro div{height:100%;border-radius:5px}'+
+  // tables
+  'table{width:100%;border-collapse:collapse;margin-top:6px;border:1px solid #e8ebf2;border-radius:10px;overflow:hidden}'+
+  'td,th{border-bottom:1px solid #eef0f5;padding:8px 10px;vertical-align:top;font-size:11.5px;text-align:start}'+
+  'thead th,tr:first-child th{background:'+NAVY+';color:#fff;font-weight:700;font-size:10.5px;letter-spacing:.3px;text-transform:uppercase}'+
+  '.stg{background:linear-gradient(90deg,'+ORANGE+',#f5803e);color:#fff;font-weight:800;font-size:11.5px;letter-spacing:.3px}'+
+  '.secr{background:#f0f3fa;color:'+NAVY+';font-weight:800;font-size:11px}'+
+  '.qn{display:inline-block;background:'+NAVY+';color:#fff;font-size:9.5px;font-weight:800;padding:2px 6px;border-radius:4px;margin-inline-end:6px;font-family:Arial,sans-serif;letter-spacing:.5px;unicode-bidi:isolate;direction:ltr;vertical-align:middle}'+
+  '.itemEn{font-weight:600;color:#1c2433;direction:ltr;unicode-bidi:isolate}'+
+  '.ar{color:#6a7488;font-size:10.5px;direction:rtl;unicode-bidi:isolate;display:block;margin-top:3px;text-align:right}'+
+  '.rm{color:#7a8499;font-size:10.5px;margin-top:3px}.cr{color:#5a6478;font-size:10.5px;width:120px}.crit-tag{display:block;color:#8a93a6;font-size:10px;margin-top:2px}'+
+  '.pill{font-weight:800;text-align:center;font-size:10.5px;padding:4px 7px;border-radius:20px;white-space:nowrap;color:#fff}'+
+  '.pill.ok{background:#1B8A3A}.pill.no{background:#C0392B}.pill.na{background:#8a8a93}.pill.maj{background:#E67E22}.pill.min{background:#D4A017}'+
+  // legend
+  '.legend{margin-top:16px;background:#fafbfd;border:1px solid #e8ebf2;border-radius:10px;padding:14px 16px}.legend ul{list-style:none;padding:0;margin:0}'+
+  '.legend li{margin:8px 0;font-size:11px;display:flex;align-items:flex-start;gap:8px;line-height:1.5}.lg{flex:0 0 auto;width:13px;height:13px;border-radius:4px;margin-top:2px}'+
+  // signatures
+  '.sg2{display:flex;gap:26px;flex-wrap:wrap;margin-top:10px}.sgbox{flex:1;min-width:210px;border:1px solid #e8ebf2;border-radius:10px;padding:14px}'+
+  '.sgrole{font-weight:800;color:'+NAVY+';font-size:12px;padding-bottom:6px;border-bottom:2px solid '+ORANGE+';margin-bottom:34px;display:inline-block}'+
+  '.sgline{border-top:1px solid #aab;font-size:0;height:1px}.sgname{font-size:11px;color:#5a6478;margin-top:6px;font-weight:700}'+
+  '.nctab th{font-size:10px}'+
+  '.wd{background:#fafbfd;border-inline-start:4px solid '+ORANGE+';padding:13px 15px;border-radius:8px;font-size:12px;white-space:pre-wrap;line-height:1.6}'+
+  '.pics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}.pc img{width:100%;border:1px solid #ddd;border-radius:8px}.pcap{font-size:10px;color:#888}'+
+  '.sign{margin-top:22px;border-top:2px solid #eef0f5;padding-top:14px}'+
+  '.foot{margin-top:16px;padding:12px 26px;background:'+NAVY+';color:rgba(255,255,255,.75);font-size:10px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}'+
   '.toolbar{position:sticky;top:0;background:#fff;padding:10px;display:flex;gap:8px;border-bottom:1px solid #eee;z-index:9}'+
   '.toolbar button{flex:1;padding:13px;border:0;border-radius:10px;font-size:15px;font-weight:800;color:#fff;cursor:pointer}.tp{background:'+ORANGE+'}.te{background:'+NAVY+'}'+
-  '@media print{.toolbar{display:none}}</style></head><body>'+
-  '<div class="toolbar"><button class="tp" onclick="window.print()">حفظ PDF / طباعة</button><button class="te" onclick="sendMail()">إرسال بالإيميل</button></div>'+
-  '<div class="hd"><img src="'+LOGO+'"><div class="ti"><b>'+reportTitle+'</b><br><span>'+(CUR&&CUR.refNo?esc(CUR.refNo)+' · ':'')+'Equipment & Technical Services Co. (ETECHS)</span></div></div><div class="or"></div>'+
+  '@media print{.toolbar{display:none}body{font-size:11.5px}.doc{max-width:100%}.statbox,.adc,.sgbox{box-shadow:none}}</style></head><body>'+
+  '<div class="doc">'+
+  '<div class="toolbar"><button class="tp" onclick="window.print()">حفظ PDF / Save PDF</button><button class="te" onclick="sendMail()">إرسال / Email</button></div>'+
+  '<div class="hd"><img src="'+LOGO+'"><div class="ti"><b>'+reportTitle+'</b><span style="font-size:12px;opacity:.9">'+reportTitleAr+'</span><br><span>'+(CUR&&CUR.refNo?esc(CUR.refNo)+' · ':'')+'Equipment &amp; Technical Services Co. (ETECHS)</span></div></div><div class="or"></div>'+
   '<div class="sec1">'+infoBlock+
-  (isAuditRep?'':'<div class="h2">Inspection Summary / ملخص التدقيق</div>'+dash)+
-  (f.workdone?'<div class="h2">'+(isAuditRep?'Executive Summary / الملخّص التنفيذي':'Work Done / وصف العمل')+'</div><div class="wd">'+esc(f.workdone)+'</div>':'')+
-  ncSection+
+  (isAuditRep?'':H2('Inspection Summary','ملخّص الفحص')+dash)+
+  (f.workdone?H2(isAuditRep?'Executive Summary':'Work Done',isAuditRep?'الملخّص التنفيذي':'وصف العمل')+'<div class="wd">'+esc(f.workdone)+'</div>':'')+
   auditBlock+
-  '<div class="h2">Detailed Results / النتائج التفصيلية</div><table>'+rows+'</table>'+
-  (f.notes?'<div class="h2">Site Notes / ملاحظات</div><div>'+esc(f.notes)+'</div>':'')+
-  (pics?'<div class="h2">Site Photos / الصور</div><div class="pics">'+pics+'</div>':'')+
+  ncSection+
+  H2('Detailed Results','النتائج التفصيلية')+'<table><tr><th>Item / البند</th><th>Acceptance / المعيار</th><th>Status / الحالة</th></tr>'+rows+'</table>'+
+  (f.notes?H2('Site Notes','ملاحظات')+'<div class="wd">'+esc(f.notes)+'</div>':'')+
+  (pics?H2('Site Photos','الصور')+'<div class="pics">'+pics+'</div>':'')+
   legend+
   dualSign+'</div>'+
+  '<div class="foot"><span>Equipment &amp; Technical Services Co. (ETECHS)'+(CUR&&CUR.refNo?' · '+esc(CUR.refNo):'')+'</span><span>Generated / صدر في: '+new Date().toLocaleString('en-GB')+'</span></div>'+
+  '</div>'+
   '<script>function sendMail(){var s=encodeURIComponent("Maintenance QA\\/QC Report - '+esc(f.site)+' - '+esc(f.date)+'");var b=encodeURIComponent("Site: '+esc(f.site)+'\\nLOA: '+esc(f.loa)+'\\nProject: '+esc(f.project)+'\\nClient: '+esc(f.client)+'\\nContract: '+esc(f.contract)+'\\nBy: '+esc(f.by||SESSION.name)+'\\nCompliance: '+pct+'%\\n\\nالرجاء إرفاق ملف الـPDF بعد حفظه.");location.href="mailto:'+rec+'?subject="+s+"&body="+b;}<\/script>'+
   '</body></html>';
   const w=window.open('','_blank');
@@ -2655,5 +2710,4 @@ function buildReport(f){
 function bar(lb,v,tot,col){const w=tot?Math.max(4,Math.round(v/tot*100)):0;return '<div class="brow"><span class="lb">'+lb+'</span><div class="track"><div class="fillb" style="width:'+w+'%;background:'+col+'"></div></div><b>'+v+'</b></div>';}
 
 </script>
-<script>if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}</script>
 </body></html>
