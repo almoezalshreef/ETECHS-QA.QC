@@ -2165,7 +2165,7 @@ function templateListPanel(){
      '<input id="newTplName" placeholder="'+(LANG==='ar'?'مثال: فحص أنظمة الإنذار':'e.g. Fire Alarm Inspection')+'">'+
      '<button class="btn" style="width:100%;margin-top:10px" onclick="addTemplate()">＋ '+(LANG==='ar'?'قالب جديد (فارغ)':'New template (empty)')+'</button>'+
      '<button class="btn" style="width:100%;margin-top:8px;background:var(--orange)" onclick="addAuditTemplate()">📋 '+(LANG==='ar'?'إضافة قالب «تدقيق شهري — أداء العقد» جاهز':'Add ready "Monthly Audit — Contract Performance" template')+'</button>'+
-     '<button class="btn" style="width:100%;margin-top:8px;background:var(--navy)" onclick="addQIP002Template()">📋 '+(LANG==='ar'?'إضافة قائمة فحص فريق الموقع (QIP-002) جاهزة':'Add ready Site Team Quality Checklist (QIP-002)')+'</button>'+
+     '<button class="btn" style="width:100%;margin-top:8px;background:var(--navy)" onclick="addQIP002Template()">📋 '+(LANG==='ar'?'إضافة قائمة فحص فريق الموقع (QIP-002) جاهزة':'Add ready Site Team Quality Checklist (QIP-002)')+'</button>'+'<button class="btn" style="width:100%;margin-top:8px;background:#1B7FB8" onclick="updateDefaultTemplate()">🔄 '+(LANG==='ar'?'تحديث القالب الافتراضي بالأسئلة الجديدة (رشاشات + تصنيف + مخاطر/عمل آمن/إسعافات)':'Update default template with new questions (Sprinkler + filtering + Risk/SWP/First-aid)')+'</button>'+'<div class="note" style="margin-top:6px">'+(LANG==='ar'?'يحدّث قالب الصيانة الحالي بالأقسام والأسئلة الجديدة. تقاريرك المحفوظة لا تتأثر.':'Updates the current maintenance template with new sections/questions. Saved reports are not affected.')+'</div>'+
      '</div></div></div>';
   return h;
 }
@@ -2489,6 +2489,22 @@ window.addAuditTemplate=async function(){
 };
 
 // ===== add ready QIP-002 Site Team Quality Checklist =====
+window.updateDefaultTemplate=async function(){
+  if(!confirm(LANG==='ar'?'تحديث قالب الصيانة الحالي بالأسئلة والأقسام الجديدة؟ (تقاريرك المحفوظة لن تتأثر)':'Update the current maintenance template with the new questions/sections? (Saved reports are not affected)'))return;
+  const fresh=JSON.parse(JSON.stringify(DEFAULT_STAGES));
+  // store as the primary template + refresh in-memory templates[0]
+  CFG.template=tplToStore(fresh);
+  if(!CFG.templates)CFG.templates=[];
+  const di=CFG.templates.findIndex(t=>t.id==='default');
+  const entry={id:'default',name:(LANG==='ar'?'صيانة الحريق / Fire Maintenance':'صيانة الحريق / Fire Maintenance'),kind:'',refPrefix:'',stages:fresh};
+  if(di>=0)CFG.templates[di]=entry; else CFG.templates.unshift(entry);
+  // ensure the new systems are in the managed filter list
+  if(!Array.isArray(CFG.systems))CFG.systems=[];
+  ['Sprinkler System','Gas Suppression (FM-200/CO2/Inert)','Fire Alarm System','Fire Pump System'].forEach(function(s){ if(DEFAULT_SYSTEMS.indexOf(s)<0 && CFG.systems.indexOf(s)<0) CFG.systems.push(s); });
+  SYSTEMS=systemsList();
+  try{ await saveConfig(); toast(LANG==='ar'?'تم تحديث القالب ✓':'Template updated ✓'); renderAdminBody(); }
+  catch(e){ toast((LANG==='ar'?'تعذّر التحديث: ':'Update failed: ')+e.message); }
+};
 window.addQIP002Template=async function(){
   if(!confirm(LANG==='ar'?'إضافة قائمة فحص فريق الموقع (QIP-002) الجاهزة؟':'Add the ready Site Team Quality Checklist (QIP-002)?'))return;
   if(!CFG.templates)CFG.templates=[];
