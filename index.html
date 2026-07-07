@@ -339,6 +339,11 @@
   .qnum{display:inline-block;background:var(--navy);color:#fff;font-size:11px;font-weight:800;padding:2px 7px;border-radius:6px;margin-inline-end:7px;vertical-align:middle;letter-spacing:.5px}
   html[data-theme=dark] .qnum{background:var(--orange)}
   .secLetter{display:inline-block;background:var(--orange);color:#fff;font-size:12px;font-weight:900;width:24px;height:24px;line-height:24px;text-align:center;border-radius:6px;margin-inline-end:4px}
+.modalOv{position:fixed;inset:0;background:rgba(10,10,30,.55);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px}
+.modalBox{background:var(--surface,#fff);border-radius:16px;padding:22px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:85vh;overflow:auto}
+.modalBox h3{color:var(--navy,#0F0A44)}
+html[data-theme=dark] .modalBox{background:#1a1f2e;color:#fff}
+.btn.ghost{background:transparent;border:1px solid var(--line,#ccc);color:var(--muted,#666)}
 </style></head><body>
 <div id="app"><div class="loadwrap"><div class="spinner"></div>Loading...</div></div>
 <script>window.onerror=function(m,s,l,c){var a=document.getElementById('app');if(a)a.innerHTML='<pre>'+m+'\n'+l+':'+c+'</pre>';};</script>
@@ -1415,28 +1420,117 @@ window.doSubmit=async function(){
   await saveCur(false);
   const f=form(); const rules=CUR.rules||CFG.rules;
   const isAudit=(CUR.kind==='audit');
+  const isTools=(CUR.kind==='tools');
   if(isAudit){
     if(!f.project){toast(LANG==='ar'?'اختر المشروع':'Select the project');return;}
     if(!f.pm){toast(LANG==='ar'?'أدخل اسم مدير المشروع':'Enter Project Manager name');const e=$('f_pm');if(e)e.scrollIntoView({behavior:'smooth',block:'center'});return;}
+  } else if(isTools){
+    if(!f.team){toast(LANG==='ar'?'أدخل اسم الفريق':'Enter the Team');const e=$('f_team');if(e)e.scrollIntoView({behavior:'smooth',block:'center'});return;}
   } else {
     if(!f.site||!f.loa){toast('أكمل المحطة ورقم LOA');return;}
   }
   // required answers
   let firstMissing=null;
-  TPL.forEach((st,si)=>st.secs.forEach((sec,ci)=>sec.items.forEach((it,ii)=>{
-    const key=kk(si,ci,ii);const a=answers[key];
-    const req = rules.allItems && itemRequired(it);
-    if(req && !isAnswered(a) && !firstMissing) firstMissing=key;
-    // required per-question photo (not for audit)
-    if(!isAudit && itemReqPhoto(it) && (!a||!a.photo) && !firstMissing) firstMissing=key;
-  })));
+  TPL.forEach((st,si)=>st.secs.forEach((sec,ci)=>{
+    if(typeof secActive==='function' && !secActive(sec)) return; // skip hidden (filtered) sections
+    sec.items.forEach((it,ii)=>{
+      const key=kk(si,ci,ii);const a=answers[key];
+      const req = rules.allItems && itemRequired(it);
+      if(req && !isAnswered(a) && !firstMissing) firstMissing=key;
+      // required per-question photo (not for audit)
+      if(!isAudit && !isTools && itemReqPhoto(it) && (!a||!a.photo) && !firstMissing) firstMissing=key;
+    });
+  }));
   if(firstMissing){toast('أكمل البنود المطلوبة');const el=$('it_'+firstMissing);if(el){el.classList.add('flag');el.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>el.classList.remove('flag'),2500);}return;}
-  if(!isAudit && rules.photo&&photos.length===0){toast('أضف صورة عامة واحدة على الأقل');$('ph').scrollIntoView({behavior:'smooth',block:'center'});return;}
-  if(!isAudit && rules.signature&&!sig){toast('وقّع في خانة التوقيع');$('sig').scrollIntoView({behavior:'smooth',block:'center'});return;}
+  if(!isAudit && !isTools && rules.photo&&photos.length===0){toast('أضف صورة عامة واحدة على الأقل');$('ph').scrollIntoView({behavior:'smooth',block:'center'});return;}
+  if(!isAudit && !isTools && rules.signature&&!sig){toast('وقّع في خانة التوقيع');$('sig').scrollIntoView({behavior:'smooth',block:'center'});return;}
   if(!CFG.recipient){openSet();toast('أضف إيميل المستلم في الإعدادات');return;}
   CUR.status='done'; await saveCur(false); logAct('close_report',(CUR.refNo||'')+' · '+((CUR.form&&(CUR.form.site||CUR.form.project))||'')); buzz([30,40,30]);
+  try{ await syncReportNCRs(CUR,f); }catch(e){ /* NCR auto-sync non-fatal */ }
   buildReport(f);
 };
+
+// ===== AUTO NCR SYNC FROM REPORTS =====
+// Every non-conformity in a submitted report becomes an NCR automatically.
+// Linked by reportId+questionKey so re-submitting updates (not duplicates).
+async function syncReportNCRs(rep, f){
+  if(!rep) return;
+  const tpl = TPL || [];
+  const ans = answers || {};
+  const sevMapEn={minor:'Minor',major:'Major',critical:'Critical'};
+  const found=[];
+  tpl.forEach((st,si)=>st.secs.forEach((sec,ci)=>sec.items.forEach((it,ii)=>{
+    const key=kk(si,ci,ii); const a=ans[key]; if(!a) return;
+    const tp=itemType(it);
+    const isAuditNC = tp==='audit' && ['minor','major','critical'].indexOf(a.status)>=0;
+    const isOkNC = tp==='okna' && a.status==='Not OK';
+    const isYesNC = tp==='yesno' && a.yn==='No';
+    if(isOkNC||isYesNC||isAuditNC){
+      const qnMap=(typeof buildQNumbers==='function')?buildQNumbers():{};
+      const qn=qnMap[key]||'';
+      found.push({
+        key, qn,
+        item: it[0]||'',
+        severity: isAuditNC ? sevMapEn[a.status] : 'Major',
+        finding: a.finding||'',
+        action: a.action||'',
+        due: a.closeDate||''
+      });
+    }
+  })));
+  // existing report-sourced NCRs for this report (avoid duplicates)
+  let existing={};
+  try{
+    const snap=await getDocs(query(collection(db,'ncr'),where('reportId','==',rep.id)));
+    snap.forEach(d=>{ const x=d.data(); if(x&&x.qkey&&x.reportId===rep.id) existing[x.qkey]={id:d.id,data:x}; });
+  }catch(e){
+    // fallback: pull all and filter (rules/index issue)
+    try{ const s2=await getDocs(collection(db,'ncr')); s2.forEach(d=>{const x=d.data(); if(x&&x.reportId===rep.id&&x.qkey) existing[x.qkey]={id:d.id,data:x};}); }catch(_){}
+  }
+  const proj=(f&&f.project)||'';
+  const siteOrLoc=(f&&(f.site||f.location||''))||'';
+  const refNo=rep.refNo||'';
+  for(const fnd of found){
+    const title=(fnd.qn?fnd.qn+' · ':'')+fnd.item;
+    const descParts=[];
+    if(refNo) descParts.push('Report: '+refNo);
+    if(siteOrLoc) descParts.push('Site/Location: '+siteOrLoc);
+    if(fnd.finding) descParts.push('Finding: '+fnd.finding);
+    const data={
+      title:title,
+      desc:descParts.join(' | '),
+      project:proj,
+      severity:fnd.severity,
+      action:fnd.action,
+      status:'Open',
+      source:'report',
+      reportId:rep.id,
+      reportRef:refNo,
+      qkey:fnd.key,
+      due:fnd.due||'',
+      updatedMs:Date.now(), updated:serverTimestamp()
+    };
+    const ex=existing[fnd.key];
+    if(ex){
+      // update only if the report still has this finding; keep manual status edits if user changed it
+      const keepStatus = ex.data.status && ex.data.status!=='Open' ? ex.data.status : 'Open';
+      await updateDoc(doc(db,'ncr',ex.id), Object.assign({}, data, {status:ex.data.statusLocked?ex.data.status:data.status}));
+      delete existing[fnd.key];
+    } else {
+      const nid='ncr_'+rep.id+'_'+fnd.key;
+      await setDoc(doc(db,'ncr',nid), Object.assign({
+        id:nid, owner:rep.owner||SESSION.uid, ownerName:rep.ownerName||SESSION.name, createdMs:Date.now(), created:serverTimestamp()
+      }, data));
+    }
+  }
+  // findings that were fixed (no longer NC): mark auto-NCR as Closed
+  for(const k in existing){
+    const ex=existing[k];
+    if(ex.data.source==='report'){
+      try{ await updateDoc(doc(db,'ncr',ex.id), {status:'Closed', autoClosed:true, updatedMs:Date.now(), updated:serverTimestamp()}); }catch(e){}
+    }
+  }
+}
 
 // ===== DASHBOARD =====
 let DASH_MONTH=null; // 'YYYY-MM' filter or null=all
@@ -1587,7 +1681,7 @@ function paintNCR(){
     const sevCls=n.severity==='عالية'?'sev-h':n.severity==='متوسطة'?'sev-m':'sev-l';
     const stCls=n.status==='مغلقة'?'st-closed':n.status==='قيد المعالجة'?'st-prog':'st-open';
     return '<div class="ncrCard'+(od?' overdue':'')+'" onclick="editNCR(\''+n.id+'\')">'+
-      '<div class="ncrTop"><span class="ncrTitle">'+esc(n.title||'(بدون عنوان)')+'</span>'+
+      '<div class="ncrTop"><span class="ncrTitle">'+(n.source==='report'?'<span title="auto from report" style="font-size:11px;background:#1B7FB8;color:#fff;padding:1px 6px;border-radius:5px;margin-inline-end:6px">🔗 '+(LANG==='ar'?'تلقائي':'auto')+'</span>':'')+esc(n.title||'(بدون عنوان)')+'</span>'+
       '<span class="ncrSt '+stCls+'">'+esc(n.status||'مفتوحة')+'</span></div>'+
       (n.project?'<div class="ncrMeta">📁 '+esc(n.project)+'</div>':'')+
       '<div class="ncrMeta">👤 '+esc(n.responsible||'—')+(n.due?' · 📅 '+esc(n.due):'')+(od?' · <b style="color:#C0392B">'+t('overdue')+'</b>':'')+'</div>'+
@@ -2172,11 +2266,9 @@ function templateListPanel(){
       '</div></div>';
   });
   h+='<div style="border:1px dashed var(--line);border-radius:10px;padding:10px;margin-top:10px">'+
-     '<label class="fld">'+(LANG==='ar'?'اسم القالب الجديد':'New template name')+'</label>'+
-     '<input id="newTplName" placeholder="'+(LANG==='ar'?'مثال: فحص أنظمة الإنذار':'e.g. Fire Alarm Inspection')+'">'+
-     '<button class="btn" style="width:100%;margin-top:10px" onclick="addTemplate()">＋ '+(LANG==='ar'?'قالب جديد (فارغ)':'New template (empty)')+'</button>'+
-     '<button class="btn" style="width:100%;margin-top:8px;background:var(--orange)" onclick="addAuditTemplate()">📋 '+(LANG==='ar'?'إضافة قالب «تدقيق شهري — أداء العقد» جاهز':'Add ready "Monthly Audit — Contract Performance" template')+'</button>'+
-     '<button class="btn" style="width:100%;margin-top:8px;background:var(--navy)" onclick="addQIP002Template()">📋 '+(LANG==='ar'?'إضافة قائمة فحص فريق الموقع (QIP-002) جاهزة':'Add ready Site Team Quality Checklist (QIP-002)')+'</button>'+'<button class="btn" style="width:100%;margin-top:8px;background:#8E44AD" onclick="addToolsTemplate()">🧰 '+(LANG==='ar'?'إضافة قائمة فحص الأدوات (Tools Inspection)':'Add Tools Inspection Checklist')+'</button>'+'<button class="btn" style="width:100%;margin-top:8px;background:#1B7FB8" onclick="updateDefaultTemplate()">🔄 '+(LANG==='ar'?'تحديث القالب الافتراضي بالأسئلة الجديدة (رشاشات + تصنيف + مخاطر/عمل آمن/إسعافات)':'Update default template with new questions (Sprinkler + filtering + Risk/SWP/First-aid)')+'</button>'+'<div class="note" style="margin-top:6px">'+(LANG==='ar'?'يحدّث قالب الصيانة الحالي بالأقسام والأسئلة الجديدة. تقاريرك المحفوظة لا تتأثر.':'Updates the current maintenance template with new sections/questions. Saved reports are not affected.')+'</div>'+
+     '<div class="fld" style="margin-bottom:8px">'+(LANG==='ar'?'القوالب الجاهزة':'Ready templates')+'</div>'+
+     '<button class="btn" style="width:100%;margin-top:4px;background:var(--orange)" onclick="openAddPicker()">＋ '+(LANG==='ar'?'إضافة قالب':'Add template')+'</button>'+
+     '<button class="btn" style="width:100%;margin-top:8px;background:#1B7FB8" onclick="openUpdatePicker()">🔄 '+(LANG==='ar'?'تحديث قالب':'Update template')+'</button>'+
      '</div></div></div>';
   return h;
 }
@@ -2230,8 +2322,10 @@ function curStages(){ return CFG.templates[EDIT_TPL].stages; }
 window.editTemplate=function(i){EDIT_TPL=i;renderAdminBody();};
 window.backToTemplates=function(){EDIT_TPL=-1;renderAdminBody();};
 window.renameTemplate=async function(name){CFG.templates[EDIT_TPL].name=name||CFG.templates[EDIT_TPL].name;await saveConfig();toast(t('saved'));};
-window.addTemplate=async function(){
-  const n=($('newTplName').value||'').trim(); if(!n){toast(LANG==='ar'?'اكتب اسم القالب':'Enter template name');return;}
+window.addTemplate=async function(nameArg){
+  const el=$('newTplName');
+  const n=(typeof nameArg==='string'&&nameArg.trim())?nameArg.trim():((el&&el.value||'').trim());
+  if(!n){toast(LANG==='ar'?'اكتب اسم القالب':'Enter template name');return;}
   const id='tpl'+Date.now();
   CFG.templates.push({id,name:n,stages:[{en:'SECTION 1',ar:'القسم 1',secs:[{en:'Items',ar:'البنود',items:[["New item","بند جديد","",{type:'okna',required:true}]]}]}]});
   await saveConfig(); toast(LANG==='ar'?'تم إنشاء القالب':'Template created'); renderAdminBody();
@@ -2500,6 +2594,29 @@ window.addAuditTemplate=async function(){
 };
 
 // ===== add ready QIP-002 Site Team Quality Checklist =====
+window.__picker=function(title,options){
+  // options: [{label, on}]
+  const ov=document.createElement('div'); ov.className='modalOv'; ov.id='pickerOv';
+  let btns=options.map((o,i)=>'<button class="btn" style="width:100%;margin-top:8px" data-i="'+i+'">'+o.label+'</button>').join('');
+  ov.innerHTML='<div class="modalBox"><h3 style="margin:0 0 12px">'+title+'</h3>'+btns+'<button class="btn ghost" style="width:100%;margin-top:14px" id="pickerCancel">'+(LANG==='ar'?'إلغاء':'Cancel')+'</button></div>';
+  document.body.appendChild(ov);
+  options.forEach((o,i)=>{ ov.querySelector('[data-i="'+i+'"]').onclick=function(){ ov.remove(); o.on(); }; });
+  ov.querySelector('#pickerCancel').onclick=function(){ ov.remove(); };
+  ov.onclick=function(e){ if(e.target===ov) ov.remove(); };
+};
+window.openAddPicker=function(){
+  window.__picker(LANG==='ar'?'اختر قالباً لإضافته':'Choose a template to add',[
+    {label:(LANG==='ar'?'📋 تدقيق شهري — أداء العقد':'📋 Monthly Audit — Contract Performance'),on:addAuditTemplate},
+    {label:(LANG==='ar'?'📋 قائمة فحص فريق الموقع (QIP-002)':'📋 Site Team Quality Checklist (QIP-002)'),on:addQIP002Template},
+    {label:(LANG==='ar'?'🧰 قائمة فحص الأدوات':'🧰 Tools Inspection Checklist'),on:addToolsTemplate},
+    {label:(LANG==='ar'?'＋ قالب جديد فارغ':'＋ New empty template'),on:function(){ const n=prompt(LANG==='ar'?'اسم القالب الجديد:':'New template name:'); if(n){ window.__newTplName=n; addTemplate(n); } }}
+  ]);
+};
+window.openUpdatePicker=function(){
+  window.__picker(LANG==='ar'?'اختر قالباً لتحديثه':'Choose a template to update',[
+    {label:(LANG==='ar'?'🔄 قالب صيانة الحريق (الأسئلة الجديدة: رشاشات + تصنيف + مخاطر/عمل آمن/إسعافات)':'🔄 Fire Maintenance template (new questions)'),on:updateDefaultTemplate}
+  ]);
+};
 window.updateDefaultTemplate=async function(){
   if(!confirm(LANG==='ar'?'تحديث قالب الصيانة الحالي بالأسئلة والأقسام الجديدة؟ (تقاريرك المحفوظة لن تتأثر)':'Update the current maintenance template with the new questions/sections? (Saved reports are not affected)'))return;
   const fresh=JSON.parse(JSON.stringify(DEFAULT_STAGES));
