@@ -238,7 +238,7 @@
   .mx5xaxis{text-align:center;font-size:10px;font-weight:700;color:#888;margin-top:4px}
   /* side drawer */
   .menubtn{background:rgba(255,255,255,.15);border:0;color:#fff;width:38px;height:38px;border-radius:10px;font-size:18px;cursor:pointer;flex:0 0 auto}
-  .drawer{position:fixed;top:0;left:0;right:auto;width:280px;max-width:82vw;height:100%;background:#fff;z-index:300;transform:translateX(-105%);transition:transform .25s;box-shadow:2px 0 18px rgba(0,0,0,.18);display:flex;flex-direction:column;padding-top:56px}
+  .drawer{position:fixed;top:0;left:0;right:auto;width:280px;max-width:82vw;height:100%;background:#fff;z-index:300;transform:translateX(-105%);transition:transform .25s;box-shadow:2px 0 18px rgba(0,0,0,.18);display:flex;flex-direction:column;overflow:hidden}
   html[dir=rtl] .drawer{left:auto;right:0;transform:translateX(105%)}
   .drawer.open{transform:translateX(0)!important}
   .dHead{background:var(--navy);color:#fff;padding:20px 16px;display:flex;align-items:center;gap:12px}
@@ -422,9 +422,14 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--flame);
 .fab:active{transform:scale(.93)}
 
 /* ---------- Drawer ---------- */
-.drawer{background:var(--surface);border-radius:0 22px 22px 0;box-shadow:var(--sh-2)}
+.drawer{background:var(--surface);border-radius:0 22px 22px 0;box-shadow:var(--sh-2);overflow:hidden}
 html[dir=rtl] .drawer{border-radius:22px 0 0 22px}
-.dHead{background:var(--grad-navy);border:0;padding:20px 16px}
+.dHead{background:var(--grad-navy);border:0;padding:calc(16px + env(safe-area-inset-top,0px)) 16px 16px;position:relative;z-index:1;box-sizing:border-box;width:100%}
+.dHead img{flex:0 0 auto}
+/* let the name/email block shrink so the close button never overflows */
+.dHt{flex:1 1 auto;min-width:0;overflow:hidden}
+.dHt b,.dHt span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.dClose{flex:0 0 auto;margin-inline-start:auto}
 .dHead img{background:#fff;border-radius:12px;padding:4px}
 .dHt b{color:#fff}.dHt span{color:rgba(255,255,255,.65)}
 .dClose{background:rgba(255,255,255,.12);border-radius:11px;color:#fff;width:36px;height:36px;
@@ -491,8 +496,12 @@ html[data-theme=dark] .lockBanner{background:linear-gradient(135deg,#2E2138,#3A2
 .lockTx{flex:1}.lockTx b{display:block;color:var(--ink);font-size:14px}
 .lockTx span{color:var(--muted);font-size:11.5px;line-height:1.4;display:block}
 .lockBtn{padding:10px 16px;font-size:13px}
-.rlocked .card .body{pointer-events:none;opacity:.94}
-.rlocked .card .body .pill,.rlocked .photos img{pointer-events:auto}
+/* Locked report: nothing inside the wrap is interactive except the lock banner */
+.rlocked > *:not(.lockBanner){pointer-events:none}
+.rlocked .lockBanner,.rlocked .lockBanner *{pointer-events:auto}
+.rlocked .card{opacity:.96}
+.rlocked input,.rlocked select,.rlocked textarea,.rlocked .seg button,.rlocked .sysChip{cursor:not-allowed}
+.rlocked .photos img{pointer-events:auto}
 
 /* ---------- Footer bar ---------- */
 .sb{background:color-mix(in srgb, var(--surface) 88%, transparent);backdrop-filter:blur(14px);
@@ -514,6 +523,51 @@ html[data-theme=dark] .lockBanner{background:linear-gradient(135deg,#2E2138,#3A2
 .toggle{border-radius:20px}
 .filterNote{border-radius:12px}
 .empty{color:var(--muted)}
+
+.traceBox{background:var(--surface2);border:1px solid var(--line);border-radius:13px;padding:10px 12px;margin-bottom:12px}
+.traceBox .row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:12px;border-bottom:1px dashed var(--line)}
+.traceBox .row:last-child{border-bottom:0}
+.traceBox .k{color:var(--muted);font-weight:700}
+.traceBox .v{color:var(--ink);font-weight:800;text-align:end;word-break:break-word}
+
+/* Header stays reachable while scrolling — the back arrow must never disappear */
+header.bar{position:sticky;top:0;z-index:340}
+.stripe{position:relative;z-index:339}
+
+.updBar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));
+  z-index:900;background:var(--grad-navy);color:#fff;border-radius:16px;box-shadow:var(--sh-2);
+  padding:12px 14px;display:flex;align-items:center;gap:12px;font-size:13px;font-weight:700;
+  animation:updIn .28s ease-out}
+@keyframes updIn{from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1}}
+.updBar span{flex:1}
+.updBar button{background:var(--grad-flame);color:#fff;border:0;border-radius:11px;
+  padding:9px 14px;font-weight:800;font-size:12.5px;cursor:pointer;flex:0 0 auto}
+.updBar button:active{transform:scale(.95)}
+.verTag{font-size:10px;opacity:.55;letter-spacing:.5px;text-align:center;padding:10px 0 4px}
+
+.schedCard{background:var(--surface);border:1px solid var(--line);border-inline-start:5px solid var(--muted);
+  border-radius:14px;box-shadow:var(--sh-1);padding:13px 14px;margin-bottom:10px;cursor:pointer;transition:transform .12s}
+.schedCard:active{transform:scale(.985)}
+.scTop{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.scDate b{font-size:15px;color:var(--ink);font-variant-numeric:tabular-nums}
+.scDate span{font-size:11.5px;color:var(--muted);margin-inline-start:7px}
+.scPill{color:#fff;font-size:10.5px;font-weight:800;padding:4px 10px;border-radius:20px;white-space:nowrap}
+.scTpl{font-weight:800;color:var(--ink);font-size:13.5px;margin-bottom:3px}
+.scMeta{font-size:11.5px;color:var(--muted)}
+.scWarn{margin-top:7px;font-size:11px;font-weight:800;color:#DC2626;background:#FEE2E2;
+  display:inline-block;padding:3px 9px;border-radius:8px}
+html[data-theme=dark] .scWarn{background:#3A1A1A}
+.scNote{margin-top:6px;font-size:11px;color:#15803D;font-weight:700}
+.notifBox{background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:12px 13px;margin:12px 0}
+.nbTitle{display:flex;align-items:center;gap:8px;font-weight:800;color:var(--ink);font-size:13px;margin-bottom:8px}
+.chkRow{display:flex;align-items:center;gap:9px;padding:7px 0;font-size:12.5px;color:var(--text);cursor:pointer}
+.chkRow input{width:18px;height:18px;accent-color:var(--flame);flex:0 0 auto}
+.refreshBtn{background:transparent;border:1.5px solid var(--line);border-radius:10px;color:var(--muted);
+  padding:6px 10px;font-size:11.5px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.refreshBtn:active{transform:scale(.95)}
+.refreshBtn svg{width:15px;height:15px}
+.spin{animation:spin360 .8s linear infinite}
+@keyframes spin360{to{transform:rotate(360deg)}}
 
 /* ---------- Scrollbar (subtle) ---------- */
 *::-webkit-scrollbar{width:5px;height:5px}
@@ -552,6 +606,7 @@ const I18N={
   // header / nav
   app_title:{en:'QA/QC Reports',ar:'تقارير الجودة QA/QC'},
   admin_panel:{en:'Control Panel',ar:'لوحة التحكّم'},
+  sched_title:{en:'Inspection Schedule',ar:'جدول مواعيد التفتيش'},
   dashboard:{en:'Dashboard',ar:'لوحة المعلومات'},
   ncr_title:{en:'Non-Conformities',ar:'عدم المطابقة'},
   settings:{en:'Settings',ar:'الإعدادات'},
@@ -627,14 +682,14 @@ const I18N={
   status:{en:'Status',ar:'الحالة'},
   severity:{en:'Severity',ar:'الخطورة'},
   corrective:{en:'Corrective Action',ar:'الإجراء التصحيحي'},
-  search_ncr:{en:'🔎 Search title/description/responsible',ar:'🔎 بحث في العنوان/الوصف/المسؤول'},
+  search_ncr:{en:'Search title/description/responsible',ar:'بحث في العنوان/الوصف/المسؤول'},
   all_status:{en:'All statuses',ar:'كل الحالات'},
   all_projects:{en:'All projects',ar:'كل المشاريع'},
   no_ncr:{en:'No cases. Tap + to add a non-conformity.',ar:'لا توجد حالات. اضغط ＋ لإضافة حالة عدم مطابقة.'},
   overdue:{en:'overdue',ar:'متأخرة'},
   // procedures
   procs_title:{en:'Procedures',ar:'الإجراءات'},
-  proc_search:{en:'🔎 Search procedures',ar:'🔎 بحث في الإجراءات'},
+  proc_search:{en:'Search procedures',ar:'بحث في الإجراءات'},
   all_cats:{en:'All categories',ar:'كل التصنيفات'},
   no_procs:{en:'No procedures yet.',ar:'لا توجد إجراءات بعد.'},
   proc_new:{en:'New Procedure',ar:'إجراء جديد'},
@@ -648,7 +703,7 @@ const I18N={
   confirm_del:{en:'Delete this item?',ar:'حذف هذا العنصر؟'},
   // risk module
   risk_title:{en:'Risk Management',ar:'إدارة المخاطر'},
-  risk_search:{en:'🔎 Search risks',ar:'🔎 بحث في المخاطر'},
+  risk_search:{en:'Search risks',ar:'بحث في المخاطر'},
   no_risks:{en:'No risks yet. Tap + to add a risk.',ar:'لا توجد مخاطر بعد. اضغط ＋ لإضافة خطر.'},
   risk_new:{en:'New Risk',ar:'خطر جديد'},
   risk_edit:{en:'Edit Risk',ar:'تعديل خطر'},
@@ -687,7 +742,7 @@ const I18N={
 function t(key){ const e=I18N[key]; return e? (e[LANG]||e.en) : key; }
 // ===== permissions =====
 // sections an engineer's access can be toggled for
-const PERM_KEYS=['create','dashboard','ncr','risk','procs','monthly','reopen'];
+const PERM_KEYS=['create','dashboard','ncr','risk','procs','monthly','reopen','schedule'];
 const PERM_LABELS={
   create:{en:'Create Reports',ar:'إنشاء التقارير'},
   dashboard:{en:'Dashboard',ar:'لوحة المعلومات'},
@@ -695,10 +750,11 @@ const PERM_LABELS={
   risk:{en:'Risk Management',ar:'إدارة المخاطر'},
   procs:{en:'Procedures',ar:'الإجراءات'},
   monthly:{en:'Monthly Report',ar:'التقرير الشهري'},
-  reopen:{en:'Reopen Locked Reports',ar:'إعادة فتح التقارير المقفلة'}
+  reopen:{en:'Reopen Locked Reports',ar:'إعادة فتح التقارير المقفلة'},
+  schedule:{en:'Inspection Schedule',ar:'جدول مواعيد التفتيش'}
 };
 // default engineer perms when none set
-const PERM_DEFAULT={create:true,dashboard:false,ncr:true,risk:false,procs:true,monthly:false,reopen:false};
+const PERM_DEFAULT={create:true,dashboard:false,ncr:true,risk:false,procs:true,monthly:false,reopen:false,schedule:true};
 function can(key){
   if(!SESSION) return false;
   if(SESSION.role==='admin') return true;
@@ -733,6 +789,57 @@ function reRender(){
 }
 loadLang();
 
+// ===== Service Worker: register + auto-notify when a new deploy is available =====
+// The SW cache name is versioned (see sw.js APP_VERSION). When a new sw.js is
+// deployed the browser installs it in the background; we then prompt the user
+// once instead of asking them to clear their cache manually.
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('./sw.js').then(function(reg){
+      // a new SW was found while this page is open
+      reg.addEventListener('updatefound', function(){
+        const nw = reg.installing;
+        if(!nw) return;
+        nw.addEventListener('statechange', function(){
+          if(nw.state === 'installed' && navigator.serviceWorker.controller){
+            showUpdateBar();
+          }
+        });
+      });
+      // a SW is already waiting from a previous visit
+      if(reg.waiting && navigator.serviceWorker.controller) showUpdateBar();
+      // check for a new version every time the app regains focus
+      document.addEventListener('visibilitychange', function(){
+        if(document.visibilityState === 'visible'){ try{ reg.update(); }catch(e){} }
+      });
+    }).catch(function(){ /* offline or unsupported: ignore */ });
+
+    let reloaded = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function(){
+      if(reloaded) return;
+      reloaded = true;
+      window.location.reload();
+    });
+  });
+}
+function showUpdateBar(){
+  if(document.getElementById('updBar')) return;
+  const bar = document.createElement('div');
+  bar.id = 'updBar';
+  bar.className = 'updBar';
+  bar.innerHTML = '<span>' + (LANG==='ar' ? 'يتوفّر إصدار جديد من التطبيق' : 'A new version is available') + '</span>' +
+    '<button onclick="applyUpdate()">' + (LANG==='ar' ? 'تحديث الآن' : 'Update now') + '</button>';
+  document.body.appendChild(bar);
+}
+window.applyUpdate = function(){
+  if(!('serviceWorker' in navigator)) { location.reload(); return; }
+  navigator.serviceWorker.getRegistration().then(function(reg){
+    if(reg && reg.waiting){ reg.waiting.postMessage('SKIP_WAITING'); }
+    else location.reload();
+  });
+};
+
+
 
 
 const LOGO = "data:image/png;base64,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";
@@ -760,7 +867,10 @@ const ICONS={
  tool:_ic('<path d="M14.5 6.5a4 4 0 0 0-5.4 5.1L3 17.7V21h3.3l6.1-6.1a4 4 0 0 0 5.1-5.4L14.7 12l-2.7-2.7 2.5-2.8z"/>'),
  refresh:_ic('<path d="M20.5 11A8.5 8.5 0 1 0 19 16.5"/><path d="M20.5 4.5V11H14"/>'),
  trash:_ic('<path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6.5 7l1 13h9l1-13"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>'),
- lock:_ic('<rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/>')
+ lock:_ic('<rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/>'),
+ bell:_ic('<path d="M18 15.5V10a6 6 0 1 0-12 0v5.5L4.5 18h15z"/><path d="M10 21h4"/>'),
+ sched:_ic('<rect x="3.5" y="5" width="17" height="16" rx="2"/><line x1="3.5" y1="9.5" x2="20.5" y2="9.5"/><line x1="8" y1="3" x2="8" y2="6.5"/><line x1="16" y1="3" x2="16" y2="6.5"/><path d="m9 14.5 2 2 4-4"/>'),
+ globe:_ic('<circle cx="12" cy="12" r="9"/><path d="M3.5 9h17M3.5 15h17"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z"/>')
 };
 const NAVY="#0F0A44", ORANGE="#EC5020";
 
@@ -1052,9 +1162,9 @@ function renderHome(){
   let h='<header class="bar"><button class="menubtn" onclick="toggleDrawer()">'+ICONS.menu+'</button>'+
    '<img src="'+LOGO+'"><div class="t"><b>'+t('app_title')+'</b><span>'+esc(SESSION.name)+(SESSION.role==='admin'?' (Admin)':'')+'</span></div>'+
    '<button class="gear" onclick="toggleTheme()" title="Theme">'+(THEME==='dark'?ICONS.sun:ICONS.moon)+'</button>'+
-   '<button class="gear" onclick="toggleLang()" title="Language">🌐</button></header><div class="stripe"></div>';
+   '<button class="gear" onclick="toggleLang()" title="Language">'+ICONS.globe+'</button></header><div class="stripe"></div>';
   h+=drawerHTML();
-  h+='<div class="wrap"><div id="annc"></div><div class="card"><h3>'+(SESSION.role==='admin'?t('all_reports'):t('my_reports'))+' <small id="syncBadge"></small>'+(SESSION.role==='admin'?'<button class="exportBtn" style="margin-inline-start:auto" onclick="exportReportsCSV()">⬇️ Excel/CSV</button>':'')+'</h3><div class="body"><input id="repSearch" class="repSearch" placeholder="'+(LANG==='ar'?'🔎 بحث بالمحطة/المشروع/LOA':'🔎 Search site/project/LOA')+'" oninput="filterHome(this.value)" value="'+esc(HOME_Q||'')+'"><div id="homeList"><div class="loadwrap"><div class="spinner"></div></div></div></div></div></div>';
+  h+='<div class="wrap"><div id="annc"></div><div class="card"><h3>'+(SESSION.role==='admin'?t('all_reports'):t('my_reports'))+' <small id="syncBadge"></small>'+(SESSION.role==='admin'?'<button class="exportBtn" style="margin-inline-start:auto" onclick="exportReportsCSV()">⬇️ Excel/CSV</button>':'')+'</h3><div class="body"><input id="repSearch" class="repSearch" placeholder="'+(LANG==='ar'?'بحث بالمحطة/المشروع/LOA':'Search site/project/LOA')+'" oninput="filterHome(this.value)" value="'+esc(HOME_Q||'')+'"><div id="homeList"><div class="loadwrap"><div class="spinner"></div></div></div></div></div></div>';
   if(can('create')) h+='<button class="fab" onclick="newReport()">'+ICONS.plus+'</button>';
   h+='<div class="toast" id="toast"></div>';
   $('app').innerHTML=h;
@@ -1068,6 +1178,7 @@ function drawerHTML(){
   if(can('dashboard')) items.push(['dashboard',t('dashboard'),ICONS.dashboard]);
   if(can('ncr')) items.push(['ncr',t('ncr_title'),ICONS.ncr]);
   if(can('risk')) items.push(['risk',t('risk_title'),ICONS.risk]);
+  if(can('schedule')) items.push(['schedule',t('sched_title'),ICONS.sched]);
   if(can('procs')) items.push(['procs',t('procs_title'),ICONS.procs]);
   if(can('monthly')&&SESSION.role==='admin') items.push(['monthly',t('monthly_title'),ICONS.monthly]);
   let nav=items.map(it=>'<button class="navItem" onclick="navGo(\''+it[0]+'\')"><span class="ni">'+it[2]+'</span>'+esc(it[1])+'</button>').join('');
@@ -1092,6 +1203,7 @@ window.navGo=function(dest){
   if(dest==='dashboard')return openDashboard();
   if(dest==='ncr')return openNCR();
   if(dest==='risk')return openRisk();
+  if(dest==='schedule')return openSchedule();
   if(dest==='procs')return openProcs();
   if(dest==='monthly')return (typeof openMonthly==='function'?openMonthly():toast('قريباً'));
   if(dest==='admin')return openAdmin();
@@ -1388,6 +1500,18 @@ function renderReport(){
   onProj();
   restoreAnswers();
   renderPhotos(); initSig(); upd(true);
+  // LOCKED REPORT: truly disable every control (defence in depth: CSS + disabled + JS guards)
+  if(ro){
+    const wrap=document.querySelector('.wrap.rlocked');
+    if(wrap){
+      wrap.querySelectorAll('input,select,textarea,button').forEach(function(el){
+        if(el.closest('.lockBanner')) return;   // keep the Reopen button usable
+        el.disabled=true;
+        el.setAttribute('aria-disabled','true');
+      });
+      const cv=wrap.querySelector('#sig'); if(cv) cv.style.pointerEvents='none';
+    }
+  }
   // auto-save on work-order field edits
   ['f_site','f_loa','f_service','f_team','f_date','f_location','f_pm','f_by','f_month','f_wo_recv','f_wo_closed','f_tr_req','f_tr_done','f_emp_total','f_sec_total','f_sec_expired','f_sec_missing','f_appr_name','f_appr_title','f_appr_date'].forEach(function(id){
     const el=$(id); if(el){ el.addEventListener('change',function(){ autoSave(); if(typeof renderAuditDash==='function')renderAuditDash(); }); el.addEventListener('input',function(){ autoSave(); }); }
@@ -1437,7 +1561,7 @@ function filterSections(){
       msg=(LANG==='ar'?'ℹ️ لا توجد أقسام مربوطة بأنظمة في هذا القالب. اربط الأقسام من: لوحة التحكّم ← الأسئلة ← تعديل القالب.':'ℹ️ No sections are linked to systems in this template. Link them in: Control Panel → Questions → Edit template.');
     } else if(chosen.length){
       const tags=chosen.map(function(s){return '<span class="sysPill" style="background:'+sysColor(s)+'">'+esc(s)+'</span>';}).join(' ');
-      msg='🔧 '+(LANG==='ar'?'الأقسام العامة + ':'General + ')+tags+' &nbsp;·&nbsp; <b>'+c.total+'</b> '+(LANG==='ar'?'سؤال ظاهر':'questions shown');
+      msg=''+(LANG==='ar'?'الأقسام العامة + ':'General + ')+tags+' &nbsp;·&nbsp; <b>'+c.total+'</b> '+(LANG==='ar'?'سؤال ظاهر':'questions shown');
     } else {
       msg=(LANG==='ar'?'اختر الأنظمة التي تعملون عليها لعرض أقسامها · ':'Select systems being serviced · ')+'<b>'+c.total+'</b> '+(LANG==='ar'?'سؤال عام ظاهر':'general questions shown');
     }
@@ -1555,7 +1679,7 @@ function itemHTML(st,sec,it,si,ci,ii){
   // per-question photo
   let ph='';
   if(itemReqPhoto(it)){
-    ph='<div class="reqphoto"><div class="lbl">📷 صورة مطلوبة لهذا البند</div>'+
+    ph='<div class="reqphoto"><div class="lbl">صورة مطلوبة لهذا البند</div>'+
        (a.photo?'<img class="qphoto" src="'+a.photo+'">':'')+
        '<button class="btn ghost" style="flex:1;width:100%;margin-top:6px;padding:9px" onclick="qPhotoFor(\''+key+'\')">'+(a.photo?'تغيير الصورة':'التقاط صورة')+'</button></div>';
   }
@@ -1570,18 +1694,19 @@ function itemHTML(st,sec,it,si,ci,ii){
 function typeLabel(tp){return ({okna:'OK/NotOK',audit:(LANG==='ar'?'تدقيق':'Audit'),rating:'تقييم',text:'نص',measure:'قياس',yesno:'نعم/لا',choice:'قائمة'})[tp]||tp}
 
 // ===== answer setters =====
+function reportLocked(){ return !!(CUR && CUR.status==='done'); }
 function ensureA(key){ const it=keyItem(key); answers[key]=answers[key]||{type:itemType(it)}; if(!answers[key].type)answers[key].type=itemType(it); return answers[key]; }
 function keyItem(key){ const[si,ci,ii]=key.split('_').map(Number); return TPL[si].secs[ci].items[ii]; }
-window.setOKNA=function(key,v,btn){buzz(12);const a=ensureA(key);a.status=(a.status===v?null:v);const seg=btn.parentNode;seg.querySelectorAll('button').forEach(b=>b.classList.remove('on'));if(a.status)btn.classList.add('on');refreshNC(key);upd();};
-window.setAudit=function(key,v,btn){buzz(12);const a=ensureA(key);a.status=(a.status===v?null:v);const seg=btn.parentNode;seg.querySelectorAll('button').forEach(b=>b.classList.remove('on'));if(a.status)btn.classList.add('on');refreshNC(key);upd();if(typeof renderAuditDash==='function')renderAuditDash();};
-window.setYN=function(key,v,btn){buzz(12);const a=ensureA(key);a.yn=(a.yn===v?null:v);const seg=btn.parentNode;seg.querySelectorAll('button').forEach(b=>b.classList.remove('on'));if(a.yn)btn.classList.add('on');refreshNC(key);upd();};
-window.setRating=function(key,n){const a=ensureA(key);a.rating=(a.rating===n?0:n);paintStars(key);upd();};
+window.setOKNA=function(key,v,btn){if(reportLocked()){toast(LANG==='ar'?'التقرير مقفول — اضغط «فتح التقرير» أولاً':'Report is locked — press Reopen first');return;}buzz(12);const a=ensureA(key);a.status=(a.status===v?null:v);const seg=btn.parentNode;seg.querySelectorAll('button').forEach(b=>b.classList.remove('on'));if(a.status)btn.classList.add('on');refreshNC(key);upd();};
+window.setAudit=function(key,v,btn){if(reportLocked()){toast(LANG==='ar'?'التقرير مقفول — اضغط «فتح التقرير» أولاً':'Report is locked — press Reopen first');return;}buzz(12);const a=ensureA(key);a.status=(a.status===v?null:v);const seg=btn.parentNode;seg.querySelectorAll('button').forEach(b=>b.classList.remove('on'));if(a.status)btn.classList.add('on');refreshNC(key);upd();if(typeof renderAuditDash==='function')renderAuditDash();};
+window.setYN=function(key,v,btn){if(reportLocked()){toast(LANG==='ar'?'التقرير مقفول — اضغط «فتح التقرير» أولاً':'Report is locked — press Reopen first');return;}buzz(12);const a=ensureA(key);a.yn=(a.yn===v?null:v);const seg=btn.parentNode;seg.querySelectorAll('button').forEach(b=>b.classList.remove('on'));if(a.yn)btn.classList.add('on');refreshNC(key);upd();};
+window.setRating=function(key,n){if(reportLocked()){toast(LANG==='ar'?'التقرير مقفول — اضغط «فتح التقرير» أولاً':'Report is locked — press Reopen first');return;}const a=ensureA(key);a.rating=(a.rating===n?0:n);paintStars(key);upd();};
 function paintStars(key){const box=$('rt_'+key);if(!box)return;const a=answers[key]||{};box.querySelectorAll('.star').forEach(s=>{s.classList.toggle('on',Number(s.dataset.n)<=(a.rating||0));});}
 window.setText=function(key,v){ensureA(key).text=v;upd();};
 window.setMeasure=function(key,v){ensureA(key).measure=v;upd();};
-window.setChoice=function(key,v){ensureA(key).choice=v;upd();};
-window.setRemark=function(key,v){ensureA(key).remark=v;};
-window.setNC=function(key,field,v){ensureA(key)[field]=v;};
+window.setChoice=function(key,v){if(reportLocked()){toast(LANG==='ar'?'التقرير مقفول — اضغط «فتح التقرير» أولاً':'Report is locked — press Reopen first');return;}ensureA(key).choice=v;upd();};
+window.setRemark=function(key,v){if(reportLocked()){toast(LANG==='ar'?'التقرير مقفول — اضغط «فتح التقرير» أولاً':'Report is locked — press Reopen first');return;}ensureA(key).remark=v;};
+window.setNC=function(key,field,v){if(reportLocked()){toast(LANG==='ar'?'التقرير مقفول — اضغط «فتح التقرير» أولاً':'Report is locked — press Reopen first');return;}ensureA(key)[field]=v;};
 function refreshNC(key){ // re-render just this item to show/hide NC box
   const a=answers[key]; const it=keyItem(key); const[si,ci,ii]=key.split('_').map(Number);
   const cont=$('it_'+key); if(!cont)return;
@@ -1606,7 +1731,7 @@ function upd(skipSave){
   const c=counts();
   const e=$('pct');
   const pc=c.total?Math.round(c.done/c.total*100):0;
-  if(e){e.innerHTML=c.done+'/'+c.total+' ('+pc+'%) · 📷'+photos.length;e.style.color=(c.done===c.total&&photos.length>0)?'#1B8A3A':'#777';}
+  if(e){e.innerHTML=c.done+'/'+c.total+' ('+pc+'%) · '+photos.length+' '+(LANG==='ar'?'صورة':'photos');e.style.color=(c.done===c.total&&photos.length>0)?'#1B8A3A':'#777';}
   const bar=$('progFill'); if(bar)bar.style.width=pc+'%';
   if(!skipSave) autoSave();
 }
@@ -1623,11 +1748,11 @@ window.saveCur=saveCur;
 window.addPhoto=function(){$('cam').click()};
 window.onPhoto=function(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const fin=(la,ln)=>stamp(e.target.result,la,ln,(d)=>{photos.push(d);renderPhotos();});if(navigator.geolocation){navigator.geolocation.getCurrentPosition(p=>fin(p.coords.latitude,p.coords.longitude),()=>fin(null,null),{enableHighAccuracy:true,timeout:6000,maximumAge:0});}else fin(null,null);};r.readAsDataURL(f);ev.target.value='';};
 let qPhotoKey=null;
-window.qPhotoFor=function(key){qPhotoKey=key;$('qcam').click();};
+window.qPhotoFor=function(key){if(reportLocked()){toast(LANG==='ar'?'التقرير مقفول — اضغط «فتح التقرير» أولاً':'Report is locked — press Reopen first');return;}qPhotoKey=key;$('qcam').click();};
 window.onQPhoto=function(ev){const f=ev.target.files[0];if(!f||!qPhotoKey)return;const key=qPhotoKey;const r=new FileReader();r.onload=e=>{const fin=(la,ln)=>stamp(e.target.result,la,ln,(d)=>{ensureA(key).photo=d.dataUrl;refreshNC(key);});if(navigator.geolocation){navigator.geolocation.getCurrentPosition(p=>fin(p.coords.latitude,p.coords.longitude),()=>fin(null,null),{enableHighAccuracy:true,timeout:6000,maximumAge:0});}else fin(null,null);};r.readAsDataURL(f);ev.target.value='';};
 function stamp(dataUrl,lat,lng,cb){const img=new Image();img.onload=()=>{const mx=1100,sc=Math.min(1,mx/img.width),w=Math.round(img.width*sc),hh=Math.round(img.height*sc);const cv=document.createElement('canvas');cv.width=w;cv.height=hh;const x=cv.getContext('2d');x.drawImage(img,0,0,w,hh);const n=new Date(),d=n.toLocaleDateString('en-GB'),t=n.toLocaleTimeString('en-GB');const loc=(lat!=null)?('Lat '+lat.toFixed(5)+', Lng '+lng.toFixed(5)):'Location N/A';const lines=['📍 '+loc,'🕒 '+d+'  '+t,'ETECHS'];const pad=8,fs=Math.max(13,Math.round(w*0.027));x.font='bold '+fs+'px Arial';const bh=fs*lines.length+pad*2;x.fillStyle='rgba(15,10,68,0.74)';x.fillRect(0,hh-bh,w,bh);x.fillStyle='#EC5020';x.fillRect(0,hh-bh,5,bh);x.fillStyle='#fff';x.textBaseline='top';lines.forEach((l,i)=>x.fillText(l,pad+4,hh-bh+pad+i*fs));cb({dataUrl:cv.toDataURL('image/jpeg',0.7),loc:loc,time:d+' '+t});};img.src=dataUrl;}
 function renderPhotos(){const b=$('ph');if(!b)return;b.innerHTML=photos.map((p,i)=>'<div class="ph"><img src="'+p.dataUrl+'"><button class="x" onclick="delP('+i+')">×</button><div class="stamp">'+esc(p.time)+'</div></div>').join('')+'<button class="addph" onclick="addPhoto()"><span>＋</span>صورة<br>Photo</button>';upd();}
-window.delP=function(i){photos.splice(i,1);renderPhotos();};
+window.delP=function(i){if(reportLocked()){toast(LANG==='ar'?'التقرير مقفول — اضغط «فتح التقرير» أولاً':'Report is locked — press Reopen first');return;}photos.splice(i,1);renderPhotos();};
 
 // ===== signature =====
 let sigCtx,sigDrawing=false;
@@ -1739,6 +1864,8 @@ async function syncReportNCRs(rep, f, ansArg, tplArg){
     if(refNo) descParts.push('Report: '+refNo);
     if(siteOrLoc) descParts.push('Site/Location: '+siteOrLoc);
     if(fnd.finding) descParts.push('Finding: '+fnd.finding);
+    const raisedName = rep.ownerName || (rep.form&&rep.form.by) || SESSION.name || '';
+    const raisedUid  = rep.owner || SESSION.uid || '';
     const data={
       title:title,
       desc:descParts.join(' | '),
@@ -1751,13 +1878,29 @@ async function syncReportNCRs(rep, f, ansArg, tplArg){
       reportRef:refNo,
       qkey:fnd.key,
       due:fnd.due||'',
+      // traceability: who logged it (from the report) + who must close it
+      raisedBy:raisedUid,
+      raisedByName:raisedName,
+      raisedOn:(rep.form&&rep.form.date)||'',
+      responsible: fnd.responsible || raisedName,
       updatedMs:Date.now(), updated:serverTimestamp()
     };
     const ex=existing[fnd.key];
     if(ex){
-      // update only if the report still has this finding; keep manual status edits if user changed it
-      const keepStatus = ex.data.status && ex.data.status!=='Open' ? ex.data.status : 'Open';
-      await updateDoc(doc(db,'ncr',ex.id), Object.assign({}, data, {status:ex.data.statusLocked?ex.data.status:data.status}));
+      // Re-sync an existing auto-NCR: refresh the facts that come from the report,
+      // but NEVER overwrite what the QA engineer edited by hand.
+      const patch={
+        title:data.title, desc:data.desc, project:data.project,
+        severity:data.severity, reportRef:data.reportRef, qkey:data.qkey,
+        raisedBy:data.raisedBy, raisedByName:data.raisedByName, raisedOn:data.raisedOn,
+        updatedMs:Date.now(), updated:serverTimestamp()
+      };
+      // preserve manual workflow fields if the user already set them
+      if(!ex.data.responsible) patch.responsible=data.responsible;
+      if(!ex.data.due && data.due) patch.due=data.due;
+      if(!ex.data.action && data.action) patch.action=data.action;
+      if(!ex.data.status) patch.status='Open';
+      await updateDoc(doc(db,'ncr',ex.id), patch);
       delete existing[fnd.key];
     } else {
       const nid='ncr_'+rep.id+'_'+fnd.key;
@@ -1778,23 +1921,33 @@ async function syncReportNCRs(rep, f, ansArg, tplArg){
 // batch-generate NCRs from ALL existing reports (for reports saved before this feature)
 window.backfillNCRs=async function(){
   if(SESSION.role!=='admin'){ toast(t('admin_only')); return; }
-  if(!confirm(LANG==='ar'?'توليد حالات عدم مطابقة من كل التقارير المحفوظة؟ (لن يُكرّر الموجود)':'Generate NCRs from all saved reports? (existing ones are not duplicated)'))return;
-  loading(LANG==='ar'?'جاري المعالجة...':'Processing...');
+  if(!confirm(LANG==='ar'?'توليد حالات عدم مطابقة من كل التقارير المُقفلة؟ (لن يُكرّر الموجود)':'Generate NCRs from all closed reports? (existing ones are not duplicated)'))return;
+  // NOTE: never call loading() here — it wipes the whole app view.
+  const btns=[...document.querySelectorAll('button')].filter(b=>/backfillNCRs/.test(b.getAttribute('onclick')||''));
+  btns.forEach(b=>{b.disabled=true; b.dataset.old=b.innerHTML; b.innerHTML=(LANG==='ar'?'جاري المعالجة…':'Processing…');});
+  let closed=0, skippedDraft=0, skippedNoTpl=0, before=0, after=0;
   try{
+    try{ const s0=await getDocs(collection(db,'ncr')); before=s0.size||0; }catch(e){}
     const snap=await getDocs(collection(db,'reports'));
     const reps=[]; snap.forEach(d=>reps.push(Object.assign({id:d.id},d.data())));
-    let count=0, scanned=0;
     for(const r of reps){
-      if(r.status!=='done') continue; // only closed reports
-      const ans=r.answers||{}; const tpl=tplFromStore(r.tpl)||[]; const f=r.form||{};
-      if(!tpl.length) continue;
-      scanned++;
-      await syncReportNCRs(r, f, ans, tpl);
-      count++;
+      if(r.status!=='done'){ skippedDraft++; continue; }
+      const tpl=tplFromStore(r.tpl)||[];
+      if(!tpl.length){ skippedNoTpl++; continue; }
+      await syncReportNCRs(r, r.form||{}, r.answers||{}, tpl);
+      closed++;
     }
-    toast((LANG==='ar'?'تمت معالجة ':'Processed ')+count+(LANG==='ar'?' تقريراً':' reports'));
-    if(typeof paintNCR==='function') paintNCR();
+    try{ const s1=await getDocs(collection(db,'ncr')); after=s1.size||0; }catch(e){}
+    const created=Math.max(0, after-before);
+    toast(LANG==='ar'
+      ? ('فُحص '+closed+' تقريراً مقفولاً · أُنشئت '+created+' حالة'+(skippedDraft?(' · تُخطّي '+skippedDraft+' مسودّة'):''))
+      : ('Scanned '+closed+' closed reports · created '+created+' NCRs'+(skippedDraft?(' · skipped '+skippedDraft+' drafts'):'')));
+    if(closed===0) toast(LANG==='ar'?'لا توجد تقارير مقفولة. أرسِل تقريراً أولاً.':'No closed reports found. Submit a report first.');
   }catch(e){ toast((LANG==='ar'?'خطأ: ':'Error: ')+e.message); }
+  finally{
+    btns.forEach(b=>{b.disabled=false; if(b.dataset.old)b.innerHTML=b.dataset.old;});
+    if(typeof paintNCR==='function' && document.getElementById('ncrList')) paintNCR();
+  }
 };
 
 // ===== DASHBOARD =====
@@ -1827,7 +1980,8 @@ function aggregate(list){
     const tpl=tplFromStore(r.tpl)||[];
     tpl.forEach((st,si)=>st.secs&&st.secs.forEach((sec,ci)=>sec.items.forEach((it,ii)=>{
       const a=(r.answers||{})[si+'_'+ci+'_'+ii];
-      if(a&&((a.status==='Not OK')||(a.yn==='No'))){
+      const auditNC = a && ['minor','major','critical'].indexOf(a.status)>=0;
+      if(a&&((a.status==='Not OK')||(a.yn==='No')||auditNC)){
         ncOpen++; projects[pj].nc++;
         ncs.push({site:(r.form&&r.form.site)||'',project:pj,item:it[0],finding:a.finding||'',action:a.action||'',date:(r.form&&r.form.date)||'',by:r.ownerName||''});
       }
@@ -1836,6 +1990,66 @@ function aggregate(list){
   const compliance = (ok+no)? Math.round(ok/(ok+no)*100) : 0;
   return {total,done,draft,items,ok,no,na,ncOpen,compliance,ncs,projects};
 }
+
+// ---- live NCR register for the dashboard (real ncr docs, not just report findings) ----
+let DASH_NCR=null; // null = not loaded yet
+async function loadDashNCR(){
+  try{
+    const snap=await getDocs(collection(db,'ncr'));
+    const arr=[]; snap.forEach(d=>arr.push(Object.assign({id:d.id},d.data())));
+    DASH_NCR = (SESSION.role==='admin') ? arr
+      : arr.filter(n=>n.owner===SESSION.uid || n.raisedBy===SESSION.uid || n.responsible===SESSION.name);
+  }catch(e){ DASH_NCR=[]; }
+  paintDashNCR();
+}
+function ncrIsClosed(n){ return /Closed|مغلق/.test(n.status||''); }
+function paintDashNCR(){
+  const box=$('dashNcr'); if(!box) return;
+  if(DASH_NCR===null){ box.innerHTML='<div class="loadwrap"><div class="spinner"></div></div>'; return; }
+  let list=DASH_NCR.slice();
+  if(DASH_PROJECT) list=list.filter(n=>(n.project||'')===DASH_PROJECT);
+  if(DASH_MONTH) list=list.filter(n=>{ const d=n.raisedOn||(n.createdMs?new Date(n.createdMs).toISOString().slice(0,10):''); return d.slice(0,7)===DASH_MONTH; });
+  const open=list.filter(n=>!ncrIsClosed(n)).length;
+  const closed=list.length-open;
+  const today=new Date().toISOString().slice(0,10);
+  const overdue=list.filter(n=>!ncrIsClosed(n)&&n.due&&n.due<today).length;
+  const sev=k=>list.filter(n=>new RegExp(k,'i').test(n.severity||'')&&!ncrIsClosed(n)).length;
+  const crit=sev('Critical|حرجة'), maj=sev('Major|كبرى'), min=sev('Minor|صغرى');
+  const rate = list.length? Math.round(closed/list.length*100) : 0;
+  if(!list.length){ box.innerHTML='<div class="empty">'+(LANG==='ar'?'لا توجد حالات عدم مطابقة':'No non-conformities')+'</div>'; return; }
+  let html='<div class="kpis" style="margin:0 0 10px">'+
+    kpi('الإجمالي','Total NCRs',list.length,NAVY)+
+    kpi('مفتوحة','Open',open,'#C0392B')+
+    kpi('مغلقة','Closed',closed,'#1B8A3A')+
+    kpi('متأخّرة','Overdue',overdue,'#D4A017')+
+    '</div>';
+  html+='<div class="dashrow" style="align-items:center;gap:16px">'+
+    '<div class="donut2" style="background:conic-gradient(#1B8A3A 0 '+rate+'%, #e8e8ee '+rate+'% 100%)"><div class="hole2"><b>'+rate+'%</b></div></div>'+
+    '<div style="flex:1">'+
+      dbar((LANG==='ar'?'حرجة':'Critical'),crit,list.length,'#C0392B')+
+      dbar((LANG==='ar'?'كبرى':'Major'),maj,list.length,'#E67E22')+
+      dbar((LANG==='ar'?'صغرى':'Minor'),min,list.length,'#D4A017')+
+    '</div></div>';
+  html+='<div class="note" style="margin-top:8px">'+(LANG==='ar'?'نسبة الإغلاق':'Closure rate')+': '+rate+'%</div>';
+  html+='<button class="btn ghost" style="width:100%;margin-top:10px" onclick="openNCR()">'+(LANG==='ar'?'فتح سجلّ عدم المطابقة':'Open NCR register')+'</button>';
+  box.innerHTML=html;
+}
+
+// Manual refresh for the NCR panel. Auto-refresh still runs on every dashboard
+// render; this button only exists for when the automatic pass didn't happen
+// (e.g. the tab was restored from cache).
+window.refreshDashNCR=async function(){
+  const b=$('ncrRefBtn');
+  const ic=b?b.querySelector('svg'):null;
+  if(ic) ic.classList.add('spin');
+  if(b) b.disabled=true;
+  DASH_NCR=null;
+  paintDashNCR();
+  await loadDashNCR();
+  if(ic) ic.classList.remove('spin');
+  if(b) b.disabled=false;
+  toast(LANG==='ar'?'تم التحديث':'Refreshed');
+};
 
 function renderDashboard(){
   const list=dashFiltered();
@@ -1876,7 +2090,16 @@ function renderDashboard(){
   } else h+='<div class="empty">لا توجد حالات عدم مطابقة في هذه الفترة. ✓</div>';
   h+='</div></div>';
   h+='</div><div class="toast" id="toast"></div>';
+    // ---- Non-Conformity register (live from /ncr) ----
+  h+='<div class="card"><h3 style="display:flex;align-items:center;justify-content:space-between;gap:10px">'+
+     '<span>'+(LANG==='ar'?'عدم المطابقة / Non-Conformities':'Non-Conformities / عدم المطابقة')+'</span>'+
+     '<button class="refreshBtn" id="ncrRefBtn" onclick="refreshDashNCR()" title="'+(LANG==='ar'?'تحديث':'Refresh')+'">'+ICONS.refresh+'<span>'+(LANG==='ar'?'تحديث':'Refresh')+'</span></button>'+
+     '</h3><div class="body" id="dashNcr"><div class="loadwrap"><div class="spinner"></div></div></div></div>';
   $('app').innerHTML=h;
+  // refresh the NCR register (async) — repaints just that card when ready
+  if(DASH_NCR!==null) paintDashNCR();
+  loadDashNCR();
+
 }
 window.dashSetMonth=function(v){DASH_MONTH=v||null;renderDashboard();};
 window.dashSetProject=function(v){DASH_PROJECT=v||'';renderDashboard();};
@@ -1888,6 +2111,370 @@ let NCR_LIST=[]; let NCR_unsub=null;
 let NCR_F={q:'',status:'',project:'',report:''};
 const NC_STATUS=['مفتوحة','قيد المعالجة','مغلقة'];
 const NC_SEV=['عالية','متوسطة','منخفضة'];
+
+
+// ================= INSPECTION SCHEDULE =================
+// Firestore: /schedule/{id}
+//   { id, date:'YYYY-MM-DD', time:'HH:MM', project, site, tplId, tplName,
+//     notifyTime:'HH:MM', notifyDayBefore:bool, notifyOnDay:bool,
+//     status:'planned'|'done', doneOn:'YYYY-MM-DD', doneBy, notes,
+//     owner, ownerName, createdMs }
+let SCHED_LIST=[]; let SCHED_unsub=null;
+
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+
+// Four states, exactly as requested:
+//   planned  -> upcoming, not yet due            (neutral)
+//   done     -> completed on or before due date  (light green)
+//   late     -> completed AFTER the due date     (dark green)
+//   overdue  -> due date passed, still not done  (red)
+function schedState(s){
+  if(s.status==='done'){
+    if(s.doneOn && s.doneOn > s.date) return 'late';
+    return 'done';
+  }
+  return (s.date < todayISO()) ? 'overdue' : 'planned';
+}
+function schedLabel(st){
+  const L={
+    planned:{ar:'مجدول',en:'Planned'},
+    done:{ar:'تم في موعده',en:'Done on time'},
+    late:{ar:'تم بعد الموعد',en:'Done late'},
+    overdue:{ar:'فات موعده',en:'Overdue'}
+  }[st];
+  return LANG==='ar'?L.ar:L.en;
+}
+function schedColor(st){
+  return {planned:'#5B6178', done:'#22C55E', late:'#15803D', overdue:'#DC2626'}[st];
+}
+
+// Templates are read live from CFG so any template you add later appears here.
+function schedTemplates(){
+  const list=(CFG.templates||[]).map(tp=>({id:tp.id,name:tp.name||tp.id}));
+  if(!list.length) list.push({id:'default',name:(LANG==='ar'?'التفتيش اليومي':'Daily Inspection')});
+  return list;
+}
+
+function subscribeSchedule(){
+  if(SCHED_unsub){SCHED_unsub();SCHED_unsub=null;}
+  let qy;
+  try{ qy=query(collection(db,'schedule'),orderBy('date','asc')); }
+  catch(e){ qy=collection(db,'schedule'); }
+  SCHED_unsub=onSnapshot(qy,function(snap){
+    const arr=[]; snap.forEach(d=>arr.push(Object.assign({id:d.id},d.data())));
+    // engineers see their own + everything if admin
+    SCHED_LIST=(SESSION.role==='admin')?arr:arr.filter(s=>s.owner===SESSION.uid);
+    SCHED_LIST.sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+    autoCompleteSchedule();
+    paintSchedule();
+  },function(){ paintSchedule(); });
+}
+
+// Auto-turn-green: if a report was submitted (status done) for the same
+// project + template on/after the scheduled date, mark the slot complete.
+async function autoCompleteSchedule(){
+  if(!SCHED_LIST.length) return;
+  const pending=SCHED_LIST.filter(s=>s.status!=='done');
+  if(!pending.length) return;
+  try{
+    let qy;
+    try{ qy=(SESSION.role==='admin')?collection(db,'reports'):query(collection(db,'reports'),where('owner','==',SESSION.uid)); }
+    catch(e){ qy=collection(db,'reports'); }
+    const snap=await getDocs(qy);
+    const reps=[]; snap.forEach(d=>reps.push(Object.assign({id:d.id},d.data())));
+    for(const s of pending){
+      const hit=reps.find(function(r){
+        if(r.status!=='done') return false;
+        const f=r.form||{};
+        const sameTpl = !s.tplId || r.tpl_id===s.tplId || (r.templateName&&r.templateName===s.tplName);
+        const sameProj = !s.project || (f.project||'')===s.project;
+        const d=(f.date||'');
+        return sameTpl && sameProj && d && d>=s.date;
+      });
+      if(hit){
+        const doneOn=(hit.form&&hit.form.date)||todayISO();
+        try{
+          await updateDoc(doc(db,'schedule',s.id),{status:'done',doneOn:doneOn,doneBy:hit.ownerName||'',reportId:hit.id,updatedMs:Date.now()});
+          s.status='done'; s.doneOn=doneOn;
+        }catch(e){}
+      }
+    }
+  }catch(e){}
+}
+
+
+window.openSchedule=function(){
+  if(!can('schedule')){ toast(t('admin_only')); return; }
+  renderSchedule(); subscribeSchedule();
+};
+let SCHED_F={status:'',proj:''};
+function renderSchedule(){
+  let hh='<header class="bar"><button class="menubtn" onclick="goHome()">'+ICONS.back+'</button>'+
+    '<img src="'+LOGO+'"><div class="t"><b>'+t('sched_title')+'</b><span>Inspection Schedule</span></div>'+
+    '<button class="gear" onclick="printSchedule()" title="PDF">'+ICONS.print+'</button>'+
+    '</header><div class="stripe"></div><div class="wrap">';
+  const projs=[...new Set((CFG.projects||[]).map(p=>p.name))];
+  hh+='<div class="card"><div class="body">';
+  hh+='<div class="grid2">';
+  hh+='<div><label class="fld">'+(LANG==='ar'?'الحالة':'Status')+'</label><select id="sc_fst" onchange="schedFilter()">'+
+      '<option value="">'+(LANG==='ar'?'الكل':'All')+'</option>'+
+      ['planned','done','late','overdue'].map(x=>'<option value="'+x+'"'+(SCHED_F.status===x?' selected':'')+'>'+schedLabel(x)+'</option>').join('')+
+      '</select></div>';
+  hh+='<div><label class="fld">'+(LANG==='ar'?'المشروع':'Project')+'</label><select id="sc_fpr" onchange="schedFilter()">'+
+      '<option value="">'+(LANG==='ar'?'الكل':'All')+'</option>'+
+      projs.map(p=>'<option value="'+esc(p)+'"'+(SCHED_F.proj===p?' selected':'')+'>'+esc(p)+'</option>').join('')+
+      '</select></div>';
+  hh+='</div></div></div>';
+  hh+='<div id="schedKpi"></div>';
+  hh+='<div id="schedList"><div class="loadwrap"><div class="spinner"></div></div></div>';
+  hh+='</div><button class="fab" onclick="newSched()">'+ICONS.plus+'</button><div class="toast" id="toast"></div>';
+  $('app').innerHTML=hh;
+}
+window.schedFilter=function(){
+  SCHED_F.status=($('sc_fst')||{}).value||'';
+  SCHED_F.proj=($('sc_fpr')||{}).value||'';
+  paintSchedule();
+};
+function schedFiltered(){
+  return SCHED_LIST.filter(function(s){
+    if(SCHED_F.status && schedState(s)!==SCHED_F.status) return false;
+    if(SCHED_F.proj && (s.project||'')!==SCHED_F.proj) return false;
+    return true;
+  });
+}
+function paintSchedule(){
+  const box=$('schedList'); if(!box) return;
+  const list=schedFiltered();
+  // KPI strip
+  const k=$('schedKpi');
+  if(k){
+    const all=SCHED_LIST;
+    const c=st=>all.filter(s=>schedState(s)===st).length;
+    k.innerHTML='<div class="kpis" style="margin-bottom:10px">'+
+      kpi('مجدول','Planned',c('planned'),'#5B6178')+
+      kpi('فات موعده','Overdue',c('overdue'),'#DC2626')+
+      kpi('تم','Done',c('done'),'#22C55E')+
+      kpi('تم متأخّراً','Late',c('late'),'#15803D')+
+      '</div>';
+  }
+  if(!list.length){ box.innerHTML='<div class="empty">'+(LANG==='ar'?'لا توجد مواعيد. اضغط + لإضافة موعد.':'No inspections scheduled. Tap + to add one.')+'</div>'; return; }
+  box.innerHTML=list.map(function(s){
+    const st=schedState(s), col=schedColor(st);
+    const overdueDays = (st==='overdue') ? Math.round((new Date(todayISO())-new Date(s.date))/86400000) : 0;
+    return '<div class="schedCard" style="border-inline-start-color:'+col+'" onclick="editSched(\''+s.id+'\')">'+
+      '<div class="scTop">'+
+        '<div class="scDate"><b>'+esc(s.date||'—')+'</b><span>'+esc(s.time||'')+'</span></div>'+
+        '<span class="scPill" style="background:'+col+'">'+schedLabel(st)+'</span>'+
+      '</div>'+
+      '<div class="scTpl">'+esc(s.tplName||'—')+'</div>'+
+      '<div class="scMeta">'+esc(s.project||'—')+(s.site?' · '+esc(s.site):'')+'</div>'+
+      (st==='overdue'?'<div class="scWarn">'+(LANG==='ar'?('متأخّر '+overdueDays+' يوم'):(overdueDays+' days overdue'))+'</div>':'')+
+      (st==='late'?'<div class="scNote">'+(LANG==='ar'?('أُنجز في '+esc(s.doneOn||'')):('Completed '+esc(s.doneOn||'')))+'</div>':'')+
+      (st==='done'?'<div class="scNote">'+(LANG==='ar'?('أُنجز في '+esc(s.doneOn||'')):('Completed '+esc(s.doneOn||'')))+'</div>':'')+
+    '</div>';
+  }).join('');
+}
+
+
+window.newSched=function(){ schedForm(null); };
+window.editSched=function(id){ const s=SCHED_LIST.find(x=>x.id===id); if(s)schedForm(s); };
+function schedForm(s){
+  const isNew=!s; s=s||{};
+  const st=isNew?'planned':schedState(s);
+  const projs=[...new Set((CFG.projects||[]).map(p=>p.name))];
+  const tpls=schedTemplates();
+  let hh='<header class="bar"><button class="menubtn" onclick="openSchedule()">'+ICONS.back+'</button>'+
+    '<img src="'+LOGO+'"><div class="t"><b>'+(isNew?(LANG==='ar'?'موعد جديد':'New inspection'):(LANG==='ar'?'تعديل الموعد':'Edit inspection'))+'</b><span>'+t('sched_title')+'</span></div></header><div class="stripe"></div>';
+  hh+='<div class="wrap"><div class="card"><div class="body">';
+  if(!isNew){
+    hh+='<div class="traceBox"><div class="row"><span class="k">'+(LANG==='ar'?'الحالة':'Status')+'</span>'+
+        '<span class="v" style="color:'+schedColor(st)+'">'+schedLabel(st)+'</span></div>'+
+        (s.doneOn?'<div class="row"><span class="k">'+(LANG==='ar'?'تاريخ الإنجاز':'Completed on')+'</span><span class="v">'+esc(s.doneOn)+'</span></div>':'')+
+        (s.doneBy?'<div class="row"><span class="k">'+(LANG==='ar'?'نفّذها':'Completed by')+'</span><span class="v">'+esc(s.doneBy)+'</span></div>':'')+
+        '</div>';
+  }
+  hh+='<label class="fld">'+(LANG==='ar'?'نوع التفتيش / النموذج':'Inspection type / Template')+'</label>'+
+      '<select id="s_tpl">'+tpls.map(tp=>'<option value="'+esc(tp.id)+'"'+(s.tplId===tp.id?' selected':'')+'>'+esc(tp.name)+'</option>').join('')+'</select>';
+  hh+='<label class="fld">'+(LANG==='ar'?'المشروع':'Project')+'</label>'+
+      '<select id="s_proj"><option value="">—</option>'+projs.map(p=>'<option value="'+esc(p)+'"'+(s.project===p?' selected':'')+'>'+esc(p)+'</option>').join('')+'</select>';
+  hh+='<label class="fld">'+(LANG==='ar'?'المحطة / الموقع':'Substation / Site')+'</label><input id="s_site" value="'+esc(s.site||'')+'">';
+  hh+='<div class="grid2">';
+  hh+='<div><label class="fld">'+(LANG==='ar'?'تاريخ التفتيش':'Inspection date')+'</label><input id="s_date" type="date" value="'+esc(s.date||todayISO())+'"></div>';
+  hh+='<div><label class="fld">'+(LANG==='ar'?'وقت التفتيش':'Time')+'</label><input id="s_time" type="time" value="'+esc(s.time||'08:00')+'"></div>';
+  hh+='</div>';
+  hh+='<div class="notifBox">';
+  hh+='<div class="nbTitle">'+ICONS.bell+' '+(LANG==='ar'?'التنبيهات':'Reminders')+'</div>';
+  hh+='<label class="chkRow"><input type="checkbox" id="s_nb" '+(s.notifyDayBefore!==false?'checked':'')+'> <span>'+(LANG==='ar'?'تنبيه قبل الموعد بيوم':'Remind me one day before')+'</span></label>';
+  hh+='<label class="chkRow"><input type="checkbox" id="s_nd" '+(s.notifyOnDay!==false?'checked':'')+'> <span>'+(LANG==='ar'?'تنبيه في يوم التفتيش':'Remind me on the inspection day')+'</span></label>';
+  hh+='<label class="fld" style="margin-top:8px">'+(LANG==='ar'?'وقت التنبيه (تختاره أنت)':'Reminder time (your choice)')+'</label>'+
+      '<input id="s_ntime" type="time" value="'+esc(s.notifyTime||'07:00')+'">';
+  hh+='</div>';
+  hh+='<label class="fld">'+(LANG==='ar'?'ملاحظات':'Notes')+'</label><textarea id="s_notes" rows="2">'+esc(s.notes||'')+'</textarea>';
+  hh+='</div></div>';
+  hh+='<div style="padding:0 16px 90px">';
+  hh+='<button class="btn" style="width:100%" onclick="saveSched(\''+(s.id||'')+'\')">'+(LANG==='ar'?'حفظ':'Save')+'</button>';
+  if(!isNew){
+    hh+='<button class="btn ghost" style="width:100%;margin-top:10px" onclick="addSchedToCalendar(\''+s.id+'\')">'+ICONS.monthly+' '+(LANG==='ar'?'إضافة لتقويم الجوال':'Add to phone calendar')+'</button>';
+    if(s.status!=='done')
+      hh+='<button class="btn ghost" style="width:100%;margin-top:10px;border-color:#22C55E;color:#15803D" onclick="markSchedDone(\''+s.id+'\')">'+(LANG==='ar'?'تحديد كمُنجز':'Mark as done')+'</button>';
+    else
+      hh+='<button class="btn ghost" style="width:100%;margin-top:10px" onclick="markSchedOpen(\''+s.id+'\')">'+(LANG==='ar'?'إرجاع كمجدول':'Reopen as planned')+'</button>';
+  }
+  hh+='<button class="btn ghost" style="width:100%;margin-top:10px" onclick="openSchedule()">'+ICONS.back+' '+(LANG==='ar'?'رجوع للجدول':'Back to schedule')+'</button>';
+  if(!isNew)
+    hh+='<button class="btn ghost" style="width:100%;margin-top:10px;border-color:#C0392B;color:#C0392B" onclick="delSched(\''+s.id+'\')">'+(LANG==='ar'?'حذف الموعد':'Delete')+'</button>';
+  hh+='</div></div><div class="toast" id="toast"></div>';
+  $('app').innerHTML=hh;
+}
+window.saveSched=async function(id){
+  const g=x=>{const e=$(x);return e?e.value:'';};
+  const c=x=>{const e=$(x);return e?e.checked:false;};
+  const tplId=g('s_tpl');
+  const tp=schedTemplates().find(x=>x.id===tplId);
+  const data={
+    date:g('s_date'), time:g('s_time'),
+    project:g('s_proj'), site:g('s_site'),
+    tplId:tplId, tplName:tp?tp.name:'',
+    notifyDayBefore:c('s_nb'), notifyOnDay:c('s_nd'), notifyTime:g('s_ntime'),
+    notes:g('s_notes'),
+    updatedMs:Date.now(), updated:serverTimestamp()
+  };
+  if(!data.date){ toast(LANG==='ar'?'اختر تاريخ التفتيش':'Pick a date'); return; }
+  try{
+    if(id){ await updateDoc(doc(db,'schedule',id),data); toast(LANG==='ar'?'تم الحفظ':'Saved'); }
+    else{
+      const nid='sc'+Date.now()+Math.floor(Math.random()*1000);
+      await setDoc(doc(db,'schedule',nid),Object.assign({
+        id:nid, status:'planned', owner:SESSION.uid, ownerName:SESSION.name, createdMs:Date.now(), created:serverTimestamp()
+      },data));
+      toast(LANG==='ar'?'تمت الإضافة':'Added');
+    }
+    logAct('schedule_save', data.date+' · '+(data.tplName||''));
+    openSchedule();
+  }catch(e){ toast((LANG==='ar'?'خطأ: ':'Error: ')+e.message); }
+};
+window.markSchedDone=async function(id){
+  try{
+    await updateDoc(doc(db,'schedule',id),{status:'done',doneOn:todayISO(),doneBy:SESSION.name,updatedMs:Date.now()});
+    toast(LANG==='ar'?'تم وضع علامة الإنجاز':'Marked done'); openSchedule();
+  }catch(e){ toast((LANG==='ar'?'خطأ: ':'Error: ')+e.message); }
+};
+window.markSchedOpen=async function(id){
+  try{
+    await updateDoc(doc(db,'schedule',id),{status:'planned',doneOn:'',doneBy:'',updatedMs:Date.now()});
+    toast(LANG==='ar'?'أُعيد كمجدول':'Reopened'); openSchedule();
+  }catch(e){ toast((LANG==='ar'?'خطأ: ':'Error: ')+e.message); }
+};
+window.delSched=async function(id){
+  if(!confirm(LANG==='ar'?'حذف هذا الموعد؟':'Delete this inspection?'))return;
+  try{ await deleteDoc(doc(db,'schedule',id)); toast(LANG==='ar'?'حُذف':'Deleted'); openSchedule(); }
+  catch(e){ toast((LANG==='ar'?'خطأ: ':'Error: ')+e.message); }
+};
+
+
+// ---- Phone calendar (.ics) with the two reminders the user configured ----
+function icsDT(dateStr,timeStr){
+  const d=(dateStr||'').replace(/-/g,'');
+  const t=(timeStr||'08:00').replace(':','')+'00';
+  return d+'T'+t;
+}
+// VALARM triggers are relative to the event start. We convert the user's chosen
+// reminder clock-time into an offset (in minutes) before the event.
+function alarmOffsetMinutes(evTime, notifyTime, daysBefore){
+  const [eh,em]=(evTime||'08:00').split(':').map(Number);
+  const [nh,nm]=(notifyTime||'07:00').split(':').map(Number);
+  const evMin=eh*60+em, nMin=nh*60+nm;
+  return (daysBefore*24*60) + (evMin - nMin);
+}
+window.addSchedToCalendar=function(id){
+  const s=SCHED_LIST.find(x=>x.id===id); if(!s){ toast('—'); return; }
+  const uid='etechs-'+s.id+'@etechsco.com';
+  const start=icsDT(s.date,s.time||'08:00');
+  const [eh,em]=(s.time||'08:00').split(':').map(Number);
+  const endH=String((eh+1)%24).padStart(2,'0');
+  const end=icsDT(s.date,endH+':'+String(em).padStart(2,'0'));
+  const title=(s.tplName||'Inspection')+' — '+(s.project||'');
+  const desc=[s.site?('Site: '+s.site):'', s.notes||''].filter(Boolean).join('\\n');
+
+  let alarms='';
+  if(s.notifyDayBefore!==false){
+    const m=alarmOffsetMinutes(s.time,s.notifyTime,1);
+    alarms+='BEGIN:VALARM\r\nTRIGGER:-PT'+Math.max(1,m)+'M\r\nACTION:DISPLAY\r\nDESCRIPTION:'+title+' (tomorrow)\r\nEND:VALARM\r\n';
+  }
+  if(s.notifyOnDay!==false){
+    const m=alarmOffsetMinutes(s.time,s.notifyTime,0);
+    alarms+='BEGIN:VALARM\r\nTRIGGER:-PT'+Math.max(1,m)+'M\r\nACTION:DISPLAY\r\nDESCRIPTION:'+title+' (today)\r\nEND:VALARM\r\n';
+  }
+  const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//ETECHS//QA-QC//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH',
+    'BEGIN:VEVENT','UID:'+uid,'DTSTAMP:'+icsDT(todayISO(),'00:00')+'Z',
+    'DTSTART:'+start,'DTEND:'+end,
+    'SUMMARY:'+title,
+    'LOCATION:'+(s.site||s.project||''),
+    'DESCRIPTION:'+desc.replace(/\n/g,'\\n'),
+    'STATUS:CONFIRMED'].join('\r\n')+'\r\n'+alarms+'END:VEVENT\r\nEND:VCALENDAR';
+
+  const blob=new Blob([ics],{type:'text/calendar;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=('inspection-'+(s.date||'')+'.ics');
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+  toast(LANG==='ar'?'افتح الملف لإضافته للتقويم':'Open the file to add it to your calendar');
+};
+
+// ---- Printable schedule (PDF via print dialog) ----
+window.printSchedule=function(){
+  const list=schedFiltered();
+  if(!list.length){ toast(LANG==='ar'?'لا توجد مواعيد':'Nothing to print'); return; }
+  const rows=list.map(function(s,i){
+    const st=schedState(s), col=schedColor(st);
+    return '<tr>'+
+      '<td>'+(i+1)+'</td>'+
+      '<td>'+esc(s.date||'')+(s.time?'<br><small>'+esc(s.time)+'</small>':'')+'</td>'+
+      '<td>'+esc(s.project||'-')+'</td>'+
+      '<td>'+esc(s.site||'-')+'</td>'+
+      '<td>'+esc(s.tplName||'-')+'</td>'+
+      '<td>'+esc(s.doneOn||'-')+'</td>'+
+      '<td><span class="pill" style="background:'+col+'">'+schedLabel(st)+'</span></td>'+
+    '</tr>';
+  }).join('');
+  const c=st=>SCHED_LIST.filter(s=>schedState(s)===st).length;
+  const w=window.open('','_blank');
+  w.document.write('<!doctype html><html dir="'+(LANG==='ar'?'rtl':'ltr')+'"><head><meta charset="utf-8"><title>Inspection Schedule</title>'+
+   '<style>body{font-family:Arial,"Segoe UI",sans-serif;margin:0;padding:24px;color:#1B1E36}'+
+   '.hdr{background:#0F0A44;color:#fff;padding:16px 18px;border-radius:12px;display:flex;align-items:center;gap:14px}'+
+   '.hdr img{height:44px;background:#fff;border-radius:8px;padding:3px}'+
+   '.hdr h1{margin:0;font-size:18px;letter-spacing:.5px}'+
+   '.stripe{height:4px;background:#EC5020;border-radius:4px;margin:0 0 18px}'+
+   '.kpis{display:flex;gap:10px;margin:14px 0}'+
+   '.k{flex:1;border:1px solid #E3E6F0;border-radius:10px;padding:10px;text-align:center}'+
+   '.k b{display:block;font-size:20px}.k span{font-size:11px;color:#6B7186}'+
+   'table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}'+
+   'th{background:#0F0A44;color:#fff;padding:8px;text-align:start;font-size:11px}'+
+   'td{border-bottom:1px solid #E3E6F0;padding:8px;vertical-align:top}'+
+   '.pill{color:#fff;padding:3px 9px;border-radius:20px;font-size:10px;white-space:nowrap}'+
+   '.ft{margin-top:20px;background:#0F0A44;color:#fff;padding:10px 14px;border-radius:10px;font-size:11px;display:flex;justify-content:space-between}'+
+   '@media print{.noprint{display:none}}'+
+   '.noprint{background:#EC5020;color:#fff;border:0;padding:12px;border-radius:10px;width:100%;font-size:15px;font-weight:bold;cursor:pointer;margin-bottom:14px}'+
+   '</style></head><body>'+
+   '<button class="noprint" onclick="window.print()">'+(LANG==='ar'?'حفظ PDF / طباعة':'Save PDF / Print')+'</button>'+
+   '<div class="hdr"><img src="'+LOGO+'"><div><h1>'+(LANG==='ar'?'جدول مواعيد التفتيش':'INSPECTION SCHEDULE')+'</h1>'+
+   '<small>ETECHS · Equipment & Technical Services Co.</small></div></div><div class="stripe"></div>'+
+   '<div class="kpis">'+
+     '<div class="k"><b>'+SCHED_LIST.length+'</b><span>'+(LANG==='ar'?'الإجمالي':'Total')+'</span></div>'+
+     '<div class="k"><b style="color:#5B6178">'+c('planned')+'</b><span>'+(LANG==='ar'?'مجدول':'Planned')+'</span></div>'+
+     '<div class="k"><b style="color:#DC2626">'+c('overdue')+'</b><span>'+(LANG==='ar'?'فات موعده':'Overdue')+'</span></div>'+
+     '<div class="k"><b style="color:#22C55E">'+c('done')+'</b><span>'+(LANG==='ar'?'تم':'Done')+'</span></div>'+
+     '<div class="k"><b style="color:#15803D">'+c('late')+'</b><span>'+(LANG==='ar'?'متأخّر':'Late')+'</span></div>'+
+   '</div>'+
+   '<table><thead><tr><th>#</th><th>'+(LANG==='ar'?'التاريخ':'Date')+'</th><th>'+(LANG==='ar'?'المشروع':'Project')+'</th>'+
+   '<th>'+(LANG==='ar'?'الموقع':'Site')+'</th><th>'+(LANG==='ar'?'نوع التفتيش':'Inspection type')+'</th>'+
+   '<th>'+(LANG==='ar'?'تاريخ الإنجاز':'Completed')+'</th><th>'+(LANG==='ar'?'الحالة':'Status')+'</th></tr></thead>'+
+   '<tbody>'+rows+'</tbody></table>'+
+   '<div class="ft"><span>Equipment & Technical Services Co. (ETECHS)</span><span>'+(LANG==='ar'?'تاريخ الإصدار: ':'Generated: ')+new Date().toLocaleString()+'</span></div>'+
+   '</body></html>');
+  w.document.close();
+};
 
 window.openNCR=function(){ if(!can('ncr')){toast(t('admin_only'));return;} renderNCR(); subscribeNCR(); };
 
@@ -1922,7 +2509,11 @@ function renderNCR(){
      '<select id="ncrRepSel" onchange="ncrFilterReport(this.value)" style="flex:1;min-width:150px"><option value="">'+(LANG==='ar'?'كل التقارير':'All reports')+'</option>'+
         [...new Set(NCR_LIST.map(n=>n.reportRef).filter(Boolean))].map(r=>'<option'+(NCR_F.report===r?' selected':'')+'>'+esc(r)+'</option>').join('')+'</select>'+
      '<button class="btn" style="flex:1;min-width:150px;background:var(--navy)" onclick="printNCRReport()">'+ICONS.print+' '+(LANG==='ar'?'تقرير عدم المطابقة':'NCR Report')+'</button>'+
-     '</div></div></div>';
+     '</div>'+
+     (SESSION.role==='admin'?
+       '<button class="btn ghost" style="width:100%;margin-top:4px;font-size:12.5px" onclick="backfillNCRs()">'+ICONS.refresh+' '+(LANG==='ar'?'توليد الحالات من التقارير القديمة':'Generate NCRs from old reports')+'</button>'
+       :'')+
+     '</div></div>';
   h+='<div id="ncrList"><div class="loadwrap"><div class="spinner"></div></div></div>';
   h+='</div><button class="fab" onclick="newNCR()">'+ICONS.plus+'</button><div class="toast" id="toast"></div>';
   $('app').innerHTML=h;
@@ -1950,7 +2541,8 @@ window.printNCRReport=function(){
       '<td>'+(i+1)+'</td>'+
       '<td>'+esc(n.title||'-')+(n.desc?'<div class="d">'+esc(n.desc)+'</div>':'')+'</td>'+
       '<td>'+esc(n.reportRef||'-')+'</td>'+
-      '<td>'+esc(n.project||'-')+'</td>'+
+      '<td>'+esc(n.raisedByName||n.ownerName||'-')+'</td>'+
+      '<td>'+esc(n.responsible||'-')+'</td>'+
       '<td><span class="pill" style="background:'+sevColor(n.severity||'')+'">'+esc(n.severity||'-')+'</span></td>'+
       '<td>'+esc(n.action||'-')+'</td>'+
       '<td>'+esc(n.due||'-')+'</td>'+
@@ -1982,7 +2574,7 @@ window.printNCRReport=function(){
       '<div class="mbox"><div class="l">'+(LANG==='ar'?'مفتوحة':'Open')+'</div><b style="color:#C0392B">'+openN+'</b></div>'+
       '<div class="mbox"><div class="l">'+(LANG==='ar'?'مغلقة':'Closed')+'</div><b style="color:#1B8A3A">'+closedN+'</b></div>'+
     '</div>'+
-    '<table><thead><tr><th>#</th><th>'+(LANG==='ar'?'الحالة / البند':'NC / Item')+'</th><th>'+(LANG==='ar'?'التقرير':'Report')+'</th><th>'+(LANG==='ar'?'المشروع':'Project')+'</th><th>'+(LANG==='ar'?'التصنيف':'Severity')+'</th><th>'+(LANG==='ar'?'الإجراء':'Action')+'</th><th>'+(LANG==='ar'?'الإغلاق':'Due')+'</th><th>'+(LANG==='ar'?'الوضع':'Status')+'</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+    '<table><thead><tr><th>#</th><th>'+(LANG==='ar'?'الحالة / البند':'NC / Item')+'</th><th>'+(LANG==='ar'?'التقرير':'Report')+'</th><th>'+(LANG==='ar'?'سجّلها':'Raised by')+'</th><th>'+(LANG==='ar'?'المسؤول عن الإغلاق':'Responsible')+'</th><th>'+(LANG==='ar'?'التصنيف':'Severity')+'</th><th>'+(LANG==='ar'?'الإجراء':'Action')+'</th><th>'+(LANG==='ar'?'الاستحقاق':'Due')+'</th><th>'+(LANG==='ar'?'الوضع':'Status')+'</th></tr></thead><tbody>'+rows+'</tbody></table>'+
     '</div>'+
     '<div class="foot"><span>Equipment &amp; Technical Services Co. (ETECHS)</span><span>'+(LANG==='ar'?'صدر في: ':'Generated: ')+new Date().toLocaleString('en-GB')+'</span></div>'+
     '</body></html>';
@@ -2020,8 +2612,9 @@ function paintNCR(){
     return '<div class="ncrCard'+(od?' overdue':'')+'" onclick="editNCR(\''+n.id+'\')">'+
       '<div class="ncrTop"><span class="ncrTitle">'+(n.source==='report'?'<span title="auto from report" style="font-size:11px;background:#1B7FB8;color:#fff;padding:1px 6px;border-radius:5px;margin-inline-end:6px">🔗 '+(LANG==='ar'?'تلقائي':'auto')+'</span>':'')+esc(n.title||'(بدون عنوان)')+'</span>'+
       '<span class="ncrSt '+stCls+'">'+esc(n.status||'مفتوحة')+'</span></div>'+
-      (n.project?'<div class="ncrMeta">📁 '+esc(n.project)+'</div>':'')+
-      '<div class="ncrMeta">👤 '+esc(n.responsible||'—')+(n.due?' · 📅 '+esc(n.due):'')+(od?' · <b style="color:#C0392B">'+t('overdue')+'</b>':'')+'</div>'+
+      (n.project?'<div class="ncrMeta">'+esc(n.project)+'</div>':'')+
+      '<div class="ncrMeta">'+(LANG==='ar'?'سجّلها: ':'Raised by: ')+esc(n.raisedByName||n.ownerName||'—')+'</div>'+
+      '<div class="ncrMeta">'+(LANG==='ar'?'المسؤول: ':'Responsible: ')+esc(n.responsible||'—')+(n.due?' · '+esc(n.due):'')+(od?' · <b style="color:#C0392B">'+t('overdue')+'</b>':'')+'</div>'+
       '<div class="ncrTags"><span class="sev '+sevCls+'">'+esc(n.severity||'متوسطة')+'</span>'+(n.source==='report'?'<span class="srcTag">من تقرير</span>':'')+'</div>'+
       '</div>';
   }).join('');
@@ -2037,11 +2630,27 @@ function ncrForm(n){
   let h='<header class="bar"><button class="menubtn" onclick="openNCR()">'+ICONS.back+'</button>'+
    '<img src="'+LOGO+'"><div class="t"><b>'+(isNew?'حالة جديدة':'تعديل حالة')+'</b><span>NCR</span></div></header><div class="stripe"></div>';
   h+='<div class="wrap"><div class="card"><div class="body">';
+  // ---- traceability header: who raised it, from where, when (read-only) ----
+  if(!isNew){
+    const raised = n.raisedByName || n.ownerName || '—';
+    const src = (n.source==='report')
+      ? (LANG==='ar'?'تلقائي من تقرير':'Auto from report')
+      : (LANG==='ar'?'إدخال يدوي':'Manual entry');
+    let rows='';
+    rows+='<div class="row"><span class="k">'+(LANG==='ar'?'سجّلها':'Raised by')+'</span><span class="v">'+esc(raised)+'</span></div>';
+    rows+='<div class="row"><span class="k">'+(LANG==='ar'?'المصدر':'Source')+'</span><span class="v">'+esc(src)+'</span></div>';
+    if(n.reportRef) rows+='<div class="row"><span class="k">'+(LANG==='ar'?'رقم التقرير':'Report No.')+'</span><span class="v">'+esc(n.reportRef)+'</span></div>';
+    const rd = n.raisedOn || (n.createdMs? new Date(n.createdMs).toISOString().slice(0,10) : '');
+    if(rd) rows+='<div class="row"><span class="k">'+(LANG==='ar'?'تاريخ التسجيل':'Raised on')+'</span><span class="v">'+esc(rd)+'</span></div>';
+    if(n.closedByName) rows+='<div class="row"><span class="k">'+(LANG==='ar'?'أغلقها':'Closed by')+'</span><span class="v">'+esc(n.closedByName)+(n.closedOn?' · '+esc(n.closedOn):'')+'</span></div>';
+    if(n.autoClosed) rows+='<div class="row"><span class="k">'+(LANG==='ar'?'ملاحظة':'Note')+'</span><span class="v">'+(LANG==='ar'?'أُغلقت تلقائياً بعد تصحيح البند':'Auto-closed after the finding was fixed')+'</span></div>';
+    h+='<div class="traceBox">'+rows+'</div>';
+  }
   h+='<label class="fld">العنوان / Title</label><input id="n_title" value="'+esc(n.title||'')+'"'+(ro?' disabled':'')+'>';
   h+='<label class="fld">الوصف / Description</label><textarea id="n_desc" rows="2"'+(ro?' disabled':'')+'>'+esc(n.desc||'')+'</textarea>';
   h+='<label class="fld">المشروع / Project</label><select id="n_project"'+(ro?' disabled':'')+'><option value="">—</option>'+projNames.map(p=>'<option'+(n.project===p?' selected':'')+'>'+esc(p)+'</option>').join('')+'</select>';
   h+='<div class="grid2">';
-  h+='<div><label class="fld">المسؤول / Responsible</label><input id="n_resp" value="'+esc(n.responsible||'')+'"></div>';
+  h+='<div><label class="fld">'+(LANG==='ar'?'المسؤول عن الإغلاق / Responsible for closure':'Responsible for closure / المسؤول عن الإغلاق')+'</label><input id="n_resp" value="'+esc(n.responsible||'')+'" placeholder="'+(LANG==='ar'?'اسم المسؤول':'Name')+'"></div>';
   h+='<div><label class="fld">تاريخ الاستحقاق / Due</label><input id="n_due" type="date" value="'+esc(n.due||'')+'"></div>';
   h+='</div>';
   h+='<div class="grid2">';
@@ -2051,29 +2660,42 @@ function ncrForm(n){
   h+='<label class="fld">الإجراء التصحيحي / Corrective Action</label><textarea id="n_action" rows="2">'+esc(n.action||'')+'</textarea>';
   if(ro)h+='<p class="note">هذه الحالة مستخرجة من تقرير. يمكنك تحديث المسؤول والتاريخ والحالة والإجراء فقط.</p>';
   h+='</div></div>';
-  h+='<div style="padding:0 16px 90px"><button class="btn" style="width:100%" onclick="saveNCR(\''+(n.id||'')+'\','+(ro?'true':'false')+')">حفظ</button>';
-  if(!isNew&&!ro)h+='<button class="btn ghost" style="width:100%;margin-top:10px;flex:1;border-color:#C0392B;color:#C0392B" onclick="delNCR(\''+n.id+'\')">حذف الحالة</button>';
+  h+='<div style="padding:0 16px 90px"><button class="btn" style="width:100%" onclick="saveNCR(\''+(n.id||'')+'\','+(ro?'true':'false')+')">'+(LANG==='ar'?'حفظ':'Save')+'</button>';
+  h+='<button class="btn ghost" style="width:100%;margin-top:10px" onclick="openNCR()">'+ICONS.back+' '+(LANG==='ar'?'رجوع للسجلّ':'Back to register')+'</button>';
+  if(!isNew&&!ro)h+='<button class="btn ghost" style="width:100%;margin-top:10px;border-color:#C0392B;color:#C0392B" onclick="delNCR(\''+n.id+'\')">'+(LANG==='ar'?'حذف الحالة':'Delete')+'</button>';
   h+='</div>';
   h+='<div class="toast" id="toast"></div>';
   $('app').innerHTML=h;
 }
 window.saveNCR=async function(id,ro){
   const g=x=>{const e=$(x);return e?e.value:'';};
-  const data={
-    title:g('n_title'),desc:g('n_desc'),project:g('n_project'),
+  // Workflow fields the QA engineer may always edit
+  let data={
     responsible:g('n_resp'),due:g('n_due'),status:g('n_status'),
-    severity:g('n_sev'),action:g('n_action'),
+    action:g('n_action'),
     updatedMs:Date.now(),updated:serverTimestamp()
   };
-  if(!data.title&&!ro){toast('اكتب عنوان الحالة');return;}
+  // Report-sourced NCRs: title/desc/project/severity come from the report — never overwrite them.
+  if(!ro){
+    data.title=g('n_title'); data.desc=g('n_desc');
+    data.project=g('n_project'); data.severity=g('n_sev');
+    if(!data.title){toast(LANG==='ar'?'اكتب عنوان الحالة':'Enter a title');return;}
+  }
+  if(data.status && /Closed|مغلق/.test(data.status)){
+    data.closedBy=SESSION.uid; data.closedByName=SESSION.name;
+    data.closedOn=new Date().toISOString().slice(0,10);
+  }
   try{
-    if(id){ await updateDoc(doc(db,'ncr',id),data); toast('تم الحفظ'); }
+    if(id){ await updateDoc(doc(db,'ncr',id),data); toast(LANG==='ar'?'تم الحفظ':'Saved'); }
     else{
       const nid='nc'+Date.now()+Math.floor(Math.random()*1000);
       await setDoc(doc(db,'ncr',nid),Object.assign({
-        id:nid,owner:SESSION.uid,ownerName:SESSION.name,source:'manual',createdMs:Date.now(),created:serverTimestamp()
+        id:nid,owner:SESSION.uid,ownerName:SESSION.name,source:'manual',
+        raisedBy:SESSION.uid,raisedByName:SESSION.name,
+        raisedOn:new Date().toISOString().slice(0,10),
+        createdMs:Date.now(),created:serverTimestamp()
       },data));
-      toast('تمت الإضافة');
+      toast(LANG==='ar'?'تمت الإضافة':'Added');
     }
     openNCR();
   }catch(e){ toast('تعذّر الحفظ: '+e.message); }
@@ -2652,9 +3274,9 @@ function templateEditPanel(){
     h+='</div></div>';
   });
   h+='<button class="btn ghost" style="width:100%;flex:1" onclick="addStage()">＋ '+(LANG==='ar'?'مرحلة جديدة':'New stage')+'</button>';
-  h+='<button class="btn" style="width:100%;margin-top:8px;background:var(--orange)" onclick="addSystemSections()">🔧 '+(LANG==='ar'?'إضافة أقسام فحص الأنظمة (تصحيحية)':'Add system inspection sections (corrective)')+'</button>';
+  h+='<button class="btn" style="width:100%;margin-top:8px;background:var(--orange)" onclick="addSystemSections()">'+ICONS.tool+' '+(LANG==='ar'?'إضافة أقسام فحص الأنظمة (تصحيحية)':'Add system inspection sections (corrective)')+'</button>';
   h+='<div class="note" style="margin-top:6px">'+(LANG==='ar'?'يضيف أقسام الفحص الفني لكل نظام (رشاشات، FM-200، إنذار، مضخة، رغوة) مربوطة بأنظمتها وملوّنة. أقسامك الحالية لا تتأثر.':'Adds technical inspection sections per system (Sprinkler, FM-200, Alarm, Pump, Foam), linked & colored. Your current sections are untouched.')+'</div>';
-  h+='<button class="btn" style="width:100%;margin-top:8px;background:var(--ok)" onclick="addSystemSections()">🧩 '+(LANG==='ar'?'إضافة أقسام الأنظمة الجاهزة (تصحيحية)':'Add ready-made system sections (corrective)')+'</button>';
+  h+='<button class="btn" style="width:100%;margin-top:8px;background:var(--ok)" onclick="addSystemSections()">'+ICONS.tool+' '+(LANG==='ar'?'إضافة أقسام الأنظمة الجاهزة (تصحيحية)':'Add ready-made system sections (corrective)')+'</button>';
   return h;
 }
 function curStages(){ return CFG.templates[EDIT_TPL].stages; }
@@ -2983,22 +3605,7 @@ window.updateOneTemplate=async function(tid){
   try{ await saveConfig(); toast(LANG==='ar'?'تم تحديث القالب ✓':'Template updated ✓'); renderAdminBody(); }
   catch(e){ toast((LANG==='ar'?'تعذّر التحديث: ':'Update failed: ')+e.message); }
 };
-window.updateDefaultTemplate=async function(){
-  if(!confirm(LANG==='ar'?'تحديث قالب الصيانة الحالي بالأسئلة والأقسام الجديدة؟ (تقاريرك المحفوظة لن تتأثر)':'Update the current maintenance template with the new questions/sections? (Saved reports are not affected)'))return;
-  const fresh=JSON.parse(JSON.stringify(DEFAULT_STAGES));
-  // store as the primary template + refresh in-memory templates[0]
-  CFG.template=tplToStore(fresh);
-  if(!CFG.templates)CFG.templates=[];
-  const di=CFG.templates.findIndex(t=>t.id==='default');
-  const entry={id:'default',name:(LANG==='ar'?'صيانة الحريق / Fire Maintenance':'صيانة الحريق / Fire Maintenance'),kind:'',refPrefix:'',stages:fresh};
-  if(di>=0)CFG.templates[di]=entry; else CFG.templates.unshift(entry);
-  // ensure the new systems are in the managed filter list
-  if(!Array.isArray(CFG.systems))CFG.systems=[];
-  ['Sprinkler System','Gas Suppression (FM-200/CO2/Inert)','Fire Alarm System','Fire Pump System'].forEach(function(s){ if(DEFAULT_SYSTEMS.indexOf(s)<0 && CFG.systems.indexOf(s)<0) CFG.systems.push(s); });
-  SYSTEMS=systemsList();
-  try{ await saveConfig(); toast(LANG==='ar'?'تم تحديث القالب ✓':'Template updated ✓'); renderAdminBody(); }
-  catch(e){ toast((LANG==='ar'?'تعذّر التحديث: ':'Update failed: ')+e.message); }
-};
+
 window.addToolsTemplate=async function(){
   if(!requireAdmin())return;
   if(!confirm(LANG==='ar'?'إضافة قائمة فحص الأدوات؟':'Add the Tools Inspection Checklist?'))return;
