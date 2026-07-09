@@ -1,0 +1,117 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- helpers ----------
+    function authed() { return request.auth != null; }
+    function isAdmin() {
+      return authed() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+    function isSelf(uid) { return authed() && request.auth.uid == uid; }
+
+    // ---------- users ----------
+    // Prevent privilege escalation: users can never change their own role/perms.
+    match /users/{uid} {
+      allow read: if isSelf(uid) || isAdmin();
+
+      // First-ever user becomes admin (bootstrap doc doesn't exist yet).
+      // Everyone else can self-create ONLY with role 'user',
+      // or with the exact role pre-assigned by admin in /pending/{email}.
+      allow create: if isSelf(uid) && (
+        !exists(/databases/$(database)/documents/meta/bootstrap)
+        || request.resource.data.role == 'user'
+        || (
+          exists(/databases/$(database)/documents/pending/$(request.auth.token.email))
+          && request.resource.data.role ==
+             get(/databases/$(database)/documents/pending/$(request.auth.token.email)).data.role
+        )
+      );
+
+      // Self-update allowed only if role & perms unchanged. Admin can update anyone.
+      allow update: if isAdmin() || (
+        isSelf(uid)
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.perms == resource.data.perms
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // ---------- meta (bootstrap flag) ----------
+    match /meta/{docId} {
+      allow read: if authed();
+      // can only be created once (first user); never modified after.
+      allow create: if authed() && !exists(/databases/$(database)/documents/meta/$(docId));
+      allow update, delete: if false;
+    }
+
+    // ---------- pending (admin pre-assigned accounts) ----------
+    match /pending/{email} {
+      // a user may read only their own pending doc; admin reads all
+      allow read: if isAdmin() || (authed() && request.auth.token.email == email);
+      allow write: if isAdmin();
+    }
+
+    // ---------- app config (projects, templates, rules, recipient) ----------
+    match /config/{docId} {
+      allow read: if authed();
+      allow write: if isAdmin();
+    }
+
+    // ---------- reports ----------
+    function hasReopenPerm() {
+      let u = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return u.get('perms', {}) != null && u.get('perms', {}).get('reopen', false) == true;
+    }
+    match /reports/{rid} {
+      // owner reads own reports; admin everything
+      allow read: if isAdmin() || (authed() && resource.data.owner == request.auth.uid);
+      allow create: if authed() && request.resource.data.owner == request.auth.uid;
+      // LOCK: once a report is 'done', only admin or a user with the
+      // 'reopen' permission may modify it (e.g. set it back to draft).
+      allow update: if isAdmin() || (
+        authed()
+        && resource.data.owner == request.auth.uid
+        && (resource.data.status != 'done' || hasReopenPerm())
+      ) || (
+        // non-owner with reopen permission may unlock
+        authed() && hasReopenPerm()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // ---------- NCR (non-conformities, incl. auto-generated) ----------
+    match /ncr/{nid} {
+      allow read: if authed();
+      allow create: if authed() && request.resource.data.owner == request.auth.uid;
+      allow update: if isAdmin() || (authed() && resource.data.owner == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    // ---------- procedures & work instructions ----------
+    match /procs/{pid} {
+      allow read: if authed();
+      allow write: if isAdmin();
+    }
+
+    // ---------- risk register ----------
+    match /risks/{rid} {
+      allow read: if authed();
+      allow write: if isAdmin();
+    }
+
+    // ---------- activity log (append-only) ----------
+    match /activity/{aid} {
+      allow read: if isAdmin();
+      allow create: if authed() && request.resource.data.byUid == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // ---------- default deny ----------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
