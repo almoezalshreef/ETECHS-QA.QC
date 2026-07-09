@@ -913,6 +913,32 @@ const ICONS={
  sched:_ic('<rect x="3.5" y="5" width="17" height="16" rx="2"/><line x1="3.5" y1="9.5" x2="20.5" y2="9.5"/><line x1="8" y1="3" x2="8" y2="6.5"/><line x1="16" y1="3" x2="16" y2="6.5"/><path d="m9 14.5 2 2 4-4"/>'),
  globe:_ic('<circle cx="12" cy="12" r="9"/><path d="M3.5 9h17M3.5 15h17"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z"/>')
 };
+// ---- Printable popups: give every one a working way back ----------------
+// window.open() pages have no browser chrome inside an installed PWA, so a
+// report opened on the phone became a dead end. Every popup now carries a
+// Close button with three fallbacks: window.close(), history.back(), and a
+// final message telling the user to swipe back.
+const POPUP_CLOSE_SCRIPT = '<scr'+'ipt>function closeDoc(){'+
+  'try{window.close();}catch(e){}'+
+  'setTimeout(function(){'+
+  '  if(window.closed) return;'+
+  '  try{ if(history.length>1){ history.back(); return; } }catch(e){}'+
+  '  setTimeout(function(){ if(window.closed) return;'+
+  '    document.body.innerHTML="<div style=\'padding:48px 24px;text-align:center;font-family:system-ui,sans-serif;color:#1B1E36\'>"+'+
+  '      "<div style=\'font-size:17px;font-weight:800;margin-bottom:10px\'>'+(LANG==='ar'?'انتهى':'Done')+'</div>"+'+
+  '      "<div style=\'font-size:13px;color:#6B7186;line-height:1.6\'>'+(LANG==='ar'?'أغلق هذه الصفحة أو اسحب للرجوع للتطبيق.':'Close this page or swipe back to return to the app.')+'</div></div>";'+
+  '  },260);'+
+  '},300);}<'+'/scr'+'ipt>';
+
+function popupCloseBtn(){
+  return '<button class="popClose" onclick="closeDoc()">'+
+    (LANG==='ar'?'إغلاق / رجوع للتطبيق':'Close / Back to app')+'</button>';
+}
+const POPUP_CLOSE_CSS =
+  '.popClose{width:100%;padding:12px;border-radius:10px;font-size:15px;font-weight:800;cursor:pointer;'+
+  'background:#fff;color:#0F0A44;border:2px solid #0F0A44;margin-bottom:14px}'+
+  '@media print{.popClose{display:none}}';
+
 const NAVY="#0F0A44", ORANGE="#EC5020";
 
 // ===== default checklist template =====
@@ -964,6 +990,21 @@ let reportsUnsub=null;
 
 function $(id){return document.getElementById(id)}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')}
+// jsq(): escape a value that will sit inside a JS string literal that itself
+// lives inside an HTML attribute, e.g.  onclick="fn('VALUE')".
+// esc() is WRONG here: it turns ' into &#39;, and the HTML parser decodes that
+// back to ' before the JS runs, letting an attacker close the string and inject
+// code. \u0027 survives HTML decoding and is interpreted by JS as a quote.
+function jsq(s){
+  return String(s==null?'':s)
+    .replace(/\\/g,'\\u005C')
+    .replace(/'/g,'\\u0027')
+    .replace(/"/g,'\\u0022')
+    .replace(/</g,'\\u003C')
+    .replace(/>/g,'\\u003E')
+    .replace(/&/g,'\\u0026')
+    .replace(/\r?\n/g,'\\n');
+}
 function requireAdmin(){ if(!SESSION||SESSION.role!=='admin'){ toast(t('admin_only')); return false; } return true; }
 function toast(m){let t=$('toast');if(!t){t=document.createElement('div');t.id='toast';t.className='toast';document.body.appendChild(t)}t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2600)}
 function kk(s,c,i){return s+'_'+c+'_'+i}
@@ -1751,7 +1792,7 @@ function itemHTML(st,sec,it,si,ci,ii){
   } else if(tp==='measure'){
     ctrl='<div class="qtype-measure"><input type="number" inputmode="decimal" placeholder="القيمة" value="'+esc(a.measure||'')+'" onchange="setMeasure(\''+key+'\',this.value)">'+(itemUnit(it)?'<span class="unit">'+esc(itemUnit(it))+'</span>':'')+'</div>';
   } else if(tp==='choice'){
-    ctrl='<div class="qopts">'+itemOptions(it).map((o,oi)=>'<label><input type="radio" name="ch_'+key+'" '+(a.choice===o?'checked':'')+' onclick="setChoice(\''+key+'\',\''+esc(o).replace(/'/g,"\\'")+'\')"> '+esc(o)+'</label>').join('')+'</div>';
+    ctrl='<div class="qopts">'+itemOptions(it).map((o,oi)=>'<label><input type="radio" name="ch_'+key+'" '+(a.choice===o?'checked':'')+' onclick="setChoice(\''+jsq(key)+'\',\''+jsq(o)+'\')"> '+esc(o)+'</label>').join('')+'</div>';
   }
   // NC box (finding + required action) for okna=Not OK or yesno=No
   let nc='';
@@ -1854,6 +1895,8 @@ window.clearSig=function(){const cv=$('sig');if(!cv)return;sigCtx.clearRect(0,0,
 
 // ===== submit =====
 window.reopenReport=async function(){
+  // reopen is allowed for admins OR users granted the 'reopen' permission,
+  // so we use canReopen() rather than requireAdmin() here.
   if(!canReopen()){ toast(t('admin_only')); return; }
   if(!CUR) return;
   if(!confirm(LANG==='ar'?'فتح هذا التقرير للتعديل مرة أخرى؟':'Reopen this report for editing?')) return;
@@ -2667,8 +2710,10 @@ window.printSchedule=function(){
    '.ft{margin-top:20px;background:#0F0A44;color:#fff;padding:10px 14px;border-radius:10px;font-size:11px;display:flex;justify-content:space-between}'+
    '@media print{.noprint{display:none}}'+
    '.noprint{background:#EC5020;color:#fff;border:0;padding:12px;border-radius:10px;width:100%;font-size:15px;font-weight:bold;cursor:pointer;margin-bottom:14px}'+
-   '</style></head><body>'+
+   POPUP_CLOSE_CSS+
+   '</style></head><body>'+POPUP_CLOSE_SCRIPT+
    '<button class="noprint" onclick="window.print()">'+(LANG==='ar'?'حفظ PDF / طباعة':'Save PDF / Print')+'</button>'+
+   popupCloseBtn()+
    '<div class="hdr"><img src="'+LOGO+'"><div><h1>'+(LANG==='ar'?'جدول مواعيد التفتيش':'INSPECTION SCHEDULE')+'</h1>'+
    '<small>ETECHS · Equipment & Technical Services Co.</small></div></div><div class="stripe"></div>'+
    '<div class="kpis">'+
@@ -2777,8 +2822,8 @@ window.printNCRReport=function(){
     '.toolbar{position:sticky;top:0;background:#fff;padding:10px;display:flex;gap:8px;border-bottom:1px solid #eee}'+
     '.toolbar button{flex:1;padding:12px;border:0;border-radius:10px;font-weight:800;color:#fff;font-size:15px}'+
     '@media print{.toolbar{display:none}}';
-  const html='<!DOCTYPE html><html dir="'+(LANG==='ar'?'rtl':'ltr')+'"><head><meta charset="utf-8"><title>NCR Report</title><style>'+css+'</style></head><body>'+
-    '<div class="toolbar"><button style="background:'+ORANGE+'" onclick="window.print()">'+(LANG==='ar'?'حفظ PDF / طباعة':'Save PDF / Print')+'</button></div>'+
+  const html='<!DOCTYPE html><html dir="'+(LANG==='ar'?'rtl':'ltr')+'"><head><meta charset="utf-8"><title>NCR Report</title><style>'+css+POPUP_CLOSE_CSS+'</style></head><body>'+POPUP_CLOSE_SCRIPT+
+    '<div class="toolbar"><button style="background:'+ORANGE+'" onclick="window.print()">'+(LANG==='ar'?'حفظ PDF / طباعة':'Save PDF / Print')+'</button>'+popupCloseBtn()+'</div>'+
     '<div class="hd"><img src="'+LOGO+'"><div class="ti"><b>NON-CONFORMITY REPORT</b><span>'+(LANG==='ar'?'تقرير حالات عدم المطابقة':'')+' · ETECHS</span></div></div><div class="or"></div>'+
     '<div class="wrap">'+
     '<div class="meta">'+
@@ -3190,8 +3235,8 @@ window.downloadRiskReport=function(){
     '.mx5cell{position:relative;color:#fff}.mxscore{font-size:10px;opacity:.75}.mxdots{display:block;font-size:0}.mxdots i{display:inline-block;background:#fff;color:#111;border-radius:50%;width:15px;height:15px;line-height:15px;font-size:9px;font-style:normal;font-weight:800;margin:1px}'+
     '.mx5xaxis{text-align:center;font-size:10px;font-weight:700;color:#666;margin-bottom:10px}'+
     '.toolbar{position:sticky;top:0;background:#fff;padding:10px;border-bottom:1px solid #eee}.toolbar button{width:100%;padding:13px;border:0;border-radius:10px;font-size:15px;font-weight:800;color:#fff;background:'+ORANGE+';cursor:pointer}'+
-    '@media print{.toolbar{display:none}}</style></head><body>'+
-    '<div class="toolbar"><button onclick="window.print()">'+(LANG==='ar'?'حفظ PDF / طباعة':'Save PDF / Print')+'</button></div>'+
+    '@media print{.toolbar{display:none}}'+POPUP_CLOSE_CSS+'</style></head><body>'+POPUP_CLOSE_SCRIPT+
+    '<div class="toolbar"><button onclick="window.print()">'+(LANG==='ar'?'حفظ PDF / طباعة':'Save PDF / Print')+'</button>'+popupCloseBtn()+'</div>'+
     '<div class="hd"><img src="'+LOGO+'"><div class="ti"><b>RISK ASSESSMENT REPORT</b><br><span>ETECHS · '+new Date().toLocaleDateString('en-GB')+'</span></div></div><div class="or"></div>'+
     '<div class="sec1"><div class="h2">'+(LANG==='ar'?'ملخّص المخاطر (المتبقية)':'Risk Summary (Residual)')+'</div>'+
     '<div class="sum">'+
@@ -3293,8 +3338,8 @@ window.downloadMonthly=function(){
     'table{width:100%;border-collapse:collapse;margin-bottom:8px}th,td{border:1px solid #ddd;padding:7px 8px;text-align:'+(LANG==='ar'?'right':'left')+';vertical-align:top;font-size:11px}th{background:'+NAVY+';color:#fff}'+
     '.comp{text-align:center;margin:10px 0}.cbig{font-size:34px;font-weight:800;color:'+ORANGE+'}'+
     '.toolbar{position:sticky;top:0;background:#fff;padding:10px;border-bottom:1px solid #eee}.toolbar button{width:100%;padding:13px;border:0;border-radius:10px;font-size:15px;font-weight:800;color:#fff;background:'+ORANGE+';cursor:pointer}'+
-    '@media print{.toolbar{display:none}}</style></head><body>'+
-    '<div class="toolbar"><button onclick="window.print()">'+(LANG==='ar'?'حفظ PDF / طباعة':'Save PDF / Print')+'</button></div>'+
+    '@media print{.toolbar{display:none}}'+POPUP_CLOSE_CSS+'</style></head><body>'+POPUP_CLOSE_SCRIPT+
+    '<div class="toolbar"><button onclick="window.print()">'+(LANG==='ar'?'حفظ PDF / طباعة':'Save PDF / Print')+'</button>'+popupCloseBtn()+'</div>'+
     '<div class="hd"><img src="'+LOGO+'"><div class="ti"><b>MONTHLY QUALITY REPORT</b><br><span>ETECHS · '+esc(period)+' · '+new Date().toLocaleDateString('en-GB')+'</span></div></div><div class="or"></div>'+
     '<div class="sec1">'+
     '<div class="h2">'+(LANG==='ar'?'ملخّص الفترة':'Period Summary')+'</div>'+
@@ -3363,7 +3408,11 @@ window.addUser=async function(){
   const gv=id=>{const el=$(id);return el?(el.value||''):'';};
   if(!$('u_name')||!$('u_email')||!$('u_pass')){ toast(LANG==='ar'?'افتح تبويب الأمان أولاً':'Open the Security tab first'); return; }
   const n=gv('u_name').trim(),e=gv('u_email').trim().toLowerCase(),p=gv('u_pass').trim();
-  if(!n||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)||p.length<6){toast('أكمل البيانات (مرور 6+)');return;}
+  // Strict allow-list. The loose /[^@\s]+/ pattern accepted quotes and
+  // backslashes, which is exactly what an injection payload needs.
+  const EMAIL_RE=/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/;
+  if(!n||!EMAIL_RE.test(e)||p.length<6){toast(LANG==='ar'?'أكمل البيانات (إيميل صحيح ومرور 6+)':'Enter a valid email and 6+ char password');return;}
+  if(/[<>'"\\]/.test(n)){toast(LANG==='ar'?'الاسم يحتوي رموزاً غير مسموحة':'Name contains invalid characters');return;}
   // We store a pending profile keyed by email; on first login the uid-doc is created with this role/name.
   try{
     // SECURITY: never persist the password. It is only used by the engineer at
@@ -3435,7 +3484,7 @@ function templateListPanel(){
   const allSys=systemsList();
   let sysChips=allSys.map(function(s){
     const isDefault=DEFAULT_SYSTEMS.indexOf(s)>=0;
-    return '<span class="chip">'+esc(s)+(isDefault?'':'<button onclick="delSystem(\''+esc(s).replace(/'/g,"\\'")+'\')">✕</button>')+'</span>';
+    return '<span class="chip">'+esc(s)+(isDefault?'':'<button onclick="delSystem(\''+jsq(s)+'\')">✕</button>')+'</span>';
   }).join('');
   h+='<div class="card"><h3>'+(LANG==='ar'?'أنظمة الفلتر':'Filter Systems')+' <small>'+(LANG==='ar'?'تُستخدم لفلترة الأقسام':'used to filter sections')+'</small></h3><div class="body">'+
     '<div class="note" style="margin-bottom:8px">'+(LANG==='ar'?'هذه قائمة الأنظمة التي تظهر في قائمة «النظام» وعند ربط الأقسام. أضف أنظمتك الخاصة. (الافتراضية لا تُحذف)':'These appear in the "System" dropdown and when tagging sections. Add your own. (Defaults can\'t be removed)')+'</div>'+
@@ -3596,6 +3645,7 @@ async function loadActivity(){
   }catch(e){ box.innerHTML='<div class="note">'+esc(e.message)+'</div>'; }
 }
 window.toggleLock=async function(btn){
+  if(!requireAdmin())return;
   const on=!btn.classList.contains('on'); btn.classList.toggle('on',on);
   const msg=($('lockMsg')&&$('lockMsg').value||'').trim();
   try{ await setDoc(doc(db,'meta','lock'),{locked:on,message:msg,by:SESSION.email,at:serverTimestamp()}); toast(on?'تم قفل التطبيق':'تم فتح التطبيق'); }
@@ -3606,11 +3656,13 @@ window.saveLockMsg=async function(){
   try{ await setDoc(doc(db,'meta','lock'),{locked:on,message:msg,by:SESSION.email,at:serverTimestamp()}); toast('تم حفظ الرسالة'); }catch(e){ toast('تعذّر الحفظ'); }
 };
 window.saveAnnounce=async function(){
+  if(!requireAdmin())return;
   const text=($('anncText').value||'').trim(); const color=$('anncColor').value;
   if(!text){toast('اكتب نص الإعلان');return;}
   try{ await setDoc(doc(db,'meta','announce'),{text,color,by:SESSION.email,at:serverTimestamp()}); toast('تم نشر الإعلان'); }catch(e){ toast('تعذّر النشر'); }
 };
 window.clearAnnounce=async function(){
+  if(!requireAdmin())return;
   try{ await setDoc(doc(db,'meta','announce'),{text:'',color:'navy',at:serverTimestamp()}); $('anncText').value=''; toast('تم مسح الإعلان'); }catch(e){ toast('تعذّر المسح'); }
 };
 let ADMIN_USERS=[];
@@ -3667,7 +3719,7 @@ async function loadPendingAdmin(){
     box.innerHTML=list.map(function(u){
       return '<div class="urow"><div class="ui"><b>'+esc(u.name||u.email)+'</b>'+
         '<span>'+esc(u.email)+' · '+(LANG==='ar'?'لم يسجّل دخوله بعد':'has not signed in yet')+'</span></div>'+
-        '<button class="miniBtn" style="border-color:#C0392B;color:#C0392B" onclick="delPending(\''+esc(u.email)+'\')">'+
+        '<button class="miniBtn" style="border-color:#C0392B;color:#C0392B" onclick="delPending(\''+jsq(u.email)+'\')">'+
         (LANG==='ar'?'إلغاء':'Cancel')+'</button></div>';
     }).join('');
   }catch(e){
@@ -3714,6 +3766,7 @@ window.openPerms=function(uid){
 };
 window.closePerms=function(){const m=$('permModal');if(m)m.remove();};
 window.savePerms=async function(uid){
+  if(!requireAdmin())return;
   const perms={}; document.querySelectorAll('#permModal .toggle').forEach(b=>{perms[b.dataset.k]=b.classList.contains('on');});
   try{ await updateDoc(doc(db,'users',uid),{perms}); toast(t('saved')); closePerms(); loadUsersAdmin(); }
   catch(e){ toast('تعذّر الحفظ: '+e.message); }
@@ -3722,9 +3775,11 @@ window.toggleRole=async function(uid,newRole){
   try{ await updateDoc(doc(db,'users',uid),{role:newRole}); toast('تم تغيير الدور'); loadUsersAdmin(); }catch(e){ toast('تعذّر التغيير'); }
 };
 window.toggleDisable=async function(uid,dis){
+  if(!requireAdmin())return;
   try{ await updateDoc(doc(db,'users',uid),{disabled:dis}); toast(dis?'تم التعطيل':'تم التفعيل'); loadUsersAdmin(); }catch(e){ toast('تعذّر التغيير'); }
 };
 window.delUser=async function(uid){
+  if(!requireAdmin())return;
   if(!confirm('حذف ملف هذا المستخدم؟ (لن يستطيع الدخول للبيانات)'))return;
   try{ await deleteDoc(doc(db,'users',uid)); toast('تم الحذف'); loadUsersAdmin(); }catch(e){ toast('تعذّر الحذف'); }
 };
@@ -3798,8 +3853,8 @@ window.archExport=function(){
   const rep='<!DOCTYPE html><html lang="'+LANG+'" dir="'+(LANG==='ar'?'rtl':'ltr')+'"><head><meta charset="utf-8"><title>Archive</title><style>'+
     'body{font-family:Arial,Tahoma,sans-serif;margin:0;font-size:12px}.hd{background:'+NAVY+';color:#fff;padding:14px 18px;display:flex;gap:14px;align-items:center}.hd img{height:42px;background:#fff;border-radius:6px;padding:3px}.hd .ti{margin-inline-start:auto}.or{height:5px;background:'+ORANGE+'}'+
     '.sec1{padding:16px 18px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ddd;padding:7px 8px;text-align:'+(LANG==='ar'?'right':'left')+';font-size:11px}th{background:'+NAVY+';color:#fff}'+
-    '.toolbar{position:sticky;top:0;background:#fff;padding:10px;border-bottom:1px solid #eee}.toolbar button{width:100%;padding:13px;border:0;border-radius:10px;font-size:15px;font-weight:800;color:#fff;background:'+ORANGE+'}@media print{.toolbar{display:none}}</style></head><body>'+
-    '<div class="toolbar"><button onclick="window.print()">'+(LANG==='ar'?'حفظ PDF / طباعة':'Save PDF / Print')+'</button></div>'+
+    '.toolbar{position:sticky;top:0;background:#fff;padding:10px;border-bottom:1px solid #eee}.toolbar button{width:100%;padding:13px;border:0;border-radius:10px;font-size:15px;font-weight:800;color:#fff;background:'+ORANGE+'}@media print{.toolbar{display:none}}'+POPUP_CLOSE_CSS+'</style></head><body>'+POPUP_CLOSE_SCRIPT+
+    '<div class="toolbar"><button onclick="window.print()">'+(LANG==='ar'?'حفظ PDF / طباعة':'Save PDF / Print')+'</button>'+popupCloseBtn()+'</div>'+
     '<div class="hd"><img src="'+LOGO+'"><div class="ti"><b>ARCHIVE SUMMARY</b><br><span>ETECHS · '+new Date().toLocaleDateString('en-GB')+' · '+ARCH_REPORTS.length+' reports</span></div></div><div class="or"></div>'+
     '<div class="sec1"><table><tr><th>#</th><th>'+t('site')+'</th><th>'+t('project')+'</th><th>LOA</th><th>'+t('date')+'</th><th>'+(LANG==='ar'?'منجز':'Done')+'</th><th>'+(LANG==='ar'?'المهندس':'Engineer')+'</th></tr>'+rows+'</table></div></body></html>';
   const w=window.open('','_blank'); if(w){w.document.open();w.document.write(rep);w.document.close();toast(LANG==='ar'?'افتح «حفظ PDF»':'Tap Save PDF');}
@@ -4154,9 +4209,9 @@ function buildReport(f){
   '.foot{margin-top:16px;padding:12px 26px;background:'+NAVY+';color:rgba(255,255,255,.75);font-size:10px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}'+
   '.toolbar{position:sticky;top:0;background:#fff;padding:10px;display:flex;gap:8px;border-bottom:1px solid #eee;z-index:9}'+
   '.toolbar button{flex:1;padding:13px;border:0;border-radius:10px;font-size:15px;font-weight:800;color:#fff;cursor:pointer}.tp{background:'+ORANGE+'}.te{background:'+NAVY+'}'+
-  '@media print{.toolbar{display:none}body{font-size:11.5px}.doc{max-width:100%}.statbox,.adc,.sgbox{box-shadow:none}}</style></head><body>'+
+  '@media print{.toolbar{display:none}body{font-size:11.5px}.doc{max-width:100%}.statbox,.adc,.sgbox{box-shadow:none}}'+POPUP_CLOSE_CSS+'</style></head><body>'+POPUP_CLOSE_SCRIPT+
   '<div class="doc">'+
-  '<div class="toolbar"><button class="tp" onclick="window.print()">حفظ PDF / Save PDF</button><button class="te" onclick="sendMail()">إرسال / Email</button></div>'+
+  '<div class="toolbar"><button class="tp" onclick="window.print()">حفظ PDF / Save PDF</button><button class="te" onclick="sendMail()">إرسال / Email</button>'+popupCloseBtn()+'</div>'+
   '<div class="hd"><img src="'+LOGO+'"><div class="ti"><b>'+reportTitle+'</b><span style="font-size:12px;opacity:.9">'+reportTitleAr+'</span><br><span>'+(CUR&&CUR.refNo?esc(CUR.refNo)+' · ':'')+'Equipment &amp; Technical Services Co. (ETECHS)</span></div></div><div class="or"></div>'+
   '<div class="sec1">'+infoBlock+
   (isAuditRep?'':H2('Inspection Summary','ملخّص الفحص')+dash)+

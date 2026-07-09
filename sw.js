@@ -1,7 +1,7 @@
 // ETECHS QA/QC — Service Worker
 // IMPORTANT: bump APP_VERSION on every deploy. The cache name is derived from it,
 // so a new version wipes the old cache instead of serving stale files forever.
-const APP_VERSION = '49';
+const APP_VERSION = '50';
 const CACHE = 'etechs-qaqc-fb-v' + APP_VERSION;
 
 const ASSETS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
