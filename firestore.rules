@@ -1,162 +1,164 @@
 rules_version = '2';
+
+// ETECHS QA/QC - Firestore Security Rules
+// Paste into: Firebase Console > Firestore Database > Rules > Publish
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ---------- helpers ----------
-    function authed() { return request.auth != null; }
-    function isAdmin() {
-      return authed() &&
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-    function isSelf(uid) { return authed() && request.auth.uid == uid; }
+    // ===================== HELPERS =====================
+    // All helpers are declared up-front so every match block can use them.
 
-    // ---------- users ----------
-    // Prevent privilege escalation: users can never change their own role/perms.
+    function authed() {
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return authed() && request.auth.uid == uid;
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function userExists() {
+      return authed() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function isAdmin() {
+      return userExists() && userDoc().role == 'admin';
+    }
+
+    // True when the signed-in user holds the 'reopen' permission.
+    function hasReopenPerm() {
+      return userExists() && userDoc().get('perms', {}).get('reopen', false) == true;
+    }
+
+    // Guards /pending against ever holding a plaintext password.
+    function noPasswordField() {
+      return !request.resource.data.keys().hasAny(['pass', 'password']);
+    }
+
+    // ===================== USERS =====================
+    // A user can never grant themselves a role or extra permissions.
     match /users/{uid} {
       allow read: if isSelf(uid) || isAdmin();
 
-      // First-ever user becomes admin (bootstrap doc doesn't exist yet).
-      // Everyone else can self-create ONLY with role 'user',
-      // or with the exact role pre-assigned by admin in /pending/{email}.
+      // Two legitimate ways to create your own user document:
+      //  1. As a plain 'user' (the normal case, incl. admin-invited engineers).
+      //  2. As 'admin', but ONLY if you are the uid recorded in meta/bootstrap.
+      //     The app writes meta/bootstrap first for the very first account, and
+      //     that document can never be created twice or modified afterwards.
       allow create: if isSelf(uid) && (
-        !exists(/databases/$(database)/documents/meta/bootstrap)
-        || request.resource.data.role == 'user'
-        || (
-          exists(/databases/$(database)/documents/pending/$(request.auth.token.email))
-          && request.resource.data.role ==
-             get(/databases/$(database)/documents/pending/$(request.auth.token.email)).data.role
+        request.resource.data.role == 'user' ||
+        (
+          exists(/databases/$(database)/documents/meta/bootstrap) &&
+          get(/databases/$(database)/documents/meta/bootstrap).data.adminUid == request.auth.uid
         )
       );
 
-      // Self-update allowed only if role & perms unchanged. Admin can update anyone.
+      // Self-update is allowed only when role and perms are unchanged.
       allow update: if isAdmin() || (
-        isSelf(uid)
-        && request.resource.data.role == resource.data.role
-        && request.resource.data.perms == resource.data.perms
+        isSelf(uid) &&
+        request.resource.data.role == resource.data.role &&
+        request.resource.data.get('perms', {}) == resource.data.get('perms', {})
       );
 
       allow delete: if isAdmin();
     }
 
-    // ---------- meta ----------
-    // bootstrap: written exactly once when the very first account is created.
-    // It is the anchor that stops anyone else from self-assigning the admin role,
-    // so it must never be updatable or deletable.
+    // ===================== META =====================
+    // bootstrap is written once, when the very first account is created.
+    // It anchors the admin rule above, so it must never change afterwards.
     match /meta/bootstrap {
       allow read: if authed();
       allow create: if authed() && !exists(/databases/$(database)/documents/meta/bootstrap);
-      allow update, delete: if false;
+      allow update: if false;
+      allow delete: if false;
     }
-    // lock (app kill-switch) and announce (banner) are admin-controlled.
+
     match /meta/lock {
       allow read: if authed();
       allow write: if isAdmin();
     }
+
     match /meta/announce {
       allow read: if authed();
       allow write: if isAdmin();
     }
-    // NOTE: Firestore evaluates ALL matching rules and ORs the results.
-    // A catch-all `match /meta/{docId}` with `allow write: if isAdmin()` would
-    // therefore re-open meta/bootstrap to admins and defeat its create-once
-    // protection. So meta docs are whitelisted explicitly, with no catch-all.
 
-    // ---------- pending (admin pre-assigned accounts) ----------
+    // No catch-all for /meta: Firestore ORs every matching rule, so a broad
+    // "match /meta/{docId}" would re-open meta/bootstrap to admins.
+
+    // ===================== PENDING INVITES =====================
+    // A pending doc holds only { name, email, role }. The invite password is
+    // NEVER stored: the engineer types it at first login, where Firebase Auth
+    // creates their account. The create/update rules enforce that at the
+    // database level, so even a buggy or tampered client cannot write one here.
+    // Note: create/update/delete are listed separately because on a delete
+    // request.resource is null, and touching request.resource.data would fail.
     match /pending/{email} {
-      // a user may read only their own pending doc; admin reads all
       allow read: if isAdmin() || (authed() && request.auth.token.email == email);
-      allow write: if isAdmin();
+      allow create: if isAdmin() && noPasswordField();
+      allow update: if isAdmin() && noPasswordField();
+      allow delete: if isAdmin();
     }
 
-    // ---------- app config (projects, templates, rules, recipient) ----------
+    // ===================== APP CONFIG =====================
     match /config/{docId} {
       allow read: if authed();
       allow write: if isAdmin();
     }
 
-    // ---------- reports ----------
-    // Safe lookup: never fail the rule if the user doc is missing.
-    function hasReopenPerm() {
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && get(/databases/$(database)/documents/users/$(request.auth.uid))
-             .data.get('perms', {}).get('reopen', false) == true;
-    }
+    // ===================== REPORTS =====================
+    // A submitted ('done') report is frozen. The only permitted change is
+    // unlocking it back to 'draft', by an admin or a user with 'reopen'.
     match /reports/{rid} {
-      // owner reads own reports; admin everything
       allow read: if isAdmin() || (authed() && resource.data.owner == request.auth.uid);
+
       allow create: if authed() && request.resource.data.owner == request.auth.uid;
 
-      // LOCK RULE
-      // - a draft may be edited freely by its owner
-      // - a report with status 'done' is FROZEN: nobody may change its content.
-      //   The only permitted change is unlocking it (status done -> draft),
-      //   and only by an admin or a user holding the 'reopen' permission.
-      allow update: if isAdmin()
-        || (
-          // owner editing their own report while it is still a draft
-          authed()
-          && resource.data.owner == request.auth.uid
-          && resource.data.status != 'done'
-        )
-        || (
-          // unlocking a closed report: status is the thing being changed
-          authed()
-          && hasReopenPerm()
-          && resource.data.status == 'done'
-          && request.resource.data.status == 'draft'
+      allow update: if isAdmin() ||
+        (
+          authed() &&
+          resource.data.owner == request.auth.uid &&
+          resource.data.status != 'done'
+        ) ||
+        (
+          authed() &&
+          hasReopenPerm() &&
+          resource.data.status == 'done' &&
+          request.resource.data.status == 'draft'
         );
 
       allow delete: if isAdmin();
     }
 
-    // ---------- NCR (non-conformities, incl. auto-generated) ----------
-    // Auto-NCRs are created by syncReportNCRs / backfillNCRs. Their `owner` is the
-    // ENGINEER WHO WROTE THE REPORT, not necessarily the person clicking. That means
-    // an admin running backfill creates docs owned by someone else — allowed below.
-    function ncrIsMine() {
-      return authed() && (
-        resource.data.get('owner', '') == request.auth.uid
-        || resource.data.get('raisedBy', '') == request.auth.uid
-        || (resource.data.get('responsible', '') != ''
-            && resource.data.get('responsible', '') == userName())
-      );
-    }
-    // Safe: returns '' when the user doc is missing instead of failing the rule.
-    function userName() {
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('name', '')
-        : '';
-    }
-    // An auto-NCR must point at a report the caller may legitimately act on.
-    function ncrFromOwnReport() {
-      let rid = request.resource.data.get('reportId', '');
-      return rid != ''
-        && exists(/databases/$(database)/documents/reports/$(rid))
-        && get(/databases/$(database)/documents/reports/$(rid)).data.owner == request.resource.data.get('owner', '');
-    }
+    // ===================== NON-CONFORMITIES =====================
+    // Auto-generated NCRs carry the REPORT OWNER as 'owner', not the person
+    // clicking, so an admin running backfill writes docs owned by someone else.
     match /ncr/{nid} {
-      // everyone signed in can read the register (the dashboard aggregates it)
       allow read: if authed();
 
-      // create: manual NCR owned by the caller, OR an auto-NCR generated from a
-      // report (admin backfill, or the report owner submitting).
       allow create: if authed() && (
-        request.resource.data.owner == request.auth.uid
-        || (isAdmin() && ncrFromOwnReport())
-        || (request.resource.data.get('source','') == 'report' && ncrFromOwnReport())
+        request.resource.data.owner == request.auth.uid ||
+        isAdmin()
       );
 
-      // update: admin, the owner, whoever raised it, or the person accountable
-      // for closing it (so they can set status / corrective action).
-      allow update: if isAdmin() || ncrIsMine();
+      // Admin, the owner, whoever raised it, or the person responsible for
+      // closing it may update (set status, corrective action, etc).
+      allow update: if isAdmin() ||
+        (authed() && resource.data.get('owner', '') == request.auth.uid) ||
+        (authed() && resource.data.get('raisedBy', '') == request.auth.uid) ||
+        (
+          userExists() &&
+          resource.data.get('responsible', '') != '' &&
+          resource.data.get('responsible', '') == userDoc().get('name', '')
+        );
 
       allow delete: if isAdmin();
     }
 
-    // ---------- inspection schedule ----------
-    // Engineers manage their own planned inspections; admin sees/edits everything.
-    // The app also auto-marks a slot 'done' when a matching report is submitted.
+    // ===================== INSPECTION SCHEDULE =====================
     match /schedule/{sid} {
       allow read: if authed();
       allow create: if authed() && request.resource.data.owner == request.auth.uid;
@@ -164,28 +166,30 @@ service cloud.firestore {
       allow delete: if isAdmin() || (authed() && resource.data.owner == request.auth.uid);
     }
 
-    // ---------- procedures & work instructions ----------
+    // ===================== PROCEDURES =====================
     match /procs/{pid} {
       allow read: if authed();
       allow write: if isAdmin();
     }
 
-    // ---------- risk register ----------
+    // ===================== RISK REGISTER =====================
     match /risks/{rid} {
       allow read: if authed();
       allow write: if isAdmin();
     }
 
-    // ---------- activity log (append-only) ----------
+    // ===================== ACTIVITY LOG (append-only) =====================
     match /activity/{aid} {
       allow read: if isAdmin();
       allow create: if authed() && request.resource.data.byUid == request.auth.uid;
-      allow update, delete: if false;
+      allow update: if false;
+      allow delete: if false;
     }
 
-    // ---------- default deny ----------
+    // ===================== DEFAULT DENY =====================
     match /{document=**} {
-      allow read, write: if false;
+      allow read: if false;
+      allow write: if false;
     }
   }
 }

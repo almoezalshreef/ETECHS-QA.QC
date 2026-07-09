@@ -250,8 +250,8 @@
   .navItem .ni{font-size:19px;width:24px;text-align:center}
   .navSep{font-size:11px;font-weight:800;color:#aaa;padding:14px 18px 6px;text-transform:uppercase;letter-spacing:.5px}
   .drawerBg{position:fixed;inset:0;background:rgba(15,10,68,.45);z-index:299;opacity:0;pointer-events:none;transition:opacity .25s}
-  header.bar{position:relative;z-index:320}
-  .menubtn{position:relative;z-index:321}
+
+
   .drawerBg.show{opacity:1;pointer-events:auto}
   /* permissions editor */
   .permRow{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:11px;padding:11px;margin-bottom:8px}
@@ -375,7 +375,7 @@ body{background:var(--appbg);color:var(--text);
 .ic{vertical-align:-4px}
 
 /* ---------- Annunciator header ---------- */
-header.bar{background:var(--grad-navy);box-shadow:0 6px 24px rgba(15,10,68,.35);position:relative}
+header.bar{background:var(--grad-navy);box-shadow:0 6px 24px rgba(15,10,68,.35)}
 .bar .t b{font-weight:800;letter-spacing:.2px}
 .bar .t span{opacity:.72;font-size:11.5px}
 .bar img{border-radius:10px;background:#fff;padding:3px}
@@ -530,9 +530,13 @@ html[data-theme=dark] .lockBanner{background:linear-gradient(135deg,#2E2138,#3A2
 .traceBox .k{color:var(--muted);font-weight:700}
 .traceBox .v{color:var(--ink);font-weight:800;text-align:end;word-break:break-word}
 
-/* Header stays reachable while scrolling — the back arrow must never disappear */
-header.bar{position:sticky;top:0;z-index:340}
-.stripe{position:relative;z-index:339}
+/* Header stays reachable while scrolling — the back arrow must never disappear.
+   LAYERS (low -> high): content < header 50 < fab 55 < footer 60 < modal 100
+   < toast 200 < drawer 300 < update bar 900 < overlay 9999
+   The header must stay BELOW the drawer and modals or it covers their close
+   buttons and input fields. */
+header.bar{position:sticky;top:0;z-index:50}
+.stripe{position:relative;z-index:49}
 
 .updBar{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));
   z-index:900;background:var(--grad-navy);color:#fff;border-radius:16px;box-shadow:var(--sh-2);
@@ -579,7 +583,7 @@ html[data-theme=dark] .scWarn{background:#3A1A1A}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, getDocs, query, where, orderBy, onSnapshot, serverTimestamp }
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, setDoc, updateDoc, deleteDoc, deleteField, collection, getDocs, query, where, orderBy, onSnapshot, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -3104,12 +3108,14 @@ window.openSet=async function(){
   if(SESSION.role==='admin'){
     let rows='<div class="note">جارٍ التحميل…</div>';
     usersHtml='<label class="fld">المستخدمون / Users</label><div id="userList">'+rows+'</div>'+
+      '<label class="fld" style="margin-top:10px">'+(LANG==='ar'?'بانتظار أول دخول / Pending':'Awaiting first login')+'</label>'+
+      '<div id="pendingList"><div class="note">'+(LANG==='ar'?'جارٍ التحميل…':'Loading…')+'</div></div>'+
       '<div style="border:1px dashed var(--line);border-radius:10px;padding:10px;margin-top:8px">'+
       '<div class="note" style="margin-bottom:6px">إضافة مستخدم: أنشئ له إيميلاً وكلمة مرور، وسيدخل بهما. (يُنشأ حسابه عند أول دخول له).</div>'+
       '<input id="u_name" placeholder="اسم المهندس" style="margin-bottom:6px">'+
       '<input id="u_email" type="email" inputmode="email" autocapitalize="off" placeholder="email@etechs.com" style="margin-bottom:6px">'+
       '<input id="u_pass" placeholder="كلمة المرور (6 خانات+)">'+
-      '<button class="btn" style="width:100%;margin-top:8px" onclick="addUser()">＋ تجهيز مستخدم</button></div>';
+      '<button class="btn" style="width:100%;margin-top:8px" onclick="addUser()">'+ICONS.plus+' '+(LANG==='ar'?'تجهيز مستخدم':'Prepare user')+'</button></div>';
   }
   const modal=document.createElement('div');modal.className='modal show';modal.id='setm';
   modal.innerHTML='<div class="sheet"><h3>الإعدادات / Settings</h3><div class="c">'+
@@ -3126,7 +3132,7 @@ window.openSet=async function(){
     '<button class="btn ghost" style="width:100%;margin-top:8px;flex:1" onclick="closeSet()">إغلاق</button>'+
     '</div></div>';
   document.body.appendChild(modal);
-  if(SESSION.role==='admin') loadUserList();
+  if(SESSION.role==='admin'){ loadUserList(); loadPendingAdmin(); }
 };
 window.closeSet=function(){const m=$('setm');if(m)m.remove();};
 window.saveSet=async function(){
@@ -3141,13 +3147,21 @@ async function loadUserList(){
 }
 // Admin "provisions" a user by pre-creating their profile (role). Their auth account is created on first login.
 window.addUser=async function(){
-  const n=($('u_name').value||'').trim(),e=($('u_email').value||'').trim().toLowerCase(),p=($('u_pass').value||'').trim();
+  if(!requireAdmin())return;
+  const gv=id=>{const el=$(id);return el?(el.value||''):'';};
+  if(!$('u_name')||!$('u_email')||!$('u_pass')){ toast(LANG==='ar'?'افتح تبويب الأمان أولاً':'Open the Security tab first'); return; }
+  const n=gv('u_name').trim(),e=gv('u_email').trim().toLowerCase(),p=gv('u_pass').trim();
   if(!n||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)||p.length<6){toast('أكمل البيانات (مرور 6+)');return;}
   // We store a pending profile keyed by email; on first login the uid-doc is created with this role/name.
   try{
-    await setDoc(doc(db,'pending',e),{name:n,role:'user',pass:p,created:serverTimestamp()});
-    toast('تم تجهيز المستخدم — يدخل بالإيميل وكلمة المرور');
-    $('u_name').value='';$('u_email').value='';$('u_pass').value='';
+    // SECURITY: never persist the password. It is only used by the engineer at
+    // their first login, where createUserWithEmailAndPassword() creates the auth
+    // account. Storing it in Firestore would leak it to anyone who can read /pending.
+    await setDoc(doc(db,'pending',e),{name:n,email:e,role:'user',created:serverTimestamp(),createdMs:Date.now()});
+    toast(LANG==='ar'?'تم تجهيز المستخدم — يدخل بالإيميل وكلمة المرور':'User prepared — they sign in with this email & password');
+    ['u_name','u_email','u_pass'].forEach(function(id){ const el=$(id); if(el)el.value=''; });
+    loadPendingAdmin();
+    if($('userList')) loadUserList();
   }catch(err){toast('تعذّر التجهيز: '+err.message);}
 };
 
@@ -3339,6 +3353,8 @@ function securityPanel(){
     '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn" style="flex:1" onclick="saveAnnounce()">نشر الإعلان</button>'+
     '<button class="btn ghost" style="flex:1" onclick="clearAnnounce()">مسح</button></div></div></div>'+
 
+    '<div class="card"><h3>'+(LANG==='ar'?'بانتظار أول دخول':'Awaiting first login')+' <small>Pending</small></h3><div class="body" id="pendingBox"><div class="loadwrap"><div class="spinner"></div></div></div></div>'+
+
     '<div class="card"><h3>المستخدمون <small>Users & Roles</small></h3><div class="body" id="usersBox"><div class="loadwrap"><div class="spinner"></div></div></div></div>'+
 
     '<div class="card"><h3>'+(LANG==='ar'?'سجلّ النشاط':'Activity Log')+' <small>Audit</small></h3><div class="body" id="actBox"><div class="loadwrap"><div class="spinner"></div></div></div></div>';
@@ -3349,6 +3365,7 @@ async function initSecurity(){
   // load announcement
   try{ const a=await getDoc(doc(db,'meta','announce')); if(a.exists()){ const d=a.data(); const t=$('anncText'); if(t)t.value=d.text||''; const c=$('anncColor'); if(c&&d.color)c.value=d.color; } }catch(e){}
   loadUsersAdmin();
+  loadPendingAdmin();
   loadActivity();
 }
 async function loadActivity(){
@@ -3385,6 +3402,73 @@ window.clearAnnounce=async function(){
   try{ await setDoc(doc(db,'meta','announce'),{text:'',color:'navy',at:serverTimestamp()}); $('anncText').value=''; toast('تم مسح الإعلان'); }catch(e){ toast('تعذّر المسح'); }
 };
 let ADMIN_USERS=[];
+// Users the admin created who have NOT signed in yet. Without this list the
+// admin adds someone and sees nothing, because /users only gets a document
+// after that person's first successful login.
+// ONE-TIME REMEDIATION: older builds stored the invite password as plain text
+// in /pending/{email}.pass . That was a real leak: anyone who could read the
+// document could read the password. We no longer write it, and we strip any
+// leftover copies the moment an admin opens the list.
+async function purgePendingPasswords(docs){
+  let cleaned=0;
+  for(const d of docs){
+    if(d.data && Object.prototype.hasOwnProperty.call(d.data,'pass')){
+      try{
+        await updateDoc(doc(db,'pending',d.id),{pass:deleteField()});
+        cleaned++;
+      }catch(e){}
+    }
+  }
+  if(cleaned){
+    toast(LANG==='ar'
+      ? ('حُذفت '+cleaned+' كلمة مرور مخزّنة بشكل غير آمن')
+      : ('Removed '+cleaned+' insecurely stored password(s)'));
+    logAct('security_purge_pending_passwords', String(cleaned));
+  }
+  return cleaned;
+}
+
+async function loadPendingAdmin(){
+  // The pending list appears in two places: the Settings modal (#pendingList)
+  // and the admin Security tab (#pendingBox). Paint whichever exists.
+  const boxes=[$('pendingBox'),$('pendingList')].filter(Boolean);
+  if(!boxes.length) return;
+  const box={ set innerHTML(v){ boxes.forEach(function(b){ b.innerHTML=v; }); } };
+  try{
+    const [pSnap,uSnap]=await Promise.all([
+      getDocs(collection(db,'pending')),
+      getDocs(collection(db,'users'))
+    ]);
+    const emails={}; uSnap.forEach(d=>{ const e=(d.data().email||'').toLowerCase(); if(e)emails[e]=true; });
+    const raw=[]; pSnap.forEach(d=>raw.push({id:d.id,data:d.data()}));
+    // strip any legacy plaintext passwords before rendering
+    if(SESSION.role==='admin') await purgePendingPasswords(raw);
+    const list=[];
+    raw.forEach(function(d){
+      const em=(d.id||'').toLowerCase();
+      if(!emails[em]) list.push(Object.assign({email:em},d.data));
+    });
+    if(!list.length){
+      box.innerHTML='<div class="note">'+(LANG==='ar'?'لا يوجد مستخدمون بانتظار الدخول.':'No users awaiting first login.')+'</div>';
+      return;
+    }
+    box.innerHTML=list.map(function(u){
+      return '<div class="urow"><div class="ui"><b>'+esc(u.name||u.email)+'</b>'+
+        '<span>'+esc(u.email)+' · '+(LANG==='ar'?'لم يسجّل دخوله بعد':'has not signed in yet')+'</span></div>'+
+        '<button class="miniBtn" style="border-color:#C0392B;color:#C0392B" onclick="delPending(\''+esc(u.email)+'\')">'+
+        (LANG==='ar'?'إلغاء':'Cancel')+'</button></div>';
+    }).join('');
+  }catch(e){
+    box.innerHTML='<div class="note">'+(LANG==='ar'?'تعذّر التحميل: ':'Could not load: ')+esc(e.message)+'</div>';
+  }
+}
+window.delPending=async function(email){
+  if(!requireAdmin())return;
+  if(!confirm(LANG==='ar'?'إلغاء دعوة هذا المستخدم؟':'Cancel this invitation?'))return;
+  try{ await deleteDoc(doc(db,'pending',email)); toast(LANG==='ar'?'أُلغيت':'Cancelled'); loadPendingAdmin(); }
+  catch(e){ toast((LANG==='ar'?'خطأ: ':'Error: ')+e.message); }
+};
+
 async function loadUsersAdmin(){
   const box=$('usersBox'); if(!box)return;
   try{
