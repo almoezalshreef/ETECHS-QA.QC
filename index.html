@@ -238,7 +238,7 @@
   .mx5xaxis{text-align:center;font-size:10px;font-weight:700;color:#888;margin-top:4px}
   /* side drawer */
   .menubtn{background:rgba(255,255,255,.15);border:0;color:#fff;width:38px;height:38px;border-radius:10px;font-size:18px;cursor:pointer;flex:0 0 auto}
-  .drawer{position:fixed;top:0;left:0;right:auto;width:280px;max-width:82vw;height:100%;background:#fff;z-index:300;transform:translateX(-105%);transition:transform .25s;box-shadow:2px 0 18px rgba(0,0,0,.18);display:flex;flex-direction:column;overflow:hidden}
+  .drawer{position:fixed;top:0;left:0;right:auto;width:280px;max-width:82vw;height:100%;background:#fff;z-index:300;transform:translateX(-105%);transition:transform .25s;box-shadow:2px 0 18px rgba(0,0,0,.18);display:flex;flex-direction:column;padding-top:56px}
   html[dir=rtl] .drawer{left:auto;right:0;transform:translateX(105%)}
   .drawer.open{transform:translateX(0)!important}
   .dHead{background:var(--navy);color:#fff;padding:20px 16px;display:flex;align-items:center;gap:12px}
@@ -422,14 +422,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--flame);
 .fab:active{transform:scale(.93)}
 
 /* ---------- Drawer ---------- */
-.drawer{background:var(--surface);border-radius:0 22px 22px 0;box-shadow:var(--sh-2);overflow:hidden}
+.drawer{background:var(--surface);border-radius:0 22px 22px 0;box-shadow:var(--sh-2)}
 html[dir=rtl] .drawer{border-radius:22px 0 0 22px}
-.dHead{background:var(--grad-navy);border:0;padding:calc(16px + env(safe-area-inset-top,0px)) 16px 16px;position:relative;z-index:1;box-sizing:border-box;width:100%}
-.dHead img{flex:0 0 auto}
-/* let the name/email block shrink so the close button never overflows */
-.dHt{flex:1 1 auto;min-width:0;overflow:hidden}
-.dHt b,.dHt span{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.dClose{flex:0 0 auto;margin-inline-start:auto}
+.dHead{background:var(--grad-navy);border:0;padding:20px 16px}
 .dHead img{background:#fff;border-radius:12px;padding:4px}
 .dHt b{color:#fff}.dHt span{color:rgba(255,255,255,.65)}
 .dClose{background:rgba(255,255,255,.12);border-radius:11px;color:#fff;width:36px;height:36px;
@@ -496,12 +491,8 @@ html[data-theme=dark] .lockBanner{background:linear-gradient(135deg,#2E2138,#3A2
 .lockTx{flex:1}.lockTx b{display:block;color:var(--ink);font-size:14px}
 .lockTx span{color:var(--muted);font-size:11.5px;line-height:1.4;display:block}
 .lockBtn{padding:10px 16px;font-size:13px}
-/* Locked report: nothing inside the wrap is interactive except the lock banner */
-.rlocked > *:not(.lockBanner){pointer-events:none}
-.rlocked .lockBanner,.rlocked .lockBanner *{pointer-events:auto}
-.rlocked .card{opacity:.96}
-.rlocked input,.rlocked select,.rlocked textarea,.rlocked .seg button,.rlocked .sysChip{cursor:not-allowed}
-.rlocked .photos img{pointer-events:auto}
+.rlocked .card .body{pointer-events:none;opacity:.94}
+.rlocked .card .body .pill,.rlocked .photos img{pointer-events:auto}
 
 /* ---------- Footer bar ---------- */
 .sb{background:color-mix(in srgb, var(--surface) 88%, transparent);backdrop-filter:blur(14px);
@@ -636,14 +627,14 @@ const I18N={
   status:{en:'Status',ar:'الحالة'},
   severity:{en:'Severity',ar:'الخطورة'},
   corrective:{en:'Corrective Action',ar:'الإجراء التصحيحي'},
-  search_ncr:{en:'Search title/description/responsible',ar:'بحث في العنوان/الوصف/المسؤول'},
+  search_ncr:{en:'🔎 Search title/description/responsible',ar:'🔎 بحث في العنوان/الوصف/المسؤول'},
   all_status:{en:'All statuses',ar:'كل الحالات'},
   all_projects:{en:'All projects',ar:'كل المشاريع'},
   no_ncr:{en:'No cases. Tap + to add a non-conformity.',ar:'لا توجد حالات. اضغط ＋ لإضافة حالة عدم مطابقة.'},
   overdue:{en:'overdue',ar:'متأخرة'},
   // procedures
   procs_title:{en:'Procedures',ar:'الإجراءات'},
-  proc_search:{en:'Search procedures',ar:'بحث في الإجراءات'},
+  proc_search:{en:'🔎 Search procedures',ar:'🔎 بحث في الإجراءات'},
   all_cats:{en:'All categories',ar:'كل التصنيفات'},
   no_procs:{en:'No procedures yet.',ar:'لا توجد إجراءات بعد.'},
   proc_new:{en:'New Procedure',ar:'إجراء جديد'},
@@ -657,7 +648,7 @@ const I18N={
   confirm_del:{en:'Delete this item?',ar:'حذف هذا العنصر؟'},
   // risk module
   risk_title:{en:'Risk Management',ar:'إدارة المخاطر'},
-  risk_search:{en:'Search risks',ar:'بحث في المخاطر'},
+  risk_search:{en:'🔎 Search risks',ar:'🔎 بحث في المخاطر'},
   no_risks:{en:'No risks yet. Tap + to add a risk.',ar:'لا توجد مخاطر بعد. اضغط ＋ لإضافة خطر.'},
   risk_new:{en:'New Risk',ar:'خطر جديد'},
   risk_edit:{en:'Edit Risk',ar:'تعديل خطر'},
@@ -769,8 +760,7 @@ const ICONS={
  tool:_ic('<path d="M14.5 6.5a4 4 0 0 0-5.4 5.1L3 17.7V21h3.3l6.1-6.1a4 4 0 0 0 5.1-5.4L14.7 12l-2.7-2.7 2.5-2.8z"/>'),
  refresh:_ic('<path d="M20.5 11A8.5 8.5 0 1 0 19 16.5"/><path d="M20.5 4.5V11H14"/>'),
  trash:_ic('<path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6.5 7l1 13h9l1-13"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>'),
- lock:_ic('<rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/>'),
- globe:_ic('<circle cx="12" cy="12" r="9"/><path d="M3.5 9h17M3.5 15h17"/><path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18z"/>')
+ lock:_ic('<rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/>')
 };
 const NAVY="#0F0A44", ORANGE="#EC5020";
 
@@ -1062,9 +1052,9 @@ function renderHome(){
   let h='<header class="bar"><button class="menubtn" onclick="toggleDrawer()">'+ICONS.menu+'</button>'+
    '<img src="'+LOGO+'"><div class="t"><b>'+t('app_title')+'</b><span>'+esc(SESSION.name)+(SESSION.role==='admin'?' (Admin)':'')+'</span></div>'+
    '<button class="gear" onclick="toggleTheme()" title="Theme">'+(THEME==='dark'?ICONS.sun:ICONS.moon)+'</button>'+
-   '<button class="gear" onclick="toggleLang()" title="Language">'+ICONS.globe+'</button></header><div class="stripe"></div>';
+   '<button class="gear" onclick="toggleLang()" title="Language">🌐</button></header><div class="stripe"></div>';
   h+=drawerHTML();
-  h+='<div class="wrap"><div id="annc"></div><div class="card"><h3>'+(SESSION.role==='admin'?t('all_reports'):t('my_reports'))+' <small id="syncBadge"></small>'+(SESSION.role==='admin'?'<button class="exportBtn" style="margin-inline-start:auto" onclick="exportReportsCSV()">⬇️ Excel/CSV</button>':'')+'</h3><div class="body"><input id="repSearch" class="repSearch" placeholder="'+(LANG==='ar'?'بحث بالمحطة/المشروع/LOA':'Search site/project/LOA')+'" oninput="filterHome(this.value)" value="'+esc(HOME_Q||'')+'"><div id="homeList"><div class="loadwrap"><div class="spinner"></div></div></div></div></div></div>';
+  h+='<div class="wrap"><div id="annc"></div><div class="card"><h3>'+(SESSION.role==='admin'?t('all_reports'):t('my_reports'))+' <small id="syncBadge"></small>'+(SESSION.role==='admin'?'<button class="exportBtn" style="margin-inline-start:auto" onclick="exportReportsCSV()">⬇️ Excel/CSV</button>':'')+'</h3><div class="body"><input id="repSearch" class="repSearch" placeholder="'+(LANG==='ar'?'🔎 بحث بالمحطة/المشروع/LOA':'🔎 Search site/project/LOA')+'" oninput="filterHome(this.value)" value="'+esc(HOME_Q||'')+'"><div id="homeList"><div class="loadwrap"><div class="spinner"></div></div></div></div></div></div>';
   if(can('create')) h+='<button class="fab" onclick="newReport()">'+ICONS.plus+'</button>';
   h+='<div class="toast" id="toast"></div>';
   $('app').innerHTML=h;
@@ -1398,18 +1388,6 @@ function renderReport(){
   onProj();
   restoreAnswers();
   renderPhotos(); initSig(); upd(true);
-  // LOCKED REPORT: truly disable every control (defence in depth: CSS + disabled + JS guards)
-  if(ro){
-    const wrap=document.querySelector('.wrap.rlocked');
-    if(wrap){
-      wrap.querySelectorAll('input,select,textarea,button').forEach(function(el){
-        if(el.closest('.lockBanner')) return;   // keep the Reopen button usable
-        el.disabled=true;
-        el.setAttribute('aria-disabled','true');
-      });
-      const cv=wrap.querySelector('#sig'); if(cv) cv.style.pointerEvents='none';
-    }
-  }
   // auto-save on work-order field edits
   ['f_site','f_loa','f_service','f_team','f_date','f_location','f_pm','f_by','f_month','f_wo_recv','f_wo_closed','f_tr_req','f_tr_done','f_emp_total','f_sec_total','f_sec_expired','f_sec_missing','f_appr_name','f_appr_title','f_appr_date'].forEach(function(id){
     const el=$(id); if(el){ el.addEventListener('change',function(){ autoSave(); if(typeof renderAuditDash==='function')renderAuditDash(); }); el.addEventListener('input',function(){ autoSave(); }); }
@@ -1459,7 +1437,7 @@ function filterSections(){
       msg=(LANG==='ar'?'ℹ️ لا توجد أقسام مربوطة بأنظمة في هذا القالب. اربط الأقسام من: لوحة التحكّم ← الأسئلة ← تعديل القالب.':'ℹ️ No sections are linked to systems in this template. Link them in: Control Panel → Questions → Edit template.');
     } else if(chosen.length){
       const tags=chosen.map(function(s){return '<span class="sysPill" style="background:'+sysColor(s)+'">'+esc(s)+'</span>';}).join(' ');
-      msg=''+(LANG==='ar'?'الأقسام العامة + ':'General + ')+tags+' &nbsp;·&nbsp; <b>'+c.total+'</b> '+(LANG==='ar'?'سؤال ظاهر':'questions shown');
+      msg='🔧 '+(LANG==='ar'?'الأقسام العامة + ':'General + ')+tags+' &nbsp;·&nbsp; <b>'+c.total+'</b> '+(LANG==='ar'?'سؤال ظاهر':'questions shown');
     } else {
       msg=(LANG==='ar'?'اختر الأنظمة التي تعملون عليها لعرض أقسامها · ':'Select systems being serviced · ')+'<b>'+c.total+'</b> '+(LANG==='ar'?'سؤال عام ظاهر':'general questions shown');
     }
@@ -1577,7 +1555,7 @@ function itemHTML(st,sec,it,si,ci,ii){
   // per-question photo
   let ph='';
   if(itemReqPhoto(it)){
-    ph='<div class="reqphoto"><div class="lbl">صورة مطلوبة لهذا البند</div>'+
+    ph='<div class="reqphoto"><div class="lbl">📷 صورة مطلوبة لهذا البند</div>'+
        (a.photo?'<img class="qphoto" src="'+a.photo+'">':'')+
        '<button class="btn ghost" style="flex:1;width:100%;margin-top:6px;padding:9px" onclick="qPhotoFor(\''+key+'\')">'+(a.photo?'تغيير الصورة':'التقاط صورة')+'</button></div>';
   }
@@ -1592,19 +1570,18 @@ function itemHTML(st,sec,it,si,ci,ii){
 function typeLabel(tp){return ({okna:'OK/NotOK',audit:(LANG==='ar'?'تدقيق':'Audit'),rating:'تقييم',text:'نص',measure:'قياس',yesno:'نعم/لا',choice:'قائمة'})[tp]||tp}
 
 // ===== answer setters =====
-function reportLocked(){ return !!(CUR && CUR.status==='done'); }
 function ensureA(key){ const it=keyItem(key); answers[key]=answers[key]||{type:itemType(it)}; if(!answers[key].type)answers[key].type=itemType(it); return answers[key]; }
 function keyItem(key){ const[si,ci,ii]=key.split('_').map(Number); return TPL[si].secs[ci].items[ii]; }
-window.setOKNA=function(key,v,btn){if(reportLocked()){toast(LANG==='ar'?'التقرير مقفول — اضغط «فتح التقرير» أولاً':'Report is locked — press Reopen first');return;}buzz(12);const a=ensureA(key);a.status=(a.status===v?null:v);const seg=btn.parentNode;seg.querySelectorAll('button').forEach(b=>b.classList.remove('on'));if(a.status)btn.classList.add('on');refreshNC(key);upd();};
-window.setAudit=function(key,v,btn){if(reportLocked()){toast(LANG==='ar'?'التقرير مقفول — اضغط «فتح التقرير» أولاً':'Report is locked — press Reopen first');return;}buzz(12);const a=ensureA(key);a.status=(a.status===v?null:v);const seg=btn.parentNode;seg.querySelectorAll('button').forEach(b=>b.classList.remove('on'));if(a.status)btn.classList.add('on');refreshNC(key);upd();if(typeof renderAuditDash==='function')renderAuditDash();};
-window.setYN=function(key,v,btn){if(reportLocked()){toast(LANG==='ar'?'التقرير مقفول — اضغط «فتح التقرير» أولاً':'Report is locked — press Reopen first');return;}buzz(12);const a=ensureA(key);a.yn=(a.yn===v?null:v);const seg=btn.parentNode;seg.querySelectorAll('button').forEach(b=>b.classList.remove('on'));if(a.yn)btn.classList.add('on');refreshNC(key);upd();};
-window.setRating=function(key,n){if(reportLocked()){toast(LANG==='ar'?'التقرير مقفول — اضغط «فتح التقرير» أولاً':'Report is locked — press Reopen first');return;}const a=ensureA(key);a.rating=(a.rating===n?0:n);paintStars(key);upd();};
+window.setOKNA=function(key,v,btn){buzz(12);const a=ensureA(key);a.status=(a.status===v?null:v);const seg=btn.parentNode;seg.querySelectorAll('button').forEach(b=>b.classList.remove('on'));if(a.status)btn.classList.add('on');refreshNC(key);upd();};
+window.setAudit=function(key,v,btn){buzz(12);const a=ensureA(key);a.status=(a.status===v?null:v);const seg=btn.parentNode;seg.querySelectorAll('button').forEach(b=>b.classList.remove('on'));if(a.status)btn.classList.add('on');refreshNC(key);upd();if(typeof renderAuditDash==='function')renderAuditDash();};
+window.setYN=function(key,v,btn){buzz(12);const a=ensureA(key);a.yn=(a.yn===v?null:v);const seg=btn.parentNode;seg.querySelectorAll('button').forEach(b=>b.classList.remove('on'));if(a.yn)btn.classList.add('on');refreshNC(key);upd();};
+window.setRating=function(key,n){const a=ensureA(key);a.rating=(a.rating===n?0:n);paintStars(key);upd();};
 function paintStars(key){const box=$('rt_'+key);if(!box)return;const a=answers[key]||{};box.querySelectorAll('.star').forEach(s=>{s.classList.toggle('on',Number(s.dataset.n)<=(a.rating||0));});}
 window.setText=function(key,v){ensureA(key).text=v;upd();};
 window.setMeasure=function(key,v){ensureA(key).measure=v;upd();};
-window.setChoice=function(key,v){if(reportLocked()){toast(LANG==='ar'?'التقرير مقفول — اضغط «فتح التقرير» أولاً':'Report is locked — press Reopen first');return;}ensureA(key).choice=v;upd();};
-window.setRemark=function(key,v){if(reportLocked()){toast(LANG==='ar'?'التقرير مقفول — اضغط «فتح التقرير» أولاً':'Report is locked — press Reopen first');return;}ensureA(key).remark=v;};
-window.setNC=function(key,field,v){if(reportLocked()){toast(LANG==='ar'?'التقرير مقفول — اضغط «فتح التقرير» أولاً':'Report is locked — press Reopen first');return;}ensureA(key)[field]=v;};
+window.setChoice=function(key,v){ensureA(key).choice=v;upd();};
+window.setRemark=function(key,v){ensureA(key).remark=v;};
+window.setNC=function(key,field,v){ensureA(key)[field]=v;};
 function refreshNC(key){ // re-render just this item to show/hide NC box
   const a=answers[key]; const it=keyItem(key); const[si,ci,ii]=key.split('_').map(Number);
   const cont=$('it_'+key); if(!cont)return;
@@ -1629,7 +1606,7 @@ function upd(skipSave){
   const c=counts();
   const e=$('pct');
   const pc=c.total?Math.round(c.done/c.total*100):0;
-  if(e){e.innerHTML=c.done+'/'+c.total+' ('+pc+'%) · '+photos.length+' '+(LANG==='ar'?'صورة':'photos');e.style.color=(c.done===c.total&&photos.length>0)?'#1B8A3A':'#777';}
+  if(e){e.innerHTML=c.done+'/'+c.total+' ('+pc+'%) · 📷'+photos.length;e.style.color=(c.done===c.total&&photos.length>0)?'#1B8A3A':'#777';}
   const bar=$('progFill'); if(bar)bar.style.width=pc+'%';
   if(!skipSave) autoSave();
 }
@@ -1646,11 +1623,11 @@ window.saveCur=saveCur;
 window.addPhoto=function(){$('cam').click()};
 window.onPhoto=function(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{const fin=(la,ln)=>stamp(e.target.result,la,ln,(d)=>{photos.push(d);renderPhotos();});if(navigator.geolocation){navigator.geolocation.getCurrentPosition(p=>fin(p.coords.latitude,p.coords.longitude),()=>fin(null,null),{enableHighAccuracy:true,timeout:6000,maximumAge:0});}else fin(null,null);};r.readAsDataURL(f);ev.target.value='';};
 let qPhotoKey=null;
-window.qPhotoFor=function(key){if(reportLocked()){toast(LANG==='ar'?'التقرير مقفول — اضغط «فتح التقرير» أولاً':'Report is locked — press Reopen first');return;}qPhotoKey=key;$('qcam').click();};
+window.qPhotoFor=function(key){qPhotoKey=key;$('qcam').click();};
 window.onQPhoto=function(ev){const f=ev.target.files[0];if(!f||!qPhotoKey)return;const key=qPhotoKey;const r=new FileReader();r.onload=e=>{const fin=(la,ln)=>stamp(e.target.result,la,ln,(d)=>{ensureA(key).photo=d.dataUrl;refreshNC(key);});if(navigator.geolocation){navigator.geolocation.getCurrentPosition(p=>fin(p.coords.latitude,p.coords.longitude),()=>fin(null,null),{enableHighAccuracy:true,timeout:6000,maximumAge:0});}else fin(null,null);};r.readAsDataURL(f);ev.target.value='';};
 function stamp(dataUrl,lat,lng,cb){const img=new Image();img.onload=()=>{const mx=1100,sc=Math.min(1,mx/img.width),w=Math.round(img.width*sc),hh=Math.round(img.height*sc);const cv=document.createElement('canvas');cv.width=w;cv.height=hh;const x=cv.getContext('2d');x.drawImage(img,0,0,w,hh);const n=new Date(),d=n.toLocaleDateString('en-GB'),t=n.toLocaleTimeString('en-GB');const loc=(lat!=null)?('Lat '+lat.toFixed(5)+', Lng '+lng.toFixed(5)):'Location N/A';const lines=['📍 '+loc,'🕒 '+d+'  '+t,'ETECHS'];const pad=8,fs=Math.max(13,Math.round(w*0.027));x.font='bold '+fs+'px Arial';const bh=fs*lines.length+pad*2;x.fillStyle='rgba(15,10,68,0.74)';x.fillRect(0,hh-bh,w,bh);x.fillStyle='#EC5020';x.fillRect(0,hh-bh,5,bh);x.fillStyle='#fff';x.textBaseline='top';lines.forEach((l,i)=>x.fillText(l,pad+4,hh-bh+pad+i*fs));cb({dataUrl:cv.toDataURL('image/jpeg',0.7),loc:loc,time:d+' '+t});};img.src=dataUrl;}
 function renderPhotos(){const b=$('ph');if(!b)return;b.innerHTML=photos.map((p,i)=>'<div class="ph"><img src="'+p.dataUrl+'"><button class="x" onclick="delP('+i+')">×</button><div class="stamp">'+esc(p.time)+'</div></div>').join('')+'<button class="addph" onclick="addPhoto()"><span>＋</span>صورة<br>Photo</button>';upd();}
-window.delP=function(i){if(reportLocked()){toast(LANG==='ar'?'التقرير مقفول — اضغط «فتح التقرير» أولاً':'Report is locked — press Reopen first');return;}photos.splice(i,1);renderPhotos();};
+window.delP=function(i){photos.splice(i,1);renderPhotos();};
 
 // ===== signature =====
 let sigCtx,sigDrawing=false;
@@ -1801,33 +1778,23 @@ async function syncReportNCRs(rep, f, ansArg, tplArg){
 // batch-generate NCRs from ALL existing reports (for reports saved before this feature)
 window.backfillNCRs=async function(){
   if(SESSION.role!=='admin'){ toast(t('admin_only')); return; }
-  if(!confirm(LANG==='ar'?'توليد حالات عدم مطابقة من كل التقارير المُقفلة؟ (لن يُكرّر الموجود)':'Generate NCRs from all closed reports? (existing ones are not duplicated)'))return;
-  // NOTE: never call loading() here — it wipes the whole app view.
-  const btns=[...document.querySelectorAll('button')].filter(b=>/backfillNCRs/.test(b.getAttribute('onclick')||''));
-  btns.forEach(b=>{b.disabled=true; b.dataset.old=b.innerHTML; b.innerHTML=(LANG==='ar'?'جاري المعالجة…':'Processing…');});
-  let closed=0, skippedDraft=0, skippedNoTpl=0, before=0, after=0;
+  if(!confirm(LANG==='ar'?'توليد حالات عدم مطابقة من كل التقارير المحفوظة؟ (لن يُكرّر الموجود)':'Generate NCRs from all saved reports? (existing ones are not duplicated)'))return;
+  loading(LANG==='ar'?'جاري المعالجة...':'Processing...');
   try{
-    try{ const s0=await getDocs(collection(db,'ncr')); before=s0.size||0; }catch(e){}
     const snap=await getDocs(collection(db,'reports'));
     const reps=[]; snap.forEach(d=>reps.push(Object.assign({id:d.id},d.data())));
+    let count=0, scanned=0;
     for(const r of reps){
-      if(r.status!=='done'){ skippedDraft++; continue; }
-      const tpl=tplFromStore(r.tpl)||[];
-      if(!tpl.length){ skippedNoTpl++; continue; }
-      await syncReportNCRs(r, r.form||{}, r.answers||{}, tpl);
-      closed++;
+      if(r.status!=='done') continue; // only closed reports
+      const ans=r.answers||{}; const tpl=tplFromStore(r.tpl)||[]; const f=r.form||{};
+      if(!tpl.length) continue;
+      scanned++;
+      await syncReportNCRs(r, f, ans, tpl);
+      count++;
     }
-    try{ const s1=await getDocs(collection(db,'ncr')); after=s1.size||0; }catch(e){}
-    const created=Math.max(0, after-before);
-    toast(LANG==='ar'
-      ? ('فُحص '+closed+' تقريراً مقفولاً · أُنشئت '+created+' حالة'+(skippedDraft?(' · تُخطّي '+skippedDraft+' مسودّة'):''))
-      : ('Scanned '+closed+' closed reports · created '+created+' NCRs'+(skippedDraft?(' · skipped '+skippedDraft+' drafts'):'')));
-    if(closed===0) toast(LANG==='ar'?'لا توجد تقارير مقفولة. أرسِل تقريراً أولاً.':'No closed reports found. Submit a report first.');
+    toast((LANG==='ar'?'تمت معالجة ':'Processed ')+count+(LANG==='ar'?' تقريراً':' reports'));
+    if(typeof paintNCR==='function') paintNCR();
   }catch(e){ toast((LANG==='ar'?'خطأ: ':'Error: ')+e.message); }
-  finally{
-    btns.forEach(b=>{b.disabled=false; if(b.dataset.old)b.innerHTML=b.dataset.old;});
-    if(typeof paintNCR==='function' && document.getElementById('ncrList')) paintNCR();
-  }
 };
 
 // ===== DASHBOARD =====
@@ -1955,11 +1922,7 @@ function renderNCR(){
      '<select id="ncrRepSel" onchange="ncrFilterReport(this.value)" style="flex:1;min-width:150px"><option value="">'+(LANG==='ar'?'كل التقارير':'All reports')+'</option>'+
         [...new Set(NCR_LIST.map(n=>n.reportRef).filter(Boolean))].map(r=>'<option'+(NCR_F.report===r?' selected':'')+'>'+esc(r)+'</option>').join('')+'</select>'+
      '<button class="btn" style="flex:1;min-width:150px;background:var(--navy)" onclick="printNCRReport()">'+ICONS.print+' '+(LANG==='ar'?'تقرير عدم المطابقة':'NCR Report')+'</button>'+
-     '</div>'+
-     (SESSION.role==='admin'?
-       '<button class="btn ghost" style="width:100%;margin-top:4px;font-size:12.5px" onclick="backfillNCRs()">'+ICONS.refresh+' '+(LANG==='ar'?'توليد الحالات من التقارير القديمة':'Generate NCRs from old reports')+'</button>'
-       :'')+
-     '</div></div>';
+     '</div></div></div>';
   h+='<div id="ncrList"><div class="loadwrap"><div class="spinner"></div></div></div>';
   h+='</div><button class="fab" onclick="newNCR()">'+ICONS.plus+'</button><div class="toast" id="toast"></div>';
   $('app').innerHTML=h;
@@ -2057,8 +2020,8 @@ function paintNCR(){
     return '<div class="ncrCard'+(od?' overdue':'')+'" onclick="editNCR(\''+n.id+'\')">'+
       '<div class="ncrTop"><span class="ncrTitle">'+(n.source==='report'?'<span title="auto from report" style="font-size:11px;background:#1B7FB8;color:#fff;padding:1px 6px;border-radius:5px;margin-inline-end:6px">🔗 '+(LANG==='ar'?'تلقائي':'auto')+'</span>':'')+esc(n.title||'(بدون عنوان)')+'</span>'+
       '<span class="ncrSt '+stCls+'">'+esc(n.status||'مفتوحة')+'</span></div>'+
-      (n.project?'<div class="ncrMeta">'+esc(n.project)+'</div>':'')+
-      '<div class="ncrMeta">'+esc(n.responsible||'—')+(n.due?' · 📅 '+esc(n.due):'')+(od?' · <b style="color:#C0392B">'+t('overdue')+'</b>':'')+'</div>'+
+      (n.project?'<div class="ncrMeta">📁 '+esc(n.project)+'</div>':'')+
+      '<div class="ncrMeta">👤 '+esc(n.responsible||'—')+(n.due?' · 📅 '+esc(n.due):'')+(od?' · <b style="color:#C0392B">'+t('overdue')+'</b>':'')+'</div>'+
       '<div class="ncrTags"><span class="sev '+sevCls+'">'+esc(n.severity||'متوسطة')+'</span>'+(n.source==='report'?'<span class="srcTag">من تقرير</span>':'')+'</div>'+
       '</div>';
   }).join('');
@@ -2689,9 +2652,9 @@ function templateEditPanel(){
     h+='</div></div>';
   });
   h+='<button class="btn ghost" style="width:100%;flex:1" onclick="addStage()">＋ '+(LANG==='ar'?'مرحلة جديدة':'New stage')+'</button>';
-  h+='<button class="btn" style="width:100%;margin-top:8px;background:var(--orange)" onclick="addSystemSections()">'+ICONS.tool+' '+(LANG==='ar'?'إضافة أقسام فحص الأنظمة (تصحيحية)':'Add system inspection sections (corrective)')+'</button>';
+  h+='<button class="btn" style="width:100%;margin-top:8px;background:var(--orange)" onclick="addSystemSections()">🔧 '+(LANG==='ar'?'إضافة أقسام فحص الأنظمة (تصحيحية)':'Add system inspection sections (corrective)')+'</button>';
   h+='<div class="note" style="margin-top:6px">'+(LANG==='ar'?'يضيف أقسام الفحص الفني لكل نظام (رشاشات، FM-200، إنذار، مضخة، رغوة) مربوطة بأنظمتها وملوّنة. أقسامك الحالية لا تتأثر.':'Adds technical inspection sections per system (Sprinkler, FM-200, Alarm, Pump, Foam), linked & colored. Your current sections are untouched.')+'</div>';
-  h+='<button class="btn" style="width:100%;margin-top:8px;background:var(--ok)" onclick="addSystemSections()">'+ICONS.tool+' '+(LANG==='ar'?'إضافة أقسام الأنظمة الجاهزة (تصحيحية)':'Add ready-made system sections (corrective)')+'</button>';
+  h+='<button class="btn" style="width:100%;margin-top:8px;background:var(--ok)" onclick="addSystemSections()">🧩 '+(LANG==='ar'?'إضافة أقسام الأنظمة الجاهزة (تصحيحية)':'Add ready-made system sections (corrective)')+'</button>';
   return h;
 }
 function curStages(){ return CFG.templates[EDIT_TPL].stages; }
@@ -3020,7 +2983,22 @@ window.updateOneTemplate=async function(tid){
   try{ await saveConfig(); toast(LANG==='ar'?'تم تحديث القالب ✓':'Template updated ✓'); renderAdminBody(); }
   catch(e){ toast((LANG==='ar'?'تعذّر التحديث: ':'Update failed: ')+e.message); }
 };
-
+window.updateDefaultTemplate=async function(){
+  if(!confirm(LANG==='ar'?'تحديث قالب الصيانة الحالي بالأسئلة والأقسام الجديدة؟ (تقاريرك المحفوظة لن تتأثر)':'Update the current maintenance template with the new questions/sections? (Saved reports are not affected)'))return;
+  const fresh=JSON.parse(JSON.stringify(DEFAULT_STAGES));
+  // store as the primary template + refresh in-memory templates[0]
+  CFG.template=tplToStore(fresh);
+  if(!CFG.templates)CFG.templates=[];
+  const di=CFG.templates.findIndex(t=>t.id==='default');
+  const entry={id:'default',name:(LANG==='ar'?'صيانة الحريق / Fire Maintenance':'صيانة الحريق / Fire Maintenance'),kind:'',refPrefix:'',stages:fresh};
+  if(di>=0)CFG.templates[di]=entry; else CFG.templates.unshift(entry);
+  // ensure the new systems are in the managed filter list
+  if(!Array.isArray(CFG.systems))CFG.systems=[];
+  ['Sprinkler System','Gas Suppression (FM-200/CO2/Inert)','Fire Alarm System','Fire Pump System'].forEach(function(s){ if(DEFAULT_SYSTEMS.indexOf(s)<0 && CFG.systems.indexOf(s)<0) CFG.systems.push(s); });
+  SYSTEMS=systemsList();
+  try{ await saveConfig(); toast(LANG==='ar'?'تم تحديث القالب ✓':'Template updated ✓'); renderAdminBody(); }
+  catch(e){ toast((LANG==='ar'?'تعذّر التحديث: ':'Update failed: ')+e.message); }
+};
 window.addToolsTemplate=async function(){
   if(!requireAdmin())return;
   if(!confirm(LANG==='ar'?'إضافة قائمة فحص الأدوات؟':'Add the Tools Inspection Checklist?'))return;
