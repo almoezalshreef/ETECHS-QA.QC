@@ -1659,7 +1659,7 @@ function renderReport(){
   h+='</div>';
   h+='<div class="progWrap"><div class="progBar"><i id="progFill" style="width:0%"></i></div></div>';
   if(ro){
-    h+='<footer class="sb"><div class="footInfo"><span class="pct" id="pct">0/0</span></div><button class="btn" onclick="buildReport(form())">'+(LANG==='ar'?'حفظ PDF':'Save PDF')+'</button></footer>';
+    h+='<footer class="sb"><div class="footInfo"><span class="pct" id="pct">0/0</span></div><button class="btn" onclick="buildReport(readForm())">'+(LANG==='ar'?'حفظ PDF':'Save PDF')+'</button></footer>';
   } else {
     h+='<footer class="sb"><div class="footInfo"><span class="pct" id="pct">0/0</span><span class="saveStat" id="saveStat"></span></div><button class="btn ghost" onclick="saveCur(true)">'+t('save')+'</button><button class="btn" id="sub" onclick="doSubmit()">'+t('submit_pdf')+'</button></footer>';
   }
@@ -1909,7 +1909,10 @@ function upd(skipSave){
 function fld(id,label,ph,val,type){return '<div><label class="fld">'+label+'</label><input id="'+id+'" type="'+(type||'text')+'" placeholder="'+(ph||'')+'" value="'+esc(val||'')+'"></div>'}
 function sel(id,label,arr,val){return '<div><label class="fld">'+label+'</label><select id="'+id+'">'+arr.map(o=>'<option'+(o===val?' selected':'')+'>'+o+'</option>').join('')+'</select></div>'}
 window.onProj=function(){const s=$('f_proj');if(!s)return;const i=s.value;const box=$('projInfo');if(i===''||!CFG.projects[i]){if(box)box.innerHTML='';return;}const p=CFG.projects[i];if(box)box.innerHTML='<b>'+esc(p.client)+'</b> · عقد '+esc(p.contract)+' · '+esc(p.city);};
-window.form=form;
+// NOTE: exposed as readForm, NOT form. Inside inline onclick handlers the
+// button element sits in the scope chain and its own .form property (null)
+// shadows window.form -> 'form is not a function'.
+window.readForm=form;
 function form(){const g=id=>{const e=$(id);return e?e.value:''};const pi=g('f_proj');const p=(pi!==''&&CFG.projects[pi])?CFG.projects[pi]:null;const sysArr=(typeof currentChosenSystems==='function')?currentChosenSystems():[];const base={projIdx:pi,project:p?p.name:'',client:p?p.client:'',contract:p?p.contract:'',city:p?p.city:'',location:g('f_location'),site:g('f_site'),loa:g('f_loa'),service:g('f_service'),systems:sysArr,system:sysArr.join(', '),team:g('f_team'),date:g('f_date'),by:g('f_by'),workdone:g('f_workdone'),notes:g('f_notes')};if(CUR&&CUR.kind==='audit'){base.pm=g('f_pm');base.month=g('f_month');base.apprName=g('f_appr_name');base.apprTitle=g('f_appr_title');base.apprDate=g('f_appr_date');base.audit={woRecv:g('f_wo_recv'),woClosed:g('f_wo_closed'),trReq:g('f_tr_req'),trDone:g('f_tr_done'),empTotal:g('f_emp_total'),secTotal:g('f_sec_total'),secExpired:g('f_sec_expired'),secMissing:g('f_sec_missing')};}return base;}
 window.goHome=async function(){await saveCur(false);CUR=null;renderHome();};
 window.saveCur=saveCur;
