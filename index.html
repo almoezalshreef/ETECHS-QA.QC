@@ -618,7 +618,7 @@ html[data-theme=dark] .scWarn{background:#3A1A1A}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail, updatePassword, reauthenticateWithCredential, EmailAuthProvider }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, setDoc, updateDoc, deleteDoc, deleteField, collection, getDocs, query, where, orderBy, onSnapshot, serverTimestamp }
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, doc, getDoc, getDocFromServer, setDoc, updateDoc, deleteDoc, deleteField, collection, getDocs, query, where, orderBy, onSnapshot, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1027,12 +1027,25 @@ function uid(){return 'r'+Date.now()+Math.floor(Math.random()*1000)}
 function loading(msg){$('app').innerHTML='<div class="loadwrap"><div class="spinner"></div>'+(msg||'جاري التحميل...')+'</div>'}
 
 // ===== config (template/projects/rules) stored in /config/app =====
+// DATA-SAFETY NOTE
+// The config document holds every project, template and rule. It must never
+// be overwritten with an empty/partial copy. Two guards below:
+//   (a) read from the SERVER first, so a stale offline cache can't report
+//       "document missing" and trick us into creating a blank config;
+//   (b) the migration only writes back when it actually changed the shape
+//       of the data (legacy single template -> multi-template).
+let CFG_LOADED_FROM_SERVER=false;
 async function loadConfig(){
   const ref=doc(db,'config','app');
-  const snap=await getDoc(ref);
+  let snap=null;
+  try{ snap=await getDocFromServer(ref); CFG_LOADED_FROM_SERVER=true; }
+  catch(e){ snap=await getDoc(ref); CFG_LOADED_FROM_SERVER=false; }
+  let needsMigrationSave=false;
   if(snap.exists()){ CFG=snap.data(); }
   else {
     CFG={projects:[], rules:{allItems:true,photo:true,signature:true}, recipient:SESSION.email};
+    // Only create a fresh config when we are SURE the server has none.
+    needsMigrationSave=CFG_LOADED_FROM_SERVER;
   }
   if(!CFG.rules) CFG.rules={allItems:true,photo:true,signature:true};
   if(!CFG.projects) CFG.projects=[];
@@ -1045,13 +1058,19 @@ async function loadConfig(){
     let baseStages = CFG.template ? tplFromStore(CFG.template) : DEFAULT_STAGES;
     if(!baseStages) baseStages = DEFAULT_STAGES;
     CFG.templates=[{id:'default', name:'صيانة الحريق / Fire Maintenance', stages:baseStages}];
+    needsMigrationSave=true; // real shape change -> worth persisting
   } else {
     // deserialize each template's stages
     CFG.templates=CFG.templates.map(tp=>({id:tp.id,name:tp.name,kind:tp.kind||'',refPrefix:tp.refPrefix||'',stages:tplFromStore(tp.stages)||DEFAULT_STAGES}));
   }
   delete CFG.template; // drop legacy field from memory
-  // persist migration once (admin only)
-  if(SESSION.role==='admin'){ try{ await saveConfig(); }catch(e){} }
+  // persist the migration once (admin only) - and ONLY when the data really
+  // changed shape and we are working from a fresh server copy. Writing on
+  // every login was a silent data-loss risk if the read had come from a
+  // stale cache.
+  if(SESSION.role==='admin' && needsMigrationSave && CFG_LOADED_FROM_SERVER){
+    try{ await saveConfig(); }catch(e){}
+  }
 }
 function templateById(id){ return (CFG.templates||[]).find(t=>t.id===id) || CFG.templates[0]; }
 async function saveConfig(){
@@ -1059,6 +1078,30 @@ async function saveConfig(){
   const out=Object.assign({},CFG);
   out.templates=(CFG.templates||[]).map(tp=>({id:tp.id,name:tp.name,kind:tp.kind||'',refPrefix:tp.refPrefix||'',stages:tplToStore(tp.stages)}));
   delete out.template;
+
+  // ---- DATA-LOSS GUARD ------------------------------------------------
+  // setDoc replaces the whole document. Before we do that, compare with what
+  // the server currently holds: if the copy we are about to write has FEWER
+  // projects or templates than the server, something went wrong upstream
+  // (stale cache, partial load) and we refuse rather than silently wipe.
+  try{
+    const live=await getDocFromServer(doc(db,'config','app'));
+    if(live.exists()){
+      const cur=live.data()||{};
+      const curP=(cur.projects||[]).length, curT=(cur.templates||[]).length;
+      const newP=(out.projects||[]).length, newT=(out.templates||[]).length;
+      const shrinking = (newP<curP && curP>0) || (newT<curT && curT>0);
+      if(shrinking && !window.__CONFIRM_SHRINK){
+        const msg=LANG==='ar'
+          ? ('تنبيه: الحفظ سيقلّل البيانات المحفوظة (مشاريع '+curP+'→'+newP+'، قوالب '+curT+'→'+newT+'). هل أنت متأكّد؟')
+          : ('Warning: saving would REDUCE stored data (projects '+curP+'→'+newP+', templates '+curT+'→'+newT+'). Continue?');
+        if(!confirm(msg)){ toast(LANG==='ar'?'أُلغي الحفظ حمايةً للبيانات':'Save cancelled to protect data'); return; }
+      }
+      // keep an automatic backup of the previous config
+      try{ await setDoc(doc(db,'config','app_backup'),Object.assign({},cur,{backupAt:Date.now(),backupBy:SESSION.email})); }catch(e){}
+    }
+  }catch(e){ /* offline: proceed, Firestore will queue the write */ }
+
   await setDoc(doc(db,'config','app'),out);
 }
 
@@ -1866,6 +1909,7 @@ function upd(skipSave){
 function fld(id,label,ph,val,type){return '<div><label class="fld">'+label+'</label><input id="'+id+'" type="'+(type||'text')+'" placeholder="'+(ph||'')+'" value="'+esc(val||'')+'"></div>'}
 function sel(id,label,arr,val){return '<div><label class="fld">'+label+'</label><select id="'+id+'">'+arr.map(o=>'<option'+(o===val?' selected':'')+'>'+o+'</option>').join('')+'</select></div>'}
 window.onProj=function(){const s=$('f_proj');if(!s)return;const i=s.value;const box=$('projInfo');if(i===''||!CFG.projects[i]){if(box)box.innerHTML='';return;}const p=CFG.projects[i];if(box)box.innerHTML='<b>'+esc(p.client)+'</b> · عقد '+esc(p.contract)+' · '+esc(p.city);};
+window.form=form;
 function form(){const g=id=>{const e=$(id);return e?e.value:''};const pi=g('f_proj');const p=(pi!==''&&CFG.projects[pi])?CFG.projects[pi]:null;const sysArr=(typeof currentChosenSystems==='function')?currentChosenSystems():[];const base={projIdx:pi,project:p?p.name:'',client:p?p.client:'',contract:p?p.contract:'',city:p?p.city:'',location:g('f_location'),site:g('f_site'),loa:g('f_loa'),service:g('f_service'),systems:sysArr,system:sysArr.join(', '),team:g('f_team'),date:g('f_date'),by:g('f_by'),workdone:g('f_workdone'),notes:g('f_notes')};if(CUR&&CUR.kind==='audit'){base.pm=g('f_pm');base.month=g('f_month');base.apprName=g('f_appr_name');base.apprTitle=g('f_appr_title');base.apprDate=g('f_appr_date');base.audit={woRecv:g('f_wo_recv'),woClosed:g('f_wo_closed'),trReq:g('f_tr_req'),trDone:g('f_tr_done'),empTotal:g('f_emp_total'),secTotal:g('f_sec_total'),secExpired:g('f_sec_expired'),secMissing:g('f_sec_missing')};}return base;}
 window.goHome=async function(){await saveCur(false);CUR=null;renderHome();};
 window.saveCur=saveCur;
@@ -3989,6 +4033,7 @@ function answerDisplay(a,it){
   if(tp==='choice'){return {txt:esc(a&&a.choice||'—'),cl:''};}
   return {txt:'—',cl:''};
 }
+window.buildReport=buildReport;
 function buildReport(f){
   const H2=function(en,ar){return '<div class="h2"><span class="en">'+en+'</span>'+(ar?'<span class="ar">'+ar+'</span>':'')+'</div>';};
   const c=counts();
