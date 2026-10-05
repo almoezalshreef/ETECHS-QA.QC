@@ -608,6 +608,63 @@ html[data-theme=dark] .scWarn{background:#3A1A1A}
 .modalOv{padding:16px;box-sizing:border-box}
 .modalBox{max-height:88dvh;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 
+/* ---------- Team tools inspection (QA-F-TL-01) ---------- */
+.tlLegend{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:11.5px;color:var(--muted);margin:0 0 10px;line-height:1.7}
+.tlLegend b{color:var(--ink)}.tlLegB{font-size:10.5px}
+.tlCard{background:var(--surface);border:1px solid var(--line);border-inline-start:5px solid #B8BDD0;border-radius:14px;box-shadow:var(--sh-1);padding:12px 13px;margin-bottom:10px}
+.tlCard.c-good{border-inline-start-color:#1B8A3A}.tlCard.c-dmg{border-inline-start-color:#E67E22}.tlCard.c-miss{border-inline-start-color:#C0392B}
+.tlCard.flag,.card.flag,#tlChecks.flag,#tlResult.flag{outline:3px solid #EC5020;outline-offset:2px}
+.tlHead{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.tlNo{min-width:28px;height:28px;border-radius:9px;background:var(--grad-navy);color:#fff;font-weight:800;font-size:12px;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.tlName{flex:1;min-width:0}.tlName b{display:block;font-size:13.5px;color:var(--ink)}.tlName span{display:block;font-size:11.5px;color:var(--muted)}
+.tlCat{font-weight:900;font-size:11px;border-radius:7px;padding:3px 8px;color:#fff;flex:0 0 auto}
+.cat-H{background:#2563EB}.cat-P{background:#EC5020}.cat-T{background:#7C3AED}.cat-L{background:#0F766E}
+.tlDel{background:transparent;border:1.5px solid #C0392B;color:#C0392B;border-radius:9px;width:30px;height:30px;font-size:17px;line-height:1;cursor:pointer;flex:0 0 auto}
+.tlOther{margin-top:6px}
+.tlSer{display:flex;gap:8px;align-items:center}.tlSer input[type=text],.tlSer input:not([type]){flex:1;min-width:0}
+.tlNA{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:800;color:var(--ink);white-space:nowrap;flex:0 0 auto}
+.tlNA input{width:18px;height:18px;accent-color:var(--flame)}
+select.ap-Y{border-color:#1B8A3A;color:#1B8A3A;font-weight:800}select.ap-N{border-color:#C0392B;color:#C0392B;font-weight:800}
+.tlSeg button.on.tc-good{background:#1B8A3A;color:#fff;border-color:#1B8A3A}
+.tlSeg button.on.tc-dmg{background:#E67E22;color:#fff;border-color:#E67E22}
+.tlSeg button.on.tc-miss{background:#C0392B;color:#fff;border-color:#C0392B}
+.tlWarn{margin-top:8px;font-size:11px;font-weight:800;color:#8E1B10;background:#FDECEA;border-radius:8px;padding:6px 9px}
+.tlReg{margin-top:6px;font-size:11px;font-weight:700;color:#1B8A3A}
+.tlReg.chg{color:#8E44AD;background:#F5EEFB;border-radius:8px;padding:6px 9px}
+.tlChk{display:flex;flex-direction:column;gap:6px;padding:9px 0;border-bottom:1px dashed var(--line)}.tlChk:last-child{border-bottom:0}
+.tlChkQ b{display:block;font-size:12.5px;color:var(--ink)}.tlChkQ span{font-size:11.5px;color:var(--muted)}
+.tlChk .seg button.on.ck-yes{background:#1B8A3A;color:#fff;border-color:#1B8A3A}
+.tlChk .seg button.on.ck-no{background:#C0392B;color:#fff;border-color:#C0392B}
+.tlChk .seg button.on.ck-na{background:#5B6178;color:#fff;border-color:#5B6178}
+.tlRes{display:flex;flex-direction:column;gap:8px;margin-bottom:6px}
+.tlRes button{text-align:start;border:2px solid var(--line);background:var(--surface);border-radius:12px;padding:11px 13px;font-weight:800;font-size:13.5px;color:var(--ink);cursor:pointer}
+.tlRes button small{display:block;font-weight:600;font-size:11px;color:var(--muted)}
+.tlRes button.on.rs-accepted{border-color:#1B8A3A;background:#EAF7EE}
+.tlRes button.on.rs-remarks{border-color:#D4A017;background:#FFF8E1}
+.tlRes button.on.rs-rejected{border-color:#C0392B;background:#FDECEA}
+html[data-theme=dark] .tlRes button.on.rs-accepted{background:#12301C}html[data-theme=dark] .tlRes button.on.rs-remarks{background:#33290A}html[data-theme=dark] .tlRes button.on.rs-rejected{background:#3A1A1A}
+html[data-theme=dark] .tlWarn{background:#3A1A1A;color:#FFB4A8}html[data-theme=dark] .tlReg.chg{background:#2A1C38;color:#D7B4F0}
+.autoTag{font-size:10px;font-weight:800;background:var(--surface2);color:var(--muted);border-radius:6px;padding:1px 6px;margin-inline-start:4px}
+#f_time[readonly]{background:var(--surface2);color:var(--muted)}
+/* team equipment page */
+.eqCard,.eqTool{background:var(--surface);border:1px solid var(--line);border-inline-start:5px solid #8A90A6;border-radius:14px;box-shadow:var(--sh-1);padding:12px 14px;margin-bottom:10px}
+.eqCard{cursor:pointer}.eqCard:active{transform:scale(.985)}
+.eqTop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.eqTop b{display:block;font-size:16px;color:var(--ink)}.eqTop span{font-size:11.5px;color:var(--muted)}
+.eqMeta{font-size:11.5px;color:var(--muted);margin-top:3px}
+.eqChips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.eqChips span{font-size:10.5px;font-weight:800;border-radius:20px;padding:3px 9px;background:var(--surface2);color:var(--ink);border:1px solid var(--line)}
+.eqChips .g{color:#1B8A3A}.eqChips .o{color:#E67E22}.eqChips .r{color:#C0392B}.eqChips .p{color:#8E44AD}.eqChips .v{color:#2563EB}
+.eqGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.eqGrid div{background:var(--surface2);border-radius:9px;padding:6px 9px;min-width:0}
+.eqGrid span{display:block;font-size:10.5px;color:var(--muted)}.eqGrid b{font-size:12.5px;color:var(--ink);word-break:break-word}
+.eqGrid i.y,.eqGrid i.n{font-style:normal;font-size:10px;color:#fff;border-radius:4px;padding:0 5px}.eqGrid i.y{background:#1B8A3A}.eqGrid i.n{background:#C0392B}
+.eqRem{margin-top:6px;font-size:11.5px;color:var(--muted)}
+.eqEdit{width:100%;margin-top:8px;padding:9px}
+.eqHist{border-bottom:1px dashed var(--line);padding:8px 0;font-size:12px}.eqHist:last-child{border-bottom:0}
+.eqHist .hk{font-weight:800}.eqHist.k-replaced .hk{color:#8E44AD}.eqHist.k-status .hk{color:#E67E22}.eqHist.k-added .hk{color:#1B8A3A}.eqHist.k-manual .hk{color:#2563EB}
+.eqHist .hd2{color:var(--ink);margin-top:2px;word-break:break-word}.eqHist .hm{font-size:10.5px;color:var(--muted);margin-top:2px}
+
 /* ---------- Scrollbar (subtle) ---------- */
 *::-webkit-scrollbar{width:5px;height:5px}
 *::-webkit-scrollbar-thumb{background:rgba(107,113,134,.35);border-radius:4px}
@@ -646,6 +703,7 @@ const I18N={
   app_title:{en:'QA/QC Reports',ar:'تقارير الجودة QA/QC'},
   admin_panel:{en:'Control Panel',ar:'لوحة التحكّم'},
   sched_title:{en:'Inspection Schedule',ar:'جدول مواعيد التفتيش'},
+  equip_title:{en:'Team Equipment',ar:'معدات الفرق'},
   account_title:{en:'My Account',ar:'إدارة حسابي'},
   dashboard:{en:'Dashboard',ar:'لوحة المعلومات'},
   ncr_title:{en:'Non-Conformities',ar:'عدم المطابقة'},
@@ -782,7 +840,7 @@ const I18N={
 function t(key){ const e=I18N[key]; return e? (e[LANG]||e.en) : key; }
 // ===== permissions =====
 // sections an engineer's access can be toggled for
-const PERM_KEYS=['create','dashboard','ncr','risk','procs','monthly','reopen','schedule'];
+const PERM_KEYS=['create','dashboard','ncr','risk','procs','monthly','reopen','schedule','equipment'];
 const PERM_LABELS={
   create:{en:'Create Reports',ar:'إنشاء التقارير'},
   dashboard:{en:'Dashboard',ar:'لوحة المعلومات'},
@@ -791,10 +849,11 @@ const PERM_LABELS={
   procs:{en:'Procedures',ar:'الإجراءات'},
   monthly:{en:'Monthly Report',ar:'التقرير الشهري'},
   reopen:{en:'Reopen Locked Reports',ar:'إعادة فتح التقارير المقفلة'},
-  schedule:{en:'Inspection Schedule',ar:'جدول مواعيد التفتيش'}
+  schedule:{en:'Inspection Schedule',ar:'جدول مواعيد التفتيش'},
+  equipment:{en:'Team Equipment',ar:'معدات الفرق'}
 };
 // default engineer perms when none set
-const PERM_DEFAULT={create:true,dashboard:false,ncr:true,risk:false,procs:true,monthly:false,reopen:false,schedule:true};
+const PERM_DEFAULT={create:true,dashboard:false,ncr:true,risk:false,procs:true,monthly:false,reopen:false,schedule:true,equipment:true};
 function can(key){
   if(!SESSION) return false;
   if(SESSION.role==='admin') return true;
@@ -1150,7 +1209,7 @@ function auditCounts(){
   const score=assessed?Math.round((C/assessed)*100):0;
   return {C,minor,major,critical,NA,total,assessed,score};
 }
-function counts(){let done=0,ok=0,no=0,na=0;TPL.forEach((st,si)=>st.secs.forEach((sec,ci)=>{if(!secActive(sec))return;sec.items.forEach((it,ii)=>{const a=answers[kk(si,ci,ii)];if(isAnswered(a)){done++;if(a.type==='okna'){if(a.status==='OK')ok++;else if(a.status==='Not OK')no++;else na++;}else if(a.type==='yesno'){if(a.yn==='Yes')ok++;else no++;}}})}));return{done,ok,no,na,total:total()}}
+function counts(){if(isTL())return tlCounts();let done=0,ok=0,no=0,na=0;TPL.forEach((st,si)=>st.secs.forEach((sec,ci)=>{if(!secActive(sec))return;sec.items.forEach((it,ii)=>{const a=answers[kk(si,ci,ii)];if(isAnswered(a)){done++;if(a.type==='okna'){if(a.status==='OK')ok++;else if(a.status==='Not OK')no++;else na++;}else if(a.type==='yesno'){if(a.yn==='Yes')ok++;else no++;}}})}));return{done,ok,no,na,total:total()}}
 function itemType(it){ return (it[3]&&it[3].type)||'okna'; }
 function itemReqPhoto(it){ return !!(it[3]&&it[3].photo); }
 function itemRequired(it){ return it[3]?it[3].required!==false:true; }
@@ -1341,6 +1400,7 @@ function drawerHTML(){
   if(can('ncr')) items.push(['ncr',t('ncr_title'),ICONS.ncr]);
   if(can('risk')) items.push(['risk',t('risk_title'),ICONS.risk]);
   if(can('schedule')) items.push(['schedule',t('sched_title'),ICONS.sched]);
+  if(can('equipment')) items.push(['equipment',t('equip_title'),ICONS.tool]);
   if(can('procs')) items.push(['procs',t('procs_title'),ICONS.procs]);
   if(can('monthly')&&SESSION.role==='admin') items.push(['monthly',t('monthly_title'),ICONS.monthly]);
   let nav=items.map(it=>'<button class="navItem" onclick="navGo(\''+it[0]+'\')"><span class="ni">'+it[2]+'</span>'+esc(it[1])+'</button>').join('');
@@ -1367,6 +1427,7 @@ window.navGo=function(dest){
   if(dest==='ncr')return openNCR();
   if(dest==='risk')return openRisk();
   if(dest==='schedule')return openSchedule();
+  if(dest==='equipment')return openEquipment();
   if(dest==='procs')return openProcs();
   if(dest==='monthly')return (typeof openMonthly==='function'?openMonthly():toast('قريباً'));
   if(dest==='account')return openAccount();
@@ -1486,6 +1547,8 @@ async function createReportFromTemplate(templateId){
     createdMs:Date.now(),updatedMs:Date.now(),updated:serverTimestamp(),
     form:{},answers:{},photos:[],sig:null,counts:{done:0,total:0},
     tpl:tplToStore(tp.stages), rules:CFG.rules};
+  // The Tools template now produces the QA-F-TL-01 per-tool form.
+  if(tp.kind==='tools'){ rep.tl=tlNew(); rep.tpl=[]; rep.form={time:rep.tl.time,date:new Date().toISOString().slice(0,10)}; }
   loading('جاري الإنشاء...');
   try{ await setDoc(doc(db,'reports',id),rep); logAct('create_report', refNo+' · '+(tp.name||'')); CUR=rep; openReportObj(rep); }
   catch(e){ toast('تعذّر الإنشاء: '+e.message); renderHome(); }
@@ -1516,7 +1579,9 @@ async function saveCur(notify,force){
   if(!CUR || !SESSION || TEARING_DOWN)return;
   if(CUR.status==='done' && !force){ if(notify)toast(LANG==='ar'?'التقرير مقفول':'Report is locked'); return; }
   CUR.form=form(); CUR.answers=answers; CUR.photos=photos; CUR.sig=sig; CUR.counts=counts(); CUR.updatedMs=Date.now();
-  try{ await updateDoc(doc(db,'reports',CUR.id),{form:CUR.form,answers:CUR.answers,photos:CUR.photos,sig:CUR.sig,counts:CUR.counts,status:CUR.status,updatedMs:CUR.updatedMs,updated:serverTimestamp()}); if(notify){toast('✓ تم الحفظ');buzz(25);} setSaveStatus('saved'); }
+  const payload={form:CUR.form,answers:CUR.answers,photos:CUR.photos,sig:CUR.sig,counts:CUR.counts,status:CUR.status,updatedMs:CUR.updatedMs,updated:serverTimestamp()};
+  if(CUR.tl) payload.tl=JSON.parse(JSON.stringify(CUR.tl));
+  try{ await updateDoc(doc(db,'reports',CUR.id),payload); if(notify){toast('✓ تم الحفظ');buzz(25);} setSaveStatus('saved'); }
   catch(e){ if(notify)toast('تعذّر الحفظ (تحقق من الإنترنت)'); setSaveStatus('error'); }
 }
 // auto-save: debounced, triggered on any field/answer change
@@ -1537,7 +1602,7 @@ function setSaveStatus(state){
 
 // ===== REPORT EDITOR =====
 function openReportObj(rep){
-  CUR=rep; TPL=tplFromStore(rep.tpl)||(CFG.templates[0]&&CFG.templates[0].stages)||DEFAULT_STAGES; answers=rep.answers||{}; photos=rep.photos||[]; sig=rep.sig||null;
+  CUR=rep; TPL=(rep.tl&&rep.tl.v===2)?[]:(tplFromStore(rep.tpl)||(CFG.templates[0]&&CFG.templates[0].stages)||DEFAULT_STAGES); answers=rep.answers||{}; photos=rep.photos||[]; sig=rep.sig||null;
   renderReport();
 }
 // multi-select system chips (general + per-system filtering)
@@ -1573,6 +1638,7 @@ window.toggleSysChip=function(btn){
   autoSave();
 };
 function renderReport(){
+  if(isTL()) return renderToolsReport();
   const r=CUR; const f=r.form||{}; const ro=(r.status==='done');
   const today=new Date().toISOString().slice(0,10);
   let h='<header class="bar"><button class="menubtn" onclick="goHome()">'+ICONS.back+'</button>'+
@@ -1913,7 +1979,7 @@ window.onProj=function(){const s=$('f_proj');if(!s)return;const i=s.value;const 
 // button element sits in the scope chain and its own .form property (null)
 // shadows window.form -> 'form is not a function'.
 window.readForm=form;
-function form(){const g=id=>{const e=$(id);return e?e.value:''};const pi=g('f_proj');const p=(pi!==''&&CFG.projects[pi])?CFG.projects[pi]:null;const sysArr=(typeof currentChosenSystems==='function')?currentChosenSystems():[];const base={projIdx:pi,project:p?p.name:'',client:p?p.client:'',contract:p?p.contract:'',city:p?p.city:'',location:g('f_location'),site:g('f_site'),loa:g('f_loa'),service:g('f_service'),systems:sysArr,system:sysArr.join(', '),team:g('f_team'),date:g('f_date'),by:g('f_by'),workdone:g('f_workdone'),notes:g('f_notes')};if(CUR&&CUR.kind==='audit'){base.pm=g('f_pm');base.month=g('f_month');base.apprName=g('f_appr_name');base.apprTitle=g('f_appr_title');base.apprDate=g('f_appr_date');base.audit={woRecv:g('f_wo_recv'),woClosed:g('f_wo_closed'),trReq:g('f_tr_req'),trDone:g('f_tr_done'),empTotal:g('f_emp_total'),secTotal:g('f_sec_total'),secExpired:g('f_sec_expired'),secMissing:g('f_sec_missing')};}return base;}
+function form(){const g=id=>{const e=$(id);return e?e.value:''};const pi=g('f_proj');const p=(pi!==''&&CFG.projects[pi])?CFG.projects[pi]:null;const sysArr=(typeof currentChosenSystems==='function')?currentChosenSystems():[];const base={projIdx:pi,project:p?p.name:'',client:p?p.client:'',contract:p?p.contract:'',city:p?p.city:'',location:g('f_location'),site:g('f_site'),loa:g('f_loa'),service:g('f_service'),systems:sysArr,system:sysArr.join(', '),team:g('f_team'),date:g('f_date'),by:g('f_by'),workdone:g('f_workdone'),notes:g('f_notes')};if(CUR&&CUR.kind==='audit'){base.pm=g('f_pm');base.month=g('f_month');base.apprName=g('f_appr_name');base.apprTitle=g('f_appr_title');base.apprDate=g('f_appr_date');base.audit={woRecv:g('f_wo_recv'),woClosed:g('f_wo_closed'),trReq:g('f_tr_req'),trDone:g('f_tr_done'),empTotal:g('f_emp_total'),secTotal:g('f_sec_total'),secExpired:g('f_sec_expired'),secMissing:g('f_sec_missing')};}if(CUR&&CUR.tl&&CUR.tl.v===2){base.teamNo=g('f_teamno').trim().toUpperCase();base.leader=g('f_leader');base.vehicle=g('f_vehicle');base.time=g('f_time')||CUR.tl.time||'';base.team=base.teamNo;base.location=base.vehicle;base.site=base.teamNo?('Team '+base.teamNo+(base.vehicle?' · '+base.vehicle:'')):base.vehicle;}return base;}
 window.goHome=async function(){await saveCur(false);CUR=null;renderHome();};
 window.saveCur=saveCur;
 
@@ -1958,6 +2024,7 @@ window.reopenReport=async function(){
 window.doSubmit=async function(){
   if(CUR&&CUR.status==='done'){ toast(LANG==='ar'?'التقرير مقفول — لا يمكن إعادة الإرسال':'Report is locked'); return; }
   await saveCur(false);
+  if(isTL()) return tlSubmit();
   const f=form(); const rules=CUR.rules||CFG.rules;
   const isAudit=(CUR.kind==='audit');
   const isTools=(CUR.kind==='tools');
@@ -2021,6 +2088,7 @@ async function syncReportNCRs(rep, f, ansArg, tplArg){
       });
     }
   })));
+  if(rep.tl && rep.tl.v===2){ tlFindings(rep).forEach(function(x){ found.push(x); }); }
   // existing report-sourced NCRs for this report (avoid duplicates)
   let existing={};
   try{
@@ -2287,6 +2355,657 @@ let NCR_F={q:'',status:'',project:'',report:''};
 const NC_STATUS=['مفتوحة','قيد المعالجة','مغلقة'];
 const NC_SEV=['عالية','متوسطة','منخفضة'];
 
+
+// ================= TEAM TOOLS INSPECTION (QA-F-TL-01) =================
+// The legacy "Tools Inspection Checklist" template (kind 'tools') now produces
+// this per-tool form. Old reports without `tl` keep rendering the old way.
+// Every submitted report updates a per-team equipment register (/teamTools),
+// which pre-fills brand + serial numbers on the next inspection.
+const TL_FORM_NO='QA-F-TL-01 Rev. 0';
+// JSON for embedding inside an inline <script>: '<' escaped so user data can never close the tag.
+function jsonSafe(s){ return JSON.stringify(String(s==null?'':s)).replace(/</g,'\\u003c').replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029'); }
+const TL_BRANDS={
+  H:['Stanley','DeWalt','Bosch','Makita','Wiha','Klein Tools','Gedore','Facom','Snap-on','Irwin'],
+  P:['Black+Decker','DeWalt','Bosch','Makita','Milwaukee','Hitachi/HiKOKI','Metabo','Ryobi'],
+  T:['SOLO','Fluke','Kyoritsu','Hioki','UNI-T','Testo'],
+  L:['Werner','Little Giant','Zarges','Hailo','Krause']
+};
+const TL_CAT={H:['Hand tool','عدة يدوية'],P:['Power tool','عدة كهربائية'],T:['Test equipment','جهاز فحص'],L:['Ladder','سلم']};
+const TL_DEFAULT=[
+ ['t01','DRILL MACHINE','دريل شحن','P'],['t02','MULTIMETER','جهاز ملتيميتر','T'],
+ ['t03','HEAT GUN','مسدس حرارة','P'],['t04','AIR BLOWER','منفاخ هواء','P'],
+ ['t05','SOLO KIT (TESTER)','جهاز SOLO','P'],['t06','FOLDING LADDER 4m','سلم قابل للطي','L'],
+ ['t07','SCREW DRIVER SET','طقم مفكات','H'],['t08','PIPE WRENCH 14"','مفتاح مواسير','H'],
+ ['t09','PIPE WRENCH 24"','مفتاح مواسير','H'],['t10','PIPE WRENCH 38"','مفتاح مواسير','H'],
+ ['t11','COMBINATION PLIER','زرادية','H'],['t12','SPANNER SET','طقم مفاتيح','H'],
+ ['t13','LONG NOSE PLIER','زرادية بوز طويل','H'],['t14','WIRE STRIPPER','قشارة أسلاك','H'],
+ ['t15','EMT PIPE CUTTER','قطاعة مواسير EMT','H'],['t16','EMT PIPE BENDER','ثنّاية مواسير EMT','H'],
+ ['t17','TOOL BOX','صندوق عدة','H'],['t18','WIRE PULLER','ساحب أسلاك','H'],
+ ['t19','CRIMPING TOOL','كباسة','H'],['t20','SOLO – Smoke Container','حاوية الدخان','T'],
+ ['t21','SOLO – Heat Container','حاوية الحرارة','T'],['t22','SOLO – Rod','عصا SOLO','T'],
+ ['t23','SOLO – Device Handler','ماسك الكاشف','T'],['t24','SOLO – Heat Battery #1','بطارية حرارة 1','T'],
+ ['t25','SOLO – Heat Battery #2','بطارية حرارة 2','T'],['t26','SOLO – Charger','شاحن البطاريات','T']
+];
+const TL_CHECKS=[
+ ['approved','All H & P tools are approved brands','العدد من الماركات المعتمدة'],
+ ['calib','Calibration stickers valid','ملصقات المعايرة سارية'],
+ ['insul','Insulated tools intact, no cracks','عزل العدد سليم'],
+ ['batt','Batteries charged & chargers OK','البطاريات مشحونة والشواحن تعمل'],
+ ['ladder','Ladder tag, locks & rungs OK','السلم سليم وعليه بطاقة فحص'],
+ ['box','Tool box clean & organized','صندوق العدة مرتب'],
+ ['personal','No unauthorized / personal tools','لا توجد عدد شخصية / غير مصرّح بها']
+];
+const TL_RESULTS=[['accepted','Accepted','مقبول'],['remarks','Accepted with remarks','مقبول بملاحظات'],['rejected','Not accepted (action required)','غير مقبول (إجراء مطلوب)']];
+const TL_COND={good:['Good','سليم','#1B8A3A'],dmg:['Damaged','تالف','#E67E22'],miss:['Missing','مفقود','#C0392B']};
+
+function tlNewTool(id,name,ar,cat,custom){
+  return {id:id,name:name,ar:ar||'',cat:cat||'H',req:1,found:'',brand:'',brandOther:'',approved:'',serial:'',serialNA:false,cond:'',remarks:'',custom:!!custom};
+}
+function tlNow(){ const d=new Date(); return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+function tlNew(){ return {v:2,tools:TL_DEFAULT.map(function(x){return tlNewTool(x[0],x[1],x[2],x[3],false);}),checks:{},result:'',corrective:'',target:'',time:tlNow()}; }
+function isTL(){ return !!(CUR && CUR.tl && CUR.tl.v===2); }
+function tlBrandOf(t){ return t.brand==='__other' ? String(t.brandOther||'').trim() : String(t.brand||''); }
+function tlApplyBrand(t,b){
+  const list=TL_BRANDS[t.cat]||[];
+  if(!b){ t.brand=''; t.brandOther=''; }
+  else if(list.indexOf(b)>=0){ t.brand=b; t.brandOther=''; }
+  else { t.brand='__other'; t.brandOther=b; }
+}
+// H & P follow the form's approved-brand policy; T & L have no policy on the
+// form, so their Approved value is left to the inspector.
+function tlAutoApproved(t){
+  const b=tlBrandOf(t); if(!b) return '';
+  if(t.cat==='H'||t.cat==='P') return (TL_BRANDS[t.cat].indexOf(b)>=0)?'Y':'N';
+  return t.approved||'';
+}
+function teamKey(project,teamNo){
+  const p=(String(project||'GENERAL').trim()||'GENERAL').replace(/\//g,'-');
+  const n=String(teamNo||'').trim().toUpperCase().replace(/\//g,'-');
+  return (p+'__'+n).slice(0,300);
+}
+function tlCounts(){
+  const T=CUR.tl, tools=T.tools||[];
+  let good=0,dmg=0,miss=0,set=0;
+  tools.forEach(function(t){ if(t.cond){set++; if(t.cond==='good')good++; else if(t.cond==='dmg')dmg++; else miss++;} });
+  let ch=0; TL_CHECKS.forEach(function(c){ if(T.checks&&T.checks[c[0]]) ch++; });
+  const total=tools.length+TL_CHECKS.length+1;
+  const done=set+ch+(T.result?1:0);
+  return {done:done,ok:good,no:dmg+miss,na:0,total:total};
+}
+function tlNonApproved(tools){ return (tools||[]).filter(function(t){return t.approved==='N';}).length; }
+
+// ---------- report editor ----------
+function tlToolHTML(t,i,ro){
+  const ar=(LANG==='ar');
+  const brands=TL_BRANDS[t.cat]||[];
+  const opts='<option value="">— '+(ar?'اختر الماركة':'Select brand')+' —</option>'+
+    brands.map(function(b){return '<option value="'+esc(b)+'"'+(t.brand===b?' selected':'')+'>'+esc(b)+'</option>';}).join('')+
+    '<option value="__other"'+(t.brand==='__other'?' selected':'')+'>'+(ar?'أخرى (غير مدرجة)…':'Other (not listed)…')+'</option>';
+  const b=tlBrandOf(t);
+  let regHint='';
+  if(t.reg){
+    const chS=(t.reg.serial && t.serial && !t.serialNA && t.reg.serial!==t.serial);
+    const chB=(t.reg.brand && b && t.reg.brand!==b);
+    if(chS||chB){
+      regHint='<div class="tlReg chg">'+(ar?'⚠ تغيّرت عن سجل الفريق — ستُسجَّل كاستبدال. السابق: ':'⚠ Differs from team register — will be logged as a replacement. Previous: ')+
+        esc([t.reg.brand,t.reg.serial].filter(Boolean).join(' / '))+'</div>';
+    } else if(t.reg.brand||t.reg.serial||t.reg.serialNA){
+      regHint='<div class="tlReg">'+(ar?'✓ من سجل الفريق':'✓ From team register')+'</div>';
+    }
+  }
+  return '<div class="tlCard c-'+(t.cond||'none')+'" id="tl_'+i+'">'+
+    '<div class="tlHead"><span class="tlNo">'+(i+1)+'</span><div class="tlName"><b>'+esc(t.name)+'</b><span>'+esc(t.ar)+'</span></div>'+
+    '<span class="tlCat cat-'+esc(t.cat)+'" title="'+esc((TL_CAT[t.cat]||['',''])[ar?1:0])+'">'+esc(t.cat)+'</span>'+
+    ((t.custom&&!ro)?'<button class="tlDel" onclick="tlDel('+i+')" title="'+(ar?'حذف من هذا التقرير':'Remove from this report')+'">×</button>':'')+'</div>'+
+    '<div class="grid2">'+
+      '<div><label class="fld">Brand / الماركة</label><select onchange="tlSet('+i+',\'brand\',this.value)">'+opts+'</select>'+
+        (t.brand==='__other'?'<input class="tlOther" placeholder="'+(ar?'اكتب الماركة':'Type brand')+'" value="'+esc(t.brandOther)+'" onchange="tlSet('+i+',\'brandOther\',this.value)">':'')+'</div>'+
+      '<div><label class="fld">Approved / معتمدة؟</label><select class="ap-'+(t.approved||'x')+'" onchange="tlSet('+i+',\'approved\',this.value)">'+
+        '<option value=""></option><option value="Y"'+(t.approved==='Y'?' selected':'')+'>Y — '+(ar?'نعم':'Yes')+'</option>'+
+        '<option value="N"'+(t.approved==='N'?' selected':'')+'>N — '+(ar?'لا':'No')+'</option></select></div>'+
+    '</div>'+
+    '<label class="fld">Serial No. / الرقم التسلسلي</label>'+
+    '<div class="tlSer"><input value="'+esc(t.serial)+'"'+(t.serialNA?' disabled':'')+' placeholder="'+(t.serialNA?'N/A':'S/N')+'" oninput="tlSet('+i+',\'serial\',this.value,1)" onchange="tlSet('+i+',\'serial\',this.value)">'+
+      '<label class="tlNA"><input type="checkbox"'+(t.serialNA?' checked':'')+' onchange="tlSet('+i+',\'serialNA\',this.checked)"> N/A</label></div>'+
+    regHint+
+    '<div class="grid2">'+
+      '<div><label class="fld">Req. / المطلوب</label><input type="number" min="0" inputmode="numeric" value="'+esc(t.req)+'" oninput="tlSet('+i+',\'req\',this.value,1)"></div>'+
+      '<div><label class="fld">Found / الموجود</label><input type="number" min="0" inputmode="numeric" value="'+esc(t.found)+'" oninput="tlSet('+i+',\'found\',this.value,1)"></div>'+
+    '</div>'+
+    '<label class="fld">Condition / الحالة</label><div class="seg tlSeg">'+
+      ['good','dmg','miss'].map(function(k){ return '<button class="tc-'+k+(t.cond===k?' on':'')+'" onclick="tlSet('+i+',\'cond\',\''+k+'\')">'+TL_COND[k][1]+' / '+TL_COND[k][0]+'</button>'; }).join('')+
+    '</div>'+
+    '<label class="fld">Remarks / ملاحظات</label><input value="'+esc(t.remarks)+'" oninput="tlSet('+i+',\'remarks\',this.value,1)">'+
+    (t.approved==='N'?'<div class="tlWarn">'+(ar?'الماركة غير معتمدة — سجّلها للاستبدال أو الاعتماد':'Brand not on approved list — record for replacement / approval')+'</div>':'')+
+  '</div>';
+}
+function tlToolsHTML(ro){ return (CUR.tl.tools||[]).map(function(t,i){return tlToolHTML(t,i,ro);}).join(''); }
+function tlChecksHTML(){
+  const ar=(LANG==='ar'); const C=CUR.tl.checks||{};
+  return TL_CHECKS.map(function(c){
+    return '<div class="tlChk"><div class="tlChkQ"><b>'+esc(c[1])+'</b><span>'+esc(c[2])+'</span></div><div class="seg">'+
+      [['yes',ar?'نعم':'Yes'],['no',ar?'لا':'No'],['na','N/A']].map(function(o){ return '<button class="ck-'+o[0]+(C[c[0]]===o[0]?' on':'')+'" onclick="tlCheck(\''+c[0]+'\',\''+o[0]+'\')">'+o[1]+'</button>'; }).join('')+
+    '</div></div>';
+  }).join('');
+}
+function tlResultHTML(){
+  const T=CUR.tl, ar=(LANG==='ar');
+  let h='<div class="tlRes">'+TL_RESULTS.map(function(r){
+    return '<button class="rs-'+r[0]+(T.result===r[0]?' on':'')+'" onclick="tlResult(\''+r[0]+'\')">'+(ar?r[2]:r[1])+'<small>'+(ar?r[1]:r[2])+'</small></button>';
+  }).join('')+'</div>';
+  if(T.result && T.result!=='accepted'){
+    h+='<label class="fld">Corrective action / الإجراء التصحيحي</label><textarea rows="2" oninput="tlField(\'corrective\',this.value)">'+esc(T.corrective||'')+'</textarea>'+
+       '<label class="fld">Target date / التاريخ المستهدف</label><input type="date" value="'+esc(T.target||'')+'" onchange="tlField(\'target\',this.value)">';
+  }
+  return h;
+}
+function renderToolsReport(){
+  const r=CUR, f=r.form||{}, ro=(r.status==='done'), T=r.tl, ar=(LANG==='ar');
+  const today=new Date().toISOString().slice(0,10);
+  let h='<header class="bar"><button class="menubtn" onclick="goHome()">'+ICONS.back+'</button>'+
+   '<img src="'+LOGO+'"><div class="t"><b>'+(ro?t('report_locked'):t('report_open'))+'</b><span>'+(CUR.refNo?esc(CUR.refNo)+' · ':'')+esc(f.teamNo?('Team '+f.teamNo):(ar?'فحص عدد الفريق':'Team tools'))+'</span></div></header><div class="stripe"></div><div class="wrap'+(ro?' rlocked':'')+'">';
+  if(ro){
+    h+='<div class="lockBanner"><div class="lockIc">'+ICONS.lock+'</div>'+
+      '<div class="lockTx"><b>'+(ar?'تقرير مقفول':'Report locked')+'</b><span>'+(ar?'أُغلق هذا التقرير بعد الإرسال ولا يمكن تعديله.':'This report was closed on submission and cannot be edited.')+'</span></div>'+
+      (canReopen()?'<button class="btn lockBtn" onclick="reopenReport()">'+(ar?'فتح التقرير':'Reopen')+'</button>':'')+'</div>';
+  }
+  const projOpts='<option value="">— اختر المشروع —</option>'+CFG.projects.map(function(p,i){return '<option value="'+i+'"'+(f.projIdx==i?' selected':'')+'>'+esc(p.name)+'</option>';}).join('');
+  h+='<div class="card"><h3>'+(ar?'نموذج فحص عدد وأدوات الفريق':'Team Tools Inspection')+' <small>'+TL_FORM_NO+'</small></h3><div class="body">'+
+    '<label class="fld">'+t('project')+'</label><select id="f_proj" onchange="onProj();tlLoadRegistry(false)">'+projOpts+'</select><div id="projInfo" class="projinfo"></div>'+
+    '<div class="grid2" style="margin-top:10px">'+
+      fld('f_teamno','Team No. / رقم الفريق','',f.teamNo)+
+      fld('f_leader','Team Leader / قائد الفريق','',f.leader)+
+      fld('f_vehicle','Location / Vehicle — الموقع / المركبة','',f.vehicle)+
+      fld('f_by','Inspected by (QA/QC) / المفتش','',f.by||SESSION.name)+
+      fld('f_date','Date / التاريخ','',f.date||today,'date')+
+      '<div><label class="fld">Time / الوقت <span class="autoTag">'+(ar?'تلقائي':'auto')+'</span></label><input id="f_time" value="'+esc(f.time||T.time||tlNow())+'" readonly></div>'+
+    '</div>'+
+    (ro?'':'<button class="btn ghost" style="width:100%;margin-top:10px" onclick="tlLoadRegistry(true)">'+ICONS.refresh+' '+(ar?'تحميل معدات الفريق من السجل':'Load team equipment from register')+'</button>')+
+    '<div class="note" id="tlRegNote">'+(ar?'اكتب رقم الفريق لتُعبّأ الماركات والأرقام التسلسلية تلقائياً من آخر تفتيش.':'Enter the team number to auto-fill brands and serials from the last inspection.')+'</div>'+
+  '</div></div>';
+  h+='<div class="tlLegend">'+
+     '<div><b>H</b> '+(ar?'يدوية':'Hand')+' · <b>P</b> '+(ar?'كهربائية':'Power')+' · <b>T</b> '+(ar?'أجهزة فحص':'Test')+' · <b>L</b> '+(ar?'سلم':'Ladder')+'</div>'+
+     '<div class="tlLegB"><b>H:</b> '+esc(TL_BRANDS.H.join(' · '))+'</div><div class="tlLegB"><b>P:</b> '+esc(TL_BRANDS.P.join(' · '))+'</div></div>';
+  h+='<div class="stage">'+(ar?'العدد والأدوات':'Tools & Equipment')+' — '+(ar?'Tools & Equipment':'العدد والأدوات')+'</div>';
+  h+='<div id="tlTools">'+tlToolsHTML(ro)+'</div>';
+  if(!ro){
+    h+='<div class="card tlAdd"><h3>'+(ar?'إضافة أداة':'Add a tool')+' <small></small></h3><div class="body">'+
+      '<div class="grid2">'+
+        '<div><label class="fld">Tool (EN) / اسم الأداة</label><input id="tl_new_name" placeholder="e.g. TORQUE WRENCH"></div>'+
+        '<div><label class="fld">الاسم بالعربي</label><input id="tl_new_ar" placeholder="مثال: مفتاح عزم"></div>'+
+      '</div>'+
+      '<label class="fld">Category / الفئة</label><select id="tl_new_cat">'+['H','P','T','L'].map(function(c){return '<option value="'+c+'">'+c+' — '+TL_CAT[c][0]+' / '+TL_CAT[c][1]+'</option>';}).join('')+'</select>'+
+      '<button class="btn" style="width:100%;margin-top:10px" onclick="tlAddTool()">'+ICONS.plus+' '+(ar?'إضافة للتقرير ولسجل الفريق':'Add to report & team register')+'</button>'+
+      '<div class="note">'+(ar?'الأداة المضافة تُحفظ في سجل الفريق عند الإرسال وتظهر تلقائياً في التفتيش القادم.':'Added tools are saved to the team register on submit and appear in the next inspection.')+'</div>'+
+    '</div></div>';
+  }
+  h+='<div class="card"><h3>'+(ar?'فحوصات عامة':'General Checks')+' <small></small></h3><div class="body" id="tlChecks">'+tlChecksHTML()+'</div></div>';
+  h+='<div class="card"><h3>'+(ar?'النتيجة':'Result')+' <small></small></h3><div class="body" id="tlResult">'+tlResultHTML()+'</div></div>';
+  h+='<div class="card"><h3>'+t('site_notes')+' <small></small></h3><div class="body"><textarea id="f_notes" rows="2" placeholder="'+(ar?'ملاحظات عامة':'General notes')+'">'+esc(f.notes||'')+'</textarea></div></div>';
+  h+='<div class="card"><h3>'+t('photos')+' <small></small></h3><div class="body"><div class="photos" id="ph"></div><p class="note">'+(ar?'أضف صور العدد في نهاية التقرير — تُختم بالتاريخ والموقع.':'Add tool photos at the end of the report — stamped with time and location.')+'</p></div></div>';
+  h+='<div class="card"><h3>'+(ar?'توقيع مفتش الجودة':'QA/QC Inspector signature')+' <small></small></h3><div class="body"><div class="sigwrap"><canvas id="sig"></canvas><button class="clr" onclick="clearSig()">'+t('clear')+'</button><div class="sighint" id="sighint">وقّع هنا بإصبعك</div></div></div></div>';
+  h+='</div>';
+  h+='<div class="progWrap"><div class="progBar"><i id="progFill" style="width:0%"></i></div></div>';
+  if(ro){
+    h+='<footer class="sb"><div class="footInfo"><span class="pct" id="pct">0/0</span></div><button class="btn" onclick="buildReport(readForm())">'+(ar?'حفظ PDF':'Save PDF')+'</button></footer>';
+  } else {
+    h+='<footer class="sb"><div class="footInfo"><span class="pct" id="pct">0/0</span><span class="saveStat" id="saveStat"></span></div><button class="btn ghost" onclick="saveCur(true)">'+t('save')+'</button><button class="btn" id="sub" onclick="doSubmit()">'+t('submit_pdf')+'</button></footer>';
+  }
+  h+='<div class="toast" id="toast"></div><input id="cam" type="file" accept="image/*" capture="environment" class="hidden" onchange="onPhoto(event)">';
+  $('app').innerHTML=h; window.scrollTo(0,0);
+  onProj();
+  renderPhotos(); initSig(); upd(true);
+  if(ro){
+    const wrap=document.querySelector('.wrap.rlocked');
+    if(wrap){
+      wrap.querySelectorAll('input,select,textarea,button').forEach(function(el){ if(el.closest('.lockBanner'))return; el.disabled=true; el.setAttribute('aria-disabled','true'); });
+      const cv=wrap.querySelector('#sig'); if(cv) cv.style.pointerEvents='none';
+    }
+  } else {
+    ['f_leader','f_vehicle','f_by','f_date','f_notes'].forEach(function(id){ const el=$(id); if(el){ el.addEventListener('input',autoSave); el.addEventListener('change',autoSave); } });
+    const tn=$('f_teamno'); if(tn){ tn.addEventListener('input',autoSave); tn.addEventListener('change',function(){ autoSave(); tlLoadRegistry(false); }); }
+  }
+  setSaveStatus('saved');
+}
+function tlLockedMsg(){ toast(LANG==='ar'?'التقرير مقفول — اضغط «فتح التقرير» أولاً':'Report is locked — press Reopen first'); }
+function tlRerender(i){ const el=$('tl_'+i); const tt=CUR.tl.tools[i]; if(el&&tt) el.outerHTML=tlToolHTML(tt,i,false); }
+window.tlSet=function(i,field,val,soft){
+  if(!isTL())return; if(reportLocked()){ tlLockedMsg(); return; }
+  const tt=CUR.tl.tools[i]; if(!tt) return;
+  if(field==='req'||field==='found') val=(val===''?'':Math.max(0,parseInt(val,10)||0));
+  if(field==='cond'){ val=(tt.cond===val?'':val); buzz(12); }
+  tt[field]=val;
+  if(field==='serial') tt.serial=String(val||'').trim().slice(0,80);
+  if(field==='serialNA' && val) tt.serial='';
+  if(field==='brand'){ if(val!=='__other') tt.brandOther=''; if(tt.cat==='H'||tt.cat==='P') tt.approved=tlAutoApproved(tt); }
+  if(field==='brandOther'){ tt.brandOther=String(val||'').trim().slice(0,60); if(tt.cat==='H'||tt.cat==='P') tt.approved=tlAutoApproved(tt); }
+  if(field==='cond'){
+    if(tt.cond==='good' && tt.found==='') tt.found=tt.req;
+    if(tt.cond==='miss' && tt.found==='') tt.found=0;
+  }
+  if(!soft) tlRerender(i);
+  upd();
+};
+window.tlDel=function(i){
+  if(!isTL())return; if(reportLocked()){ tlLockedMsg(); return; }
+  const tt=CUR.tl.tools[i]; if(!tt||!tt.custom) return;
+  if(!confirm(LANG==='ar'?'حذف «'+tt.name+'» من هذا التقرير؟ (يبقى في سجل الفريق)':'Remove "'+tt.name+'" from this report? (It stays in the team register)')) return;
+  CUR.tl.tools.splice(i,1);
+  const box=$('tlTools'); if(box) box.innerHTML=tlToolsHTML(false);
+  upd();
+};
+window.tlAddTool=function(){
+  if(!isTL())return; if(reportLocked()){ tlLockedMsg(); return; }
+  const n=(($('tl_new_name')||{}).value||'').trim().slice(0,80);
+  const a=(($('tl_new_ar')||{}).value||'').trim().slice(0,80);
+  const c=(($('tl_new_cat')||{}).value||'H');
+  if(n.length<2){ toast(LANG==='ar'?'اكتب اسم الأداة':'Enter the tool name'); return; }
+  const dup=CUR.tl.tools.some(function(x){return x.name.toLowerCase()===n.toLowerCase();});
+  if(dup && !confirm(LANG==='ar'?'توجد أداة بنفس الاسم. إضافة نسخة أخرى؟':'A tool with this name exists. Add another?')) return;
+  const id='c'+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36);
+  CUR.tl.tools.push(tlNewTool(id,n,a,['H','P','T','L'].indexOf(c)>=0?c:'H',true));
+  const box=$('tlTools'); if(box) box.innerHTML=tlToolsHTML(false);
+  ['tl_new_name','tl_new_ar'].forEach(function(k){ const e=$(k); if(e) e.value=''; });
+  const el=$('tl_'+(CUR.tl.tools.length-1)); if(el) el.scrollIntoView({behavior:'smooth',block:'center'});
+  toast(LANG==='ar'?'أُضيفت الأداة ✓':'Tool added ✓');
+  upd();
+};
+window.tlCheck=function(k,v){
+  if(!isTL())return; if(reportLocked()){ tlLockedMsg(); return; }
+  CUR.tl.checks=CUR.tl.checks||{};
+  CUR.tl.checks[k]=(CUR.tl.checks[k]===v?'':v); buzz(12);
+  const b=$('tlChecks'); if(b) b.innerHTML=tlChecksHTML();
+  upd();
+};
+window.tlResult=function(v){
+  if(!isTL())return; if(reportLocked()){ tlLockedMsg(); return; }
+  CUR.tl.result=(CUR.tl.result===v?'':v); buzz(12);
+  const b=$('tlResult'); if(b) b.innerHTML=tlResultHTML();
+  upd();
+};
+window.tlField=function(k,v){
+  if(!isTL())return; if(reportLocked()){ tlLockedMsg(); return; }
+  if(k==='corrective'||k==='target'){ CUR.tl[k]=String(v||'').slice(0,1000); upd(); }
+};
+
+// ---------- team register: load / sync ----------
+async function tlGetRegistry(project,teamNo){
+  if(!String(teamNo||'').trim()) return null;
+  const s=await getDoc(doc(db,'teamTools',teamKey(project,teamNo)));
+  return s.exists()?s.data():null;
+}
+window.tlLoadRegistry=async function(manual){
+  if(!isTL()||CUR.status==='done') return;
+  const f=form(); const note=$('tlRegNote'); const ar=(LANG==='ar');
+  if(!String(f.teamNo||'').trim()){ if(manual) toast(ar?'اكتب رقم الفريق أولاً':'Enter the team number first'); return; }
+  if(note) note.textContent=(ar?'جارٍ البحث في سجل الفريق…':'Looking up team register…');
+  let reg=null; try{ reg=await tlGetRegistry(f.project,f.teamNo); }catch(e){}
+  if(!isTL()) return;
+  if(!reg){
+    if(note) note.textContent=(ar?'فريق جديد — يُنشأ سجله تلقائياً عند إرسال هذا التقرير.':'New team — its register is created when this report is submitted.');
+    if(manual) toast(ar?'لا يوجد سجل لهذا الفريق بعد':'No register for this team yet');
+    return;
+  }
+  let filled=0, added=0;
+  (reg.tools||[]).forEach(function(rt){
+    let tt=CUR.tl.tools.find(function(x){return x.id===rt.id;});
+    if(!tt){ tt=tlNewTool(rt.id,rt.name||'',rt.ar||'',rt.cat||'H',true); CUR.tl.tools.push(tt); added++; }
+    tt.reg={brand:rt.brand||'',serial:rt.serial||'',serialNA:!!rt.serialNA};
+    if(!tlBrandOf(tt) && !tt.serial && !tt.serialNA){
+      tlApplyBrand(tt,rt.brand||''); tt.serial=rt.serial||''; tt.serialNA=!!rt.serialNA;
+      tt.approved=rt.approved||tlAutoApproved(tt);
+      if(rt.req!==undefined && rt.req!=='') tt.req=rt.req;
+      if(rt.brand||rt.serial||rt.serialNA) filled++;
+    }
+  });
+  const ld=$('f_leader'); if(ld && !ld.value && reg.leader) ld.value=reg.leader;
+  const vh=$('f_vehicle'); if(vh && !vh.value && reg.vehicle) vh.value=reg.vehicle;
+  const box=$('tlTools'); if(box) box.innerHTML=tlToolsHTML(false);
+  if(note) note.innerHTML=(ar?'✓ سجل الفريق: آخر تفتيش ':'✓ Team register: last inspection ')+esc(reg.lastInspected||'—')+(reg.lastRef?' · '+esc(reg.lastRef):'')+
+    ' — '+filled+(ar?' أداة عُبّئت':' tools filled')+(added?(' · '+added+(ar?' أداة مضافة سابقاً':' previously added')):'');
+  toast(ar?'تم تحميل معدات الفريق ✓':'Team equipment loaded ✓');
+  upd();
+};
+async function tlSyncRegistry(rep,f){
+  if(!rep||!rep.tl||!String(f.teamNo||'').trim()) return;
+  const key=teamKey(f.project,f.teamNo); const ref=doc(db,'teamTools',key);
+  let reg=null; try{ const s=await getDoc(ref); reg=s.exists()?s.data():null; }catch(e){}
+  const isNew=!reg;
+  reg=reg||{teamKey:key,teamNo:String(f.teamNo).trim().toUpperCase(),project:f.project||'',tools:[],history:[],createdMs:Date.now()};
+  reg.tools=Array.isArray(reg.tools)?reg.tools:[]; reg.history=Array.isArray(reg.history)?reg.history:[];
+  const date=f.date||new Date().toISOString().slice(0,10), rno=rep.refNo||'', by=SESSION.name||'';
+  const H=function(o){ reg.history.push(Object.assign({date:date,ref:rno,by:by,ms:Date.now()},o)); };
+  (rep.tl.tools||[]).forEach(function(tt){
+    const brand=tlBrandOf(tt);
+    let rt=reg.tools.find(function(x){return x.id===tt.id;});
+    if(!rt){
+      rt={id:tt.id,name:tt.name,ar:tt.ar||'',cat:tt.cat,custom:!!tt.custom,addedOn:date,replaceCount:0};
+      reg.tools.push(rt);
+      if(!isNew) H({toolId:tt.id,toolName:tt.name,kind:'added',field:'',from:'',to:[brand,tt.serial].filter(Boolean).join(' / ')});
+    } else if(tt.cond!=='miss'){
+      let replaced=false;
+      if(rt.serial && tt.serial && !tt.serialNA && rt.serial!==tt.serial){ H({toolId:tt.id,toolName:tt.name,kind:'replaced',field:'serial',from:rt.serial,to:tt.serial}); rt.prevSerial=rt.serial; replaced=true; }
+      if(rt.brand && brand && rt.brand!==brand){ H({toolId:tt.id,toolName:tt.name,kind:'replaced',field:'brand',from:rt.brand,to:brand}); rt.prevBrand=rt.brand; replaced=true; }
+      if(replaced){ rt.replacedOn=date; rt.replacedRef=rno; rt.replaceCount=(rt.replaceCount||0)+1; }
+    }
+    if(rt.cond && tt.cond && rt.cond!==tt.cond) H({toolId:tt.id,toolName:tt.name,kind:'status',field:'cond',from:rt.cond,to:tt.cond});
+    rt.name=tt.name; rt.ar=tt.ar||''; rt.cat=tt.cat;
+    if(tt.cond!=='miss'){
+      if(brand) rt.brand=brand;
+      if(tt.serialNA){ rt.serial=''; rt.serialNA=true; } else if(tt.serial){ rt.serial=tt.serial; rt.serialNA=false; }
+      if(tt.approved) rt.approved=tt.approved;
+    }
+    rt.cond=tt.cond||rt.cond||''; rt.remarks=tt.remarks||''; rt.req=(tt.req===''?1:tt.req); rt.found=tt.found;
+    rt.lastSeen=date; rt.lastRef=rno;
+  });
+  reg.leader=f.leader||reg.leader||''; reg.vehicle=f.vehicle||reg.vehicle||''; reg.project=f.project||reg.project||'';
+  reg.lastInspected=date; reg.lastRef=rno; reg.lastReportId=rep.id; reg.lastResult=rep.tl.result||'';
+  reg.updatedMs=Date.now(); reg.updatedBy=SESSION.uid; reg.updatedByName=by;
+  if(reg.history.length>300) reg.history=reg.history.slice(-300);
+  await setDoc(ref, JSON.parse(JSON.stringify(reg)));
+}
+async function tlSubmit(){
+  const f=form(), T=CUR.tl, ar=(LANG==='ar');
+  const go=function(id,msg){ toast(msg); const e=$(id); if(e){ e.classList.add('flag'); e.scrollIntoView({behavior:'smooth',block:'center'}); setTimeout(function(){e.classList.remove('flag');},2500);} };
+  if(!f.project){ go('f_proj',ar?'اختر المشروع':'Select the project'); return; }
+  if(!String(f.teamNo||'').trim()){ go('f_teamno',ar?'أدخل رقم الفريق':'Enter the team number'); return; }
+  if(!String(f.leader||'').trim()){ go('f_leader',ar?'أدخل اسم قائد الفريق':'Enter the team leader'); return; }
+  for(let i=0;i<T.tools.length;i++){
+    const tt=T.tools[i];
+    if(!tt.cond){ go('tl_'+i,(ar?'حدّد حالة الأداة: ':'Set the condition of: ')+tt.name); return; }
+    if(tt.cond!=='miss'){
+      if(!tlBrandOf(tt)){ go('tl_'+i,(ar?'اختر الماركة: ':'Select the brand: ')+tt.name); return; }
+      if(!tt.serial && !tt.serialNA){ go('tl_'+i,(ar?'اكتب الرقم التسلسلي أو N/A: ':'Enter serial no. or N/A: ')+tt.name); return; }
+      if(!tt.approved){ go('tl_'+i,(ar?'حدّد هل الماركة معتمدة: ':'Set Approved Y/N: ')+tt.name); return; }
+    }
+  }
+  for(const c of TL_CHECKS){ if(!(T.checks&&T.checks[c[0]])){ go('tlChecks',(ar?'أكمل الفحوصات العامة: ':'Complete general checks: ')+(ar?c[2]:c[1])); return; } }
+  if(!T.result){ go('tlResult',ar?'اختر النتيجة':'Select the result'); return; }
+  if(T.result!=='accepted' && !String(T.corrective||'').trim()){ go('tlResult',ar?'اكتب الإجراء التصحيحي':'Enter the corrective action'); return; }
+  if(!CFG.recipient){ openSet(); toast(ar?'أضف إيميل المستلم في الإعدادات':'Add the recipient email in Settings'); return; }
+  CUR.status='done'; await saveCur(false,true);
+  logAct('close_report',(CUR.refNo||'')+' · Team '+(f.teamNo||'')); buzz([30,40,30]);
+  try{ await tlSyncRegistry(CUR,f); }catch(e){ toast((ar?'تعذّر تحديث سجل الفريق: ':'Team register update failed: ')+e.message); }
+  try{ await syncReportNCRs(CUR,f); }catch(e){}
+  buildReport(f);
+}
+// NCR findings for damaged / missing / non-approved tools
+function tlFindings(rep){
+  const out=[]; if(!rep||!rep.tl) return out;
+  const T=rep.tl;
+  (T.tools||[]).forEach(function(tt,i){
+    const qn='TL'+String(i+1).padStart(2,'0');
+    if(tt.cond==='dmg'||tt.cond==='miss'){
+      out.push({key:'tl_'+tt.id+'_c',qn:qn,item:tt.name,severity:'Major',
+        finding:(tt.cond==='dmg'?'Damaged':'Missing')+(tt.found!==''&&tt.found!==undefined?(' (found '+tt.found+' of '+tt.req+')'):'')+(tt.remarks?' — '+tt.remarks:''),
+        action:T.corrective||(tt.cond==='dmg'?'Repair or replace the tool':'Provide the missing tool'),due:T.target||''});
+    }
+    if(tt.cond!=='miss' && tt.approved==='N'){
+      out.push({key:'tl_'+tt.id+'_b',qn:qn,item:tt.name,severity:'Minor',
+        finding:'Brand not on approved list: '+(tlBrandOf(tt)||'-'),action:'Replace with an approved brand or obtain approval',due:T.target||''});
+    }
+  });
+  return out;
+}
+
+// ---------- PDF ----------
+function buildToolsReport(f){
+  const T=CUR.tl, rec=CFG.recipient||'';
+  const tools=T.tools||[];
+  const c={good:0,dmg:0,miss:0};
+  tools.forEach(function(tt){ if(c[tt.cond]!==undefined) c[tt.cond]++; });
+  const nonAp=tlNonApproved(tools);
+  const mk=function(b){return b?'<b class="mk">✓</b>':'';};
+  const rows=tools.map(function(tt,i){
+    const ap=tt.approved==='Y'?'<span class="y">Y</span>':(tt.approved==='N'?'<span class="n">N</span>':'');
+    return '<tr class="'+(tt.cond==='dmg'?'rd':tt.cond==='miss'?'rm':'')+'"><td>'+(i+1)+'</td><td><b>'+esc(tt.name)+'</b><div class="ar">'+esc(tt.ar)+'</div></td><td class="c">'+esc(tt.cat)+'</td>'+
+      '<td class="c">'+esc(tt.req)+'</td><td class="c">'+esc(tt.found)+'</td><td>'+esc(tlBrandOf(tt)||'—')+'</td><td class="c">'+ap+'</td>'+
+      '<td>'+(tt.serialNA?'N/A':esc(tt.serial||'—'))+'</td><td class="c">'+mk(tt.cond==='good')+'</td><td class="c">'+mk(tt.cond==='dmg')+'</td><td class="c">'+mk(tt.cond==='miss')+'</td><td>'+esc(tt.remarks||'')+'</td></tr>';
+  }).join('');
+  const chk=TL_CHECKS.map(function(cq){ const v=(T.checks||{})[cq[0]]||''; return '<tr><td><b>'+esc(cq[1])+'</b><div class="ar">'+esc(cq[2])+'</div></td><td class="c">'+mk(v==='yes')+'</td><td class="c">'+mk(v==='no')+'</td><td class="c">'+mk(v==='na')+'</td></tr>'; }).join('');
+  const res=TL_RESULTS.map(function(r){ return '<div class="rb'+(T.result===r[0]?' on rs-'+r[0]:'')+'"><span class="box">'+(T.result===r[0]?'✓':'')+'</span>'+r[1]+' — '+r[2]+'</div>'; }).join('');
+  const pics=(photos||[]).map(function(p){ return '<div class="ph"><img src="'+p.dataUrl+'"><div class="pcap">'+esc(p.time||'')+'</div></div>'; }).join('');
+  const info=[['Date / التاريخ',f.date],['Time / الوقت',f.time],['Project / المشروع',f.project],['Team No. / رقم الفريق',f.teamNo],['Team Leader / قائد الفريق',f.leader],['Location / Vehicle',f.vehicle],['Inspected by / المفتش',f.by||SESSION.name],['Report No.',CUR.refNo||'']]
+    .map(function(x){return '<div class="iv"><span>'+x[0]+'</span><b>'+esc(x[1]||'—')+'</b></div>';}).join('');
+  const resCol=T.result==='accepted'?'#1B8A3A':T.result==='remarks'?'#D4A017':T.result==='rejected'?'#C0392B':'#888';
+  const resTx=(TL_RESULTS.find(function(r){return r[0]===T.result;})||['','—','—']);
+  const css='body{font-family:Arial,"Segoe UI",Tahoma,sans-serif;margin:0;background:#f4f5f9;color:#1B1E36}.doc{max-width:1000px;margin:0 auto;background:#fff}'+
+    '.hd{background:'+NAVY+';color:#fff;padding:16px 22px;display:flex;gap:14px;align-items:center}.hd img{height:48px;background:#fff;border-radius:8px;padding:4px}.hd b{font-size:18px;display:block}.hd span{font-size:11px;opacity:.85}'+
+    '.or{height:5px;background:'+ORANGE+'}.sec{padding:16px 22px}.h2{font-weight:800;color:'+NAVY+';font-size:14px;margin:16px 0 8px;border-bottom:2px solid #eef0f5;padding-bottom:5px;display:flex;justify-content:space-between}'+
+    '.info{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.iv{border:1px solid #e3e6f0;border-radius:8px;padding:7px 9px}.iv span{display:block;font-size:9.5px;color:#6B7186}.iv b{font-size:12px}'+
+    '.kp{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.k{border-radius:9px;padding:9px;text-align:center;color:#fff}.k b{display:block;font-size:20px}.k span{font-size:10px}'+
+    'table{width:100%;border-collapse:collapse;font-size:10.5px}th{background:'+NAVY+';color:#fff;padding:6px 5px;font-size:9.5px;text-align:start}td{border-bottom:1px solid #e8eaf2;padding:5px;vertical-align:top}td.c{text-align:center}'+
+    '.ar{font-size:9.5px;color:#6B7186}.mk{color:'+NAVY+';font-size:13px}.y{background:#1B8A3A;color:#fff;border-radius:4px;padding:1px 6px;font-weight:800}.n{background:#C0392B;color:#fff;border-radius:4px;padding:1px 6px;font-weight:800}'+
+    'tr.rd td{background:#FFF4E5}tr.rm td{background:#FDECEA}.rb{border:1.5px solid #e3e6f0;border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:12px;display:flex;gap:8px;align-items:center}.rb .box{width:16px;height:16px;border:1.5px solid #999;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:11px}'+
+    '.rb.on{font-weight:800}.rb.rs-accepted{border-color:#1B8A3A;background:#EAF7EE}.rb.rs-remarks{border-color:#D4A017;background:#FFF8E1}.rb.rs-rejected{border-color:#C0392B;background:#FDECEA}'+
+    '.wd{border:1px solid #e3e6f0;border-radius:8px;padding:9px;font-size:12px;white-space:pre-wrap}.pics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.ph img{width:100%;border-radius:8px;border:1px solid #ddd}.pcap{font-size:9.5px;color:#888}'+
+    '.sg{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px}.sgb{border:1px solid #e3e6f0;border-radius:9px;padding:10px;min-height:90px;font-size:11px}.sgb img{max-height:60px;display:block;margin-top:6px}'+
+    '.note{font-size:10px;color:#6B7186;margin-top:10px}.foot{background:'+NAVY+';color:rgba(255,255,255,.8);font-size:10px;padding:10px 22px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px}'+
+    '.toolbar{position:sticky;top:0;background:#fff;padding:10px;display:flex;gap:8px;border-bottom:1px solid #eee;z-index:9;flex-wrap:wrap}.toolbar button{flex:1;padding:12px;border:0;border-radius:10px;font-size:14px;font-weight:800;color:#fff;cursor:pointer}.tp{background:'+ORANGE+'}.te{background:'+NAVY+'}'+
+    '@media (max-width:640px){.info{grid-template-columns:1fr 1fr}.kp{grid-template-columns:repeat(3,1fr)}.tbw{overflow-x:auto}table{min-width:720px}}'+
+    '@media print{.toolbar{display:none}body{background:#fff}.tbw{overflow:visible}table{min-width:0}}';
+  const rep='<!DOCTYPE html><html dir="ltr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Team Tools Inspection</title><style>'+css+POPUP_CLOSE_CSS+'</style></head><body>'+POPUP_CLOSE_SCRIPT+
+    '<div class="doc"><div class="toolbar"><button class="tp" onclick="window.print()">حفظ PDF / Save PDF</button><button class="te" onclick="sendMail()">إرسال / Email</button>'+popupCloseBtn()+'</div>'+
+    '<div class="hd"><img src="'+LOGO+'"><div><b>TEAM TOOLS INSPECTION FORM</b><span>نموذج فحص عدد وأدوات الفريق · '+TL_FORM_NO+(CUR.refNo?' · '+esc(CUR.refNo):'')+'</span><br><span>Equipment &amp; Technical Services Co. (ETECHS) · QA/QC Department</span></div></div><div class="or"></div>'+
+    '<div class="sec"><div class="info">'+info+'</div>'+
+    '<div class="h2"><span>Summary</span><span>الملخّص</span></div><div class="kp">'+
+      '<div class="k" style="background:'+NAVY+'"><b>'+tools.length+'</b><span>Tools / العدد</span></div>'+
+      '<div class="k" style="background:#1B8A3A"><b>'+c.good+'</b><span>Good / سليم</span></div>'+
+      '<div class="k" style="background:#E67E22"><b>'+c.dmg+'</b><span>Damaged / تالف</span></div>'+
+      '<div class="k" style="background:#C0392B"><b>'+c.miss+'</b><span>Missing / مفقود</span></div>'+
+      '<div class="k" style="background:'+(nonAp?'#8E44AD':'#5B6178')+'"><b>'+nonAp+'</b><span>Not approved / غير معتمدة</span></div></div>'+
+    '<div class="h2"><span>Tools &amp; Equipment</span><span>العدد والأدوات</span></div><div class="tbw"><table><tr><th>#</th><th>Tool / العدة</th><th>Cat.</th><th>Req.</th><th>Found</th><th>Brand</th><th>Appr.</th><th>Serial No.</th><th>Good</th><th>Dmg.</th><th>Miss.</th><th>Remarks</th></tr>'+rows+'</table></div>'+
+    '<div class="note">Key: H = Hand tool · P = Power tool · T = Test equipment · L = Ladder · Approved brand: Y = Yes, N = No</div>'+
+    '<div class="h2"><span>General Checks</span><span>فحوصات عامة</span></div><table><tr><th>Item</th><th>Yes</th><th>No</th><th>N/A</th></tr>'+chk+'</table>'+
+    '<div class="h2"><span>Result</span><span style="color:'+resCol+'">'+esc(resTx[1])+' — '+esc(resTx[2])+'</span></div>'+res+
+    ((T.result&&T.result!=='accepted')?'<div class="h2"><span>Corrective action / Target date</span><span>الإجراء التصحيحي / التاريخ المستهدف</span></div><div class="wd">'+esc(T.corrective||'—')+'\n\nTarget date / التاريخ المستهدف: '+esc(T.target||'—')+'</div>':'')+
+    (f.notes?'<div class="h2"><span>Notes</span><span>ملاحظات</span></div><div class="wd">'+esc(f.notes)+'</div>':'')+
+    (pics?'<div class="h2"><span>Photos</span><span>الصور</span></div><div class="pics">'+pics+'</div>':'')+
+    '<div class="h2"><span>Signatures</span><span>التوقيعات</span></div><div class="sg">'+
+      '<div class="sgb"><b>Team Leader — قائد الفريق</b><br>Name: '+esc(f.leader||'')+'<br>Signature: ____________________</div>'+
+      '<div class="sgb"><b>QA/QC Inspector — مفتش الجودة</b><br>Name: '+esc(f.by||SESSION.name)+'<br>Signature:'+(sig?'<img src="'+sig+'">':' ____________________')+'</div></div>'+
+    '<div class="note">Brand not on the approved list → marked N and recorded for replacement / approval. · الماركة غير المعتمدة تُسجَّل للاستبدال أو الاعتماد.</div>'+
+    '</div><div class="foot"><span>Equipment &amp; Technical Services Co. (ETECHS) · '+TL_FORM_NO+'</span><span>Generated / صدر في: '+new Date().toLocaleString('en-GB')+'</span></div></div>'+
+    '<script>function sendMail(){var s=encodeURIComponent('+jsonSafe('Team Tools Inspection - Team '+(f.teamNo||'')+' - '+(f.date||''))+');var b=encodeURIComponent('+jsonSafe('Team: '+(f.teamNo||'')+'\nLeader: '+(f.leader||'')+'\nProject: '+(f.project||'')+'\nResult: '+resTx[1]+'\nGood/Damaged/Missing: '+c.good+'/'+c.dmg+'/'+c.miss+'\n\nPlease attach the saved PDF.')+');location.href="mailto:'+encodeURIComponent(rec)+'?subject="+s+"&body="+b;}<\/script>'+
+    '</body></html>';
+  const w=window.open('','_blank');
+  if(w){ w.document.open(); w.document.write(rep); w.document.close(); toast(LANG==='ar'?'افتح «حفظ PDF» في أعلى التقرير':'Use "Save PDF" at the top'); }
+  else { const blob=new Blob([rep],{type:'text/html'}); location.href=URL.createObjectURL(blob); }
+  setTimeout(function(){ CUR=null; renderHome(); },1400);
+  return rep;
+}
+
+// ================= TEAM EQUIPMENT PAGE =================
+let EQ_LIST=[]; let EQ_F={q:'',proj:''}; let EQ_CUR=-1;
+window.openEquipment=function(){
+  if(!can('equipment')){ toast(t('admin_only')); return; }
+  EQ_CUR=-1; renderEquipmentList(); loadEquipmentInner();
+};
+async function loadEquipmentInner(){
+  if(!SESSION||TEARING_DOWN) return;
+  try{
+    const s=await getDocs(collection(db,'teamTools'));
+    const arr=[]; s.forEach(function(d){ arr.push(Object.assign({_id:d.id},d.data())); });
+    arr.sort(function(a,b){ return String(a.project||'').localeCompare(String(b.project||'')) || String(a.teamNo||'').localeCompare(String(b.teamNo||''),undefined,{numeric:true}); });
+    EQ_LIST=arr;
+  }catch(e){
+    const b=$('eqList'); if(b) b.innerHTML='<div class="empty">'+(LANG==='ar'?'تعذّر التحميل: ':'Could not load: ')+esc(e.message)+'</div>'; return;
+  }
+  if(EQ_CUR>=0) renderTeamEq(EQ_CUR); else paintEquipment();
+}
+function eqStats(reg){
+  const tools=reg.tools||[]; const s={n:tools.length,good:0,dmg:0,miss:0,nonAp:0,repl:0};
+  tools.forEach(function(x){ if(x.cond==='good')s.good++; else if(x.cond==='dmg')s.dmg++; else if(x.cond==='miss')s.miss++; if(x.approved==='N')s.nonAp++; if(x.replaceCount)s.repl+=x.replaceCount; });
+  return s;
+}
+function renderEquipmentList(){
+  const ar=(LANG==='ar');
+  let h='<header class="bar"><button class="menubtn" onclick="goHome()">'+ICONS.back+'</button><img src="'+LOGO+'"><div class="t"><b>'+t('equip_title')+'</b><span>Team Equipment</span></div>'+
+    '<button class="gear" onclick="loadEquipment()" title="'+(ar?'تحديث':'Refresh')+'">'+ICONS.refresh+'</button></header><div class="stripe"></div><div class="wrap">';
+  h+='<div class="card"><div class="body"><input id="eq_q" placeholder="'+(ar?'بحث: رقم فريق، قائد، أداة، ماركة، رقم تسلسلي…':'Search: team, leader, tool, brand, serial…')+'" value="'+esc(EQ_F.q)+'" oninput="eqFilter()">'+
+    '<select id="eq_p" style="margin-top:8px" onchange="eqFilter()"><option value="">'+(ar?'كل المشاريع':'All projects')+'</option>'+
+    [...new Set((CFG.projects||[]).map(function(p){return p.name;}))].map(function(p){return '<option value="'+esc(p)+'"'+(EQ_F.proj===p?' selected':'')+'>'+esc(p)+'</option>';}).join('')+'</select></div></div>';
+  h+='<div id="eqKpi"></div><div id="eqList"><div class="loadwrap"><div class="spinner"></div></div></div>';
+  h+='<div class="note" style="padding:4px 4px 90px">'+(ar?'يُنشأ سجل كل فريق ويتحدّث تلقائياً عند إرسال «نموذج فحص عدد وأدوات الفريق».':'Each team register is created and updated automatically when a Team Tools Inspection is submitted.')+'</div>';
+  h+='</div><div class="toast" id="toast"></div>';
+  $('app').innerHTML=h; window.scrollTo(0,0);
+}
+window.eqFilter=function(){ EQ_F.q=(($('eq_q')||{}).value||'').trim(); EQ_F.proj=(($('eq_p')||{}).value||''); paintEquipment(); };
+function eqMatch(reg){
+  if(EQ_F.proj && (reg.project||'')!==EQ_F.proj) return false;
+  const q=EQ_F.q.toLowerCase(); if(!q) return true;
+  const hay=[reg.teamNo,reg.leader,reg.vehicle,reg.project].concat((reg.tools||[]).map(function(x){return [x.name,x.ar,x.brand,x.serial,x.prevSerial].join(' ');})).join(' ').toLowerCase();
+  return hay.indexOf(q)>=0;
+}
+function paintEquipment(){
+  const box=$('eqList'); if(!box) return; const ar=(LANG==='ar');
+  const list=EQ_LIST.map(function(r,i){return {r:r,i:i};}).filter(function(o){return eqMatch(o.r);});
+  const k=$('eqKpi');
+  if(k){
+    let n=0,dm=0,na=0,rp=0; EQ_LIST.forEach(function(r){ const s=eqStats(r); n+=s.n; dm+=s.dmg+s.miss; na+=s.nonAp; rp+=s.repl; });
+    k.innerHTML='<div class="kpis" style="margin-bottom:10px">'+kpi('الفرق','Teams',EQ_LIST.length,NAVY)+kpi('الأدوات','Tools',n,'#5B6178')+kpi('تالف/مفقود','Dmg/Missing',dm,'#C0392B')+kpi('مستبدلة','Replaced',rp,'#8E44AD')+'</div>';
+  }
+  if(!list.length){ box.innerHTML='<div class="empty">'+(EQ_LIST.length?(ar?'لا نتائج للبحث':'No matches'):(ar?'لا توجد سجلات بعد. أرسل أول «فحص عدد الفريق» ليُنشأ السجل.':'No registers yet. Submit a Team Tools Inspection to create one.'))+'</div>'; return; }
+  box.innerHTML=list.map(function(o){
+    const r=o.r, s=eqStats(r);
+    const rc=r.lastResult==='accepted'?'#1B8A3A':r.lastResult==='remarks'?'#D4A017':r.lastResult==='rejected'?'#C0392B':'#8A90A6';
+    const rt=(TL_RESULTS.find(function(x){return x[0]===r.lastResult;})||['','—','—'])[ar?2:1];
+    return '<div class="eqCard" onclick="openTeamEq('+o.i+')" style="border-inline-start-color:'+rc+'">'+
+      '<div class="eqTop"><div><b>'+(ar?'فريق ':'Team ')+esc(r.teamNo||'—')+'</b><span>'+esc(r.project||'')+'</span></div><span class="scPill" style="background:'+rc+'">'+esc(rt)+'</span></div>'+
+      '<div class="eqMeta">'+esc(r.leader||'—')+(r.vehicle?' · '+esc(r.vehicle):'')+'</div>'+
+      '<div class="eqMeta">'+(ar?'آخر تفتيش: ':'Last inspection: ')+esc(r.lastInspected||'—')+(r.lastRef?' · '+esc(r.lastRef):'')+'</div>'+
+      '<div class="eqChips"><span>'+s.n+' '+(ar?'أداة':'tools')+'</span><span class="g">'+s.good+' '+(ar?'سليم':'good')+'</span>'+
+        (s.dmg?'<span class="o">'+s.dmg+' '+(ar?'تالف':'dmg')+'</span>':'')+(s.miss?'<span class="r">'+s.miss+' '+(ar?'مفقود':'missing')+'</span>':'')+
+        (s.nonAp?'<span class="p">'+s.nonAp+' '+(ar?'غير معتمدة':'not approved')+'</span>':'')+(s.repl?'<span class="v">'+s.repl+' '+(ar?'استبدال':'replaced')+'</span>':'')+'</div>'+
+    '</div>';
+  }).join('');
+}
+window.openTeamEq=function(i){ EQ_CUR=i; renderTeamEq(i); };
+window.eqBack=function(){ EQ_CUR=-1; renderEquipmentList(); paintEquipment(); };
+window.loadEquipment=function(){ return loadEquipmentInner(); };
+function eqKindLabel(k){ const ar=(LANG==='ar'); return ({replaced:ar?'استبدال':'Replaced',status:ar?'تغيّر الحالة':'Status change',added:ar?'أداة مضافة':'Added',manual:ar?'تعديل يدوي':'Manual edit'})[k]||k; }
+function eqCondTx(c){ const x=TL_COND[c]; return x?(LANG==='ar'?x[1]:x[0]):'—'; }
+function renderTeamEq(i){
+  const r=EQ_LIST[i]; if(!r){ openEquipment(); return; }
+  const ar=(LANG==='ar'), s=eqStats(r);
+  let h='<header class="bar"><button class="menubtn" onclick="eqBack()">'+ICONS.back+'</button><img src="'+LOGO+'"><div class="t"><b>'+(ar?'فريق ':'Team ')+esc(r.teamNo||'')+'</b><span>'+esc(r.project||'')+'</span></div>'+
+    '<button class="gear" onclick="printTeamEq('+i+')" title="PDF">'+ICONS.print+'</button></header><div class="stripe"></div><div class="wrap">';
+  h+='<div class="card"><div class="body"><div class="traceBox">'+
+    [[ar?'قائد الفريق':'Team leader',r.leader],[ar?'الموقع / المركبة':'Location / Vehicle',r.vehicle],[ar?'آخر تفتيش':'Last inspection',(r.lastInspected||'—')+(r.lastRef?' · '+r.lastRef:'')],[ar?'آخر تحديث بواسطة':'Updated by',r.updatedByName]]
+      .map(function(x){return '<div class="row"><span class="k">'+x[0]+'</span><span class="v">'+esc(x[1]||'—')+'</span></div>';}).join('')+'</div>'+
+    '<div class="eqChips" style="margin-top:10px"><span>'+s.n+' '+(ar?'أداة':'tools')+'</span><span class="g">'+s.good+' '+(ar?'سليم':'good')+'</span><span class="o">'+s.dmg+' '+(ar?'تالف':'dmg')+'</span><span class="r">'+s.miss+' '+(ar?'مفقود':'missing')+'</span><span class="p">'+s.nonAp+' '+(ar?'غير معتمدة':'not approved')+'</span><span class="v">'+s.repl+' '+(ar?'استبدال':'replaced')+'</span></div>'+
+  '</div></div>';
+  h+='<div class="stage">'+(ar?'قائمة المعدات':'Equipment list')+'</div>';
+  h+=(r.tools||[]).map(function(x,k){
+    const cc=x.cond?TL_COND[x.cond][2]:'#8A90A6';
+    return '<div class="eqTool" style="border-inline-start-color:'+cc+'">'+
+      '<div class="tlHead"><span class="tlNo">'+(k+1)+'</span><div class="tlName"><b>'+esc(x.name)+'</b><span>'+esc(x.ar||'')+'</span></div><span class="tlCat cat-'+esc(x.cat)+'">'+esc(x.cat)+'</span></div>'+
+      '<div class="eqGrid">'+
+        '<div><span>'+(ar?'الماركة':'Brand')+'</span><b>'+esc(x.brand||'—')+(x.approved==='Y'?' <i class="y">Y</i>':x.approved==='N'?' <i class="n">N</i>':'')+'</b></div>'+
+        '<div><span>'+(ar?'الرقم التسلسلي':'Serial No.')+'</span><b>'+(x.serialNA?'N/A':esc(x.serial||'—'))+'</b></div>'+
+        '<div><span>'+(ar?'الحالة':'Condition')+'</span><b style="color:'+cc+'">'+eqCondTx(x.cond)+'</b></div>'+
+        '<div><span>'+(ar?'آخر فحص':'Last seen')+'</span><b>'+esc(x.lastSeen||'—')+'</b></div>'+
+      '</div>'+
+      (x.replacedOn?'<div class="tlReg chg">'+(ar?'🔁 استُبدلت في ':'🔁 Replaced on ')+esc(x.replacedOn)+(x.replacedRef?' ('+esc(x.replacedRef)+')':'')+
+        ' — '+(ar?'السابق: ':'previous: ')+esc([x.prevBrand,x.prevSerial].filter(Boolean).join(' / ')||'—')+(x.replaceCount>1?' · '+x.replaceCount+(ar?' مرات':' times'):'')+'</div>':'')+
+      (x.remarks?'<div class="eqRem">'+esc(x.remarks)+'</div>':'')+
+      '<button class="btn ghost eqEdit" onclick="eqEditTool('+i+','+k+')">'+(ar?'تعديل / تسجيل استبدال':'Edit / log replacement')+'</button>'+
+    '</div>';
+  }).join('');
+  h+='<button class="btn" style="width:100%;margin:6px 0 12px" onclick="eqEditTool('+i+',-1)">'+ICONS.plus+' '+(ar?'إضافة أداة لهذا الفريق':'Add a tool to this team')+'</button>';
+  const hist=(r.history||[]).slice().reverse().slice(0,80);
+  h+='<div class="card"><h3>'+(ar?'سجلّ التغييرات والاستبدال':'Change & replacement log')+' <small>'+(r.history||[]).length+'</small></h3><div class="body">'+
+    (hist.length?hist.map(function(e){
+      return '<div class="eqHist k-'+esc(e.kind)+'"><div><b>'+esc(e.toolName||'')+'</b> · <span class="hk">'+eqKindLabel(e.kind)+'</span></div>'+
+        '<div class="hd2">'+(e.from||e.to?(esc(e.field==='cond'?eqCondTx(e.from):e.from||'—')+' → '+esc(e.field==='cond'?eqCondTx(e.to):e.to||'—')):'')+'</div>'+
+        '<div class="hm">'+esc(e.date||'')+(e.ref?' · '+esc(e.ref):'')+(e.by?' · '+esc(e.by):'')+'</div></div>';
+    }).join(''):'<div class="note">'+(ar?'لا تغييرات مسجّلة بعد.':'No changes recorded yet.')+'</div>')+
+  '</div></div>';
+  if(SESSION.role==='admin') h+='<button class="btn ghost" style="width:100%;border-color:#C0392B;color:#C0392B" onclick="eqDeleteTeam('+i+')">'+(ar?'حذف سجل هذا الفريق':'Delete this team register')+'</button>';
+  h+='<div style="height:90px"></div></div><div class="toast" id="toast"></div>';
+  $('app').innerHTML=h; window.scrollTo(0,0);
+}
+window.eqEditTool=function(i,k){
+  const r=EQ_LIST[i]; if(!r) return; const ar=(LANG==='ar');
+  const isNew=(k<0); const x=isNew?{name:'',ar:'',cat:'H',brand:'',serial:'',serialNA:false,approved:'',cond:'good',remarks:''}:(r.tools||[])[k];
+  if(!x) return;
+  const brands=[...new Set([].concat(TL_BRANDS.H,TL_BRANDS.P,TL_BRANDS.T,TL_BRANDS.L))];
+  const ov=document.createElement('div'); ov.className='modalOv'; ov.id='eqModal';
+  ov.innerHTML='<div class="modalBox"><h3 style="margin:0 0 10px">'+(isNew?(ar?'إضافة أداة':'Add tool'):esc(x.name))+'</h3>'+
+    (isNew?'<label class="fld">Tool (EN)</label><input id="eq_name"><label class="fld">الاسم بالعربي</label><input id="eq_ar">'+
+      '<label class="fld">Category</label><select id="eq_cat">'+['H','P','T','L'].map(function(c){return '<option value="'+c+'">'+c+' — '+TL_CAT[c][ar?1:0]+'</option>';}).join('')+'</select>':'')+
+    '<label class="fld">'+(ar?'الماركة':'Brand')+'</label><input id="eq_brand" list="eqBrands" value="'+esc(x.brand||'')+'"><datalist id="eqBrands">'+brands.map(function(b){return '<option value="'+esc(b)+'">';}).join('')+'</datalist>'+
+    '<label class="fld">'+(ar?'الرقم التسلسلي':'Serial No.')+'</label><div class="tlSer"><input id="eq_serial" value="'+esc(x.serial||'')+'"><label class="tlNA"><input type="checkbox" id="eq_na"'+(x.serialNA?' checked':'')+'> N/A</label></div>'+
+    '<div class="grid2"><div><label class="fld">'+(ar?'معتمدة؟':'Approved')+'</label><select id="eq_ap"><option value=""></option><option value="Y"'+(x.approved==='Y'?' selected':'')+'>Y</option><option value="N"'+(x.approved==='N'?' selected':'')+'>N</option></select></div>'+
+    '<div><label class="fld">'+(ar?'الحالة':'Condition')+'</label><select id="eq_cond">'+['good','dmg','miss'].map(function(c){return '<option value="'+c+'"'+(x.cond===c?' selected':'')+'>'+TL_COND[c][ar?1:0]+'</option>';}).join('')+'</select></div></div>'+
+    '<label class="fld">'+(ar?'ملاحظات':'Remarks')+'</label><input id="eq_rem" value="'+esc(x.remarks||'')+'">'+
+    '<div class="note">'+(ar?'تغيير الماركة أو الرقم التسلسلي يُسجَّل تلقائياً كاستبدال مع التاريخ.':'Changing the brand or serial is logged automatically as a replacement with the date.')+'</div>'+
+    '<div style="display:flex;gap:8px;margin-top:12px"><button class="btn" style="flex:1" onclick="eqSaveTool('+i+','+k+')">'+(ar?'حفظ':'Save')+'</button><button class="btn ghost" style="flex:1" onclick="document.getElementById(\'eqModal\').remove()">'+(ar?'إلغاء':'Cancel')+'</button></div></div>';
+  document.body.appendChild(ov);
+};
+window.eqSaveTool=async function(i,k){
+  const r=EQ_LIST[i]; if(!r) return; const ar=(LANG==='ar');
+  const v=function(id){ const e=$(id); return e?String(e.value||'').trim():''; };
+  const brand=v('eq_brand').slice(0,60), serial=v('eq_serial').slice(0,80), na=!!(($('eq_na')||{}).checked);
+  const apIn=v('eq_ap'), cond=v('eq_cond')||'good', rem=v('eq_rem').slice(0,300);
+  const date=new Date().toISOString().slice(0,10), by=SESSION.name||'';
+  const reg=JSON.parse(JSON.stringify(r)); delete reg._id;
+  reg.tools=reg.tools||[]; reg.history=reg.history||[];
+  const H=function(o){ reg.history.push(Object.assign({date:date,ref:'',by:by,ms:Date.now()},o)); };
+  if(k<0){
+    const name=v('eq_name').slice(0,80); if(name.length<2){ toast(ar?'اكتب اسم الأداة':'Enter the tool name'); return; }
+    const cat=v('eq_cat')||'H';
+    const nt={id:'c'+Date.now().toString(36),name:name,ar:v('eq_ar').slice(0,80),cat:cat,custom:true,brand:brand,serial:na?'':serial,serialNA:na,cond:cond,remarks:rem,addedOn:date,lastSeen:date,replaceCount:0,req:1,found:''};
+    const tmp={cat:cat,brand:'',brandOther:'',approved:apIn}; tlApplyBrand(tmp,brand); nt.approved=apIn||tlAutoApproved(tmp);
+    reg.tools.push(nt); H({toolId:nt.id,toolName:name,kind:'added',field:'',from:'',to:[brand,serial].filter(Boolean).join(' / ')});
+  } else {
+    const x=reg.tools[k]; if(!x) return;
+    let replaced=false;
+    if(!na && serial && x.serial && serial!==x.serial){ H({toolId:x.id,toolName:x.name,kind:'replaced',field:'serial',from:x.serial,to:serial}); x.prevSerial=x.serial; replaced=true; }
+    if(brand && x.brand && brand!==x.brand){ H({toolId:x.id,toolName:x.name,kind:'replaced',field:'brand',from:x.brand,to:brand}); x.prevBrand=x.brand; replaced=true; }
+    if(replaced){ x.replacedOn=date; x.replacedRef=''; x.replaceCount=(x.replaceCount||0)+1; }
+    if(x.cond && cond && x.cond!==cond) H({toolId:x.id,toolName:x.name,kind:'status',field:'cond',from:x.cond,to:cond});
+    if(!replaced && x.cond===cond && (brand!==(x.brand||'')||serial!==(x.serial||'')||na!==!!x.serialNA)) H({toolId:x.id,toolName:x.name,kind:'manual',field:'',from:[x.brand,x.serial].filter(Boolean).join(' / '),to:[brand,serial].filter(Boolean).join(' / ')});
+    x.brand=brand; x.serialNA=na; x.serial=na?'':serial; x.cond=cond; x.remarks=rem;
+    const tmp={cat:x.cat,brand:'',brandOther:'',approved:apIn}; tlApplyBrand(tmp,brand); x.approved=apIn||tlAutoApproved(tmp);
+  }
+  if(reg.history.length>300) reg.history=reg.history.slice(-300);
+  reg.updatedMs=Date.now(); reg.updatedBy=SESSION.uid; reg.updatedByName=by;
+  try{
+    await setDoc(doc(db,'teamTools',r._id), JSON.parse(JSON.stringify(reg)));
+    const m=$('eqModal'); if(m) m.remove();
+    reg._id=r._id; EQ_LIST[i]=reg;
+    logAct('team_tools_edit',(reg.teamNo||'')+(k<0?' + tool':''));
+    toast(ar?'تم الحفظ ✓':'Saved ✓'); renderTeamEq(i);
+  }catch(e){ toast((ar?'تعذّر الحفظ: ':'Save failed: ')+e.message); }
+};
+window.eqDeleteTeam=async function(i){
+  if(!requireAdmin()) return; const r=EQ_LIST[i]; if(!r) return;
+  if(!confirm(LANG==='ar'?('حذف سجل الفريق '+r.teamNo+' نهائياً؟ التقارير لا تتأثر.'):('Permanently delete the register of team '+r.teamNo+'? Reports are not affected.'))) return;
+  try{ await deleteDoc(doc(db,'teamTools',r._id)); logAct('team_tools_delete',r.teamNo||''); toast(LANG==='ar'?'حُذف':'Deleted'); openEquipment(); }
+  catch(e){ toast((LANG==='ar'?'خطأ: ':'Error: ')+e.message); }
+};
+window.printTeamEq=function(i){
+  const r=EQ_LIST[i]; if(!r) return; const s=eqStats(r);
+  const rows=(r.tools||[]).map(function(x,k){
+    return '<tr class="'+(x.cond==='dmg'?'rd':x.cond==='miss'?'rm':'')+'"><td>'+(k+1)+'</td><td><b>'+esc(x.name)+'</b><div class="ar">'+esc(x.ar||'')+'</div></td><td class="c">'+esc(x.cat)+'</td><td>'+esc(x.brand||'—')+'</td><td class="c">'+esc(x.approved||'')+'</td><td>'+(x.serialNA?'N/A':esc(x.serial||'—'))+'</td><td>'+esc(eqCondTx(x.cond))+'</td><td>'+esc(x.lastSeen||'')+'</td><td>'+(x.replacedOn?esc(x.replacedOn)+'<div class="ar">'+esc([x.prevBrand,x.prevSerial].filter(Boolean).join(' / '))+'</div>':'')+'</td></tr>';
+  }).join('');
+  const hist=(r.history||[]).slice().reverse().slice(0,60).map(function(e){ return '<tr><td>'+esc(e.date||'')+'</td><td>'+esc(e.toolName||'')+'</td><td>'+esc(eqKindLabel(e.kind))+'</td><td>'+esc(e.field==='cond'?eqCondTx(e.from):e.from||'')+' → '+esc(e.field==='cond'?eqCondTx(e.to):e.to||'')+'</td><td>'+esc(e.ref||'')+'</td><td>'+esc(e.by||'')+'</td></tr>'; }).join('');
+  const css='body{font-family:Arial,Tahoma,sans-serif;margin:0;color:#1B1E36}.hd{background:'+NAVY+';color:#fff;padding:14px 20px;display:flex;gap:12px;align-items:center}.hd img{height:44px;background:#fff;border-radius:8px;padding:3px}.or{height:4px;background:'+ORANGE+'}'+
+    '.s{padding:14px 20px}h2{font-size:14px;color:'+NAVY+';border-bottom:2px solid #eef0f5;padding-bottom:4px}table{width:100%;border-collapse:collapse;font-size:11px}th{background:'+NAVY+';color:#fff;padding:6px;text-align:start}td{border-bottom:1px solid #e8eaf2;padding:5px;vertical-align:top}td.c{text-align:center}.ar{font-size:9.5px;color:#6B7186}tr.rd td{background:#FFF4E5}tr.rm td{background:#FDECEA}'+
+    '.info{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;font-size:11px}.info div{border:1px solid #e3e6f0;border-radius:8px;padding:6px 8px}.info span{display:block;font-size:9.5px;color:#6B7186}'+
+    '.toolbar{position:sticky;top:0;background:#fff;padding:10px;display:flex;gap:8px;border-bottom:1px solid #eee}.toolbar button{flex:1;padding:12px;border:0;border-radius:10px;font-weight:800;color:#fff;background:'+ORANGE+'}'+
+    '@media (max-width:640px){.info{grid-template-columns:1fr 1fr}.tw{overflow-x:auto}table{min-width:640px}}@media print{.toolbar{display:none}table{min-width:0}}';
+  const html='<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Team Equipment</title><style>'+css+POPUP_CLOSE_CSS+'</style></head><body>'+POPUP_CLOSE_SCRIPT+
+    '<div class="toolbar"><button onclick="window.print()">حفظ PDF / Save PDF</button>'+popupCloseBtn()+'</div>'+
+    '<div class="hd"><img src="'+LOGO+'"><div><b>TEAM EQUIPMENT REGISTER — '+esc(r.teamNo||'')+'</b><br><span style="font-size:11px">سجل معدات الفريق · Equipment &amp; Technical Services Co. (ETECHS)</span></div></div><div class="or"></div>'+
+    '<div class="s"><div class="info"><div><span>Project</span><b>'+esc(r.project||'—')+'</b></div><div><span>Team Leader</span><b>'+esc(r.leader||'—')+'</b></div><div><span>Location / Vehicle</span><b>'+esc(r.vehicle||'—')+'</b></div><div><span>Last inspection</span><b>'+esc(r.lastInspected||'—')+' '+esc(r.lastRef||'')+'</b></div></div>'+
+    '<p style="font-size:11px">Tools: <b>'+s.n+'</b> · Good: <b>'+s.good+'</b> · Damaged: <b>'+s.dmg+'</b> · Missing: <b>'+s.miss+'</b> · Not approved: <b>'+s.nonAp+'</b> · Replacements: <b>'+s.repl+'</b></p>'+
+    '<h2>Equipment / المعدات</h2><div class="tw"><table><tr><th>#</th><th>Tool</th><th>Cat.</th><th>Brand</th><th>Appr.</th><th>Serial No.</th><th>Condition</th><th>Last seen</th><th>Replaced (previous)</th></tr>'+rows+'</table></div>'+
+    (hist?'<h2>Change log / سجل التغييرات</h2><div class="tw"><table><tr><th>Date</th><th>Tool</th><th>Change</th><th>From → To</th><th>Report</th><th>By</th></tr>'+hist+'</table></div>':'')+
+    '<p style="font-size:10px;color:#6B7186">Generated '+new Date().toLocaleString('en-GB')+'</p></div></body></html>';
+  const w=window.open('','_blank'); if(w){ w.document.open(); w.document.write(html); w.document.close(); }
+};
 
 // ================= MY ACCOUNT =================
 // Lets the engineer change the display name that appears on their reports and
@@ -3970,7 +4689,7 @@ window.openAddPicker=function(){
   window.__picker(LANG==='ar'?'اختر قالباً لإضافته':'Choose a template to add',[
     {label:ICONS.doc+' '+(LANG==='ar'?'تدقيق شهري — أداء العقد':'Monthly Audit — Contract Performance'),on:addAuditTemplate},
     {label:ICONS.doc+' '+(LANG==='ar'?'قائمة فحص فريق الموقع (QIP-002)':'Site Team Quality Checklist (QIP-002)'),on:addQIP002Template},
-    {label:ICONS.tool+' '+(LANG==='ar'?'قائمة فحص الأدوات':'Tools Inspection Checklist'),on:addToolsTemplate},
+    {label:ICONS.tool+' '+(LANG==='ar'?'فحص عدد وأدوات الفريق (QA-F-TL-01)':'Team Tools Inspection (QA-F-TL-01)'),on:addToolsTemplate},
     {label:ICONS.plus+' '+(LANG==='ar'?'قالب جديد فارغ':'New empty template'),on:function(){ const n=prompt(LANG==='ar'?'اسم القالب الجديد:':'New template name:'); if(n){ window.__newTplName=n; addTemplate(n); } }}
   ]);
 };
@@ -4006,11 +4725,14 @@ window.updateOneTemplate=async function(tid){
 
 window.addToolsTemplate=async function(){
   if(!requireAdmin())return;
+  if((CFG.templates||[]).some(function(x){return x.kind==='tools';})){
+    toast(LANG==='ar'?'قالب فحص عدد الفريق موجود بالفعل — لا حاجة لنسخة ثانية':'The Team Tools template already exists — no duplicate needed'); return;
+  }
   if(!confirm(LANG==='ar'?'إضافة قائمة فحص الأدوات؟':'Add the Tools Inspection Checklist?'))return;
   if(!CFG.templates)CFG.templates=[];
   const id='tools_'+Date.now();
   const stages=JSON.parse(JSON.stringify(TOOLS_TEMPLATE_STAGES));
-  CFG.templates.push({id:id,name:(LANG==='ar'?'قائمة فحص الأدوات':'Tools Inspection Checklist'),kind:'tools',refPrefix:'ETECHS-TIC',stages:stages});
+  CFG.templates.push({id:id,name:(LANG==='ar'?'فحص عدد وأدوات الفريق':'Team Tools Inspection'),kind:'tools',refPrefix:'ETECHS-TIC',stages:stages});
   await saveConfig(); renderAdminBody();
   toast(LANG==='ar'?'أُضيفت قائمة فحص الأدوات ✓':'Tools checklist added ✓');
 };
@@ -4038,6 +4760,7 @@ function answerDisplay(a,it){
 }
 window.buildReport=buildReport;
 function buildReport(f){
+  if(isTL()) return buildToolsReport(f);
   const H2=function(en,ar){return '<div class="h2"><span class="en">'+en+'</span>'+(ar?'<span class="ar">'+ar+'</span>':'')+'</div>';};
   const c=counts();
   const pct=c.done?Math.round(c.ok/c.done*100):0;

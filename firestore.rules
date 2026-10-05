@@ -166,6 +166,17 @@ service cloud.firestore {
       allow delete: if isAdmin() || (authed() && resource.data.owner == request.auth.uid);
     }
 
+    // ===================== TEAM EQUIPMENT REGISTER =====================
+    // One document per team. Created/updated automatically when a Team Tools
+    // Inspection is submitted; engineers may also log a replacement manually.
+    // Only an admin may delete a register.
+    match /teamTools/{tid} {
+      allow read: if authed();
+      allow create: if authed() && request.resource.data.teamNo is string;
+      allow update: if authed() && request.resource.data.teamNo == resource.data.teamNo;
+      allow delete: if isAdmin();
+    }
+
     // ===================== PROCEDURES =====================
     match /procs/{pid} {
       allow read: if authed();
