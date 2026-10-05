@@ -1120,7 +1120,7 @@ async function loadConfig(){
     needsMigrationSave=true; // real shape change -> worth persisting
   } else {
     // deserialize each template's stages
-    CFG.templates=CFG.templates.map(tp=>({id:tp.id,name:tp.name,kind:tp.kind||'',refPrefix:tp.refPrefix||'',stages:tplFromStore(tp.stages)||DEFAULT_STAGES}));
+    CFG.templates=CFG.templates.map(tp=>({id:tp.id,name:tp.name,kind:tp.kind||'',refPrefix:tp.refPrefix||'',stages:tplFromStore(tp.stages)||(tp.kind==='tools'?[]:DEFAULT_STAGES)}));
   }
   delete CFG.template; // drop legacy field from memory
   // persist the migration once (admin only) - and ONLY when the data really
@@ -1209,7 +1209,8 @@ function auditCounts(){
   const score=assessed?Math.round((C/assessed)*100):0;
   return {C,minor,major,critical,NA,total,assessed,score};
 }
-function counts(){if(isTL())return tlCounts();let done=0,ok=0,no=0,na=0;TPL.forEach((st,si)=>st.secs.forEach((sec,ci)=>{if(!secActive(sec))return;sec.items.forEach((it,ii)=>{const a=answers[kk(si,ci,ii)];if(isAnswered(a)){done++;if(a.type==='okna'){if(a.status==='OK')ok++;else if(a.status==='Not OK')no++;else na++;}else if(a.type==='yesno'){if(a.yn==='Yes')ok++;else no++;}}})}));return{done,ok,no,na,total:total()}}
+function counts(){const b=baseCounts();if(isTL()){const t=tlCounts();return {done:b.done+t.done,ok:b.ok+t.ok,no:b.no+t.no,na:b.na+t.na,total:b.total+t.total};}return b;}
+function baseCounts(){let done=0,ok=0,no=0,na=0;TPL.forEach((st,si)=>st.secs.forEach((sec,ci)=>{if(!secActive(sec))return;sec.items.forEach((it,ii)=>{const a=answers[kk(si,ci,ii)];if(isAnswered(a)){done++;if(a.type==='okna'){if(a.status==='OK')ok++;else if(a.status==='Not OK')no++;else na++;}else if(a.type==='yesno'){if(a.yn==='Yes')ok++;else no++;}}})}));return{done,ok,no,na,total:total()}}
 function itemType(it){ return (it[3]&&it[3].type)||'okna'; }
 function itemReqPhoto(it){ return !!(it[3]&&it[3].photo); }
 function itemRequired(it){ return it[3]?it[3].required!==false:true; }
@@ -1548,7 +1549,7 @@ async function createReportFromTemplate(templateId){
     form:{},answers:{},photos:[],sig:null,counts:{done:0,total:0},
     tpl:tplToStore(tp.stages), rules:CFG.rules};
   // The Tools template now produces the QA-F-TL-01 per-tool form.
-  if(tp.kind==='tools'){ rep.tl=tlNew(); rep.tpl=[]; rep.form={time:rep.tl.time,date:new Date().toISOString().slice(0,10)}; }
+  if(tp.kind==='tools'){ rep.tl=tlNew(); rep.tpl=tplToStore(tlMergeQuestions(tp.stages)); rep.form={time:rep.tl.time,date:new Date().toISOString().slice(0,10)}; }
   loading('جاري الإنشاء...');
   try{ await setDoc(doc(db,'reports',id),rep); logAct('create_report', refNo+' · '+(tp.name||'')); CUR=rep; openReportObj(rep); }
   catch(e){ toast('تعذّر الإنشاء: '+e.message); renderHome(); }
@@ -1602,7 +1603,18 @@ function setSaveStatus(state){
 
 // ===== REPORT EDITOR =====
 function openReportObj(rep){
-  CUR=rep; TPL=(rep.tl&&rep.tl.v===2)?[]:(tplFromStore(rep.tpl)||(CFG.templates[0]&&CFG.templates[0].stages)||DEFAULT_STAGES); answers=rep.answers||{}; photos=rep.photos||[]; sig=rep.sig||null;
+  CUR=rep; answers=rep.answers||{}; photos=rep.photos||[]; sig=rep.sig||null;
+  if(rep.tl&&rep.tl.v===2){
+    TPL=tplFromStore(rep.tpl)||[];
+    // Drafts created by v54 were saved without the legacy questions: restore them.
+    if(!TPL.length && rep.status!=='done'){
+      const tp=tlToolsTemplate(rep.templateId);
+      if(tp){ TPL=tlMergeQuestions(tp.stages); rep.tpl=tplToStore(TPL);
+        if(TPL.length){ try{ updateDoc(doc(db,'reports',rep.id),{tpl:rep.tpl,updatedMs:Date.now()}).catch(function(){}); }catch(e){} } }
+    }
+  } else {
+    TPL=tplFromStore(rep.tpl)||(CFG.templates[0]&&CFG.templates[0].stages)||DEFAULT_STAGES;
+  }
   renderReport();
 }
 // multi-select system chips (general + per-system filtering)
@@ -2397,6 +2409,48 @@ const TL_CHECKS=[
 ];
 const TL_RESULTS=[['accepted','Accepted','مقبول'],['remarks','Accepted with remarks','مقبول بملاحظات'],['rejected','Not accepted (action required)','غير مقبول (إجراء مطلوب)']];
 const TL_COND={good:['Good','سليم','#1B8A3A'],dmg:['Damaged','تالف','#E67E22'],miss:['Missing','مفقود','#C0392B']};
+// Questions of the legacy tools checklist that the QA-F-TL-01 form already
+// covers (per-tool Condition, the 7 General Checks, or a repeat inside the old
+// list itself). Everything else in the template is kept, including questions
+// an admin adds later in Control Panel -> Questions.
+const TL_DUP_Q=[
+ '(Hand Tools) Are screwdrivers (flathead, Phillips) in good condition?',            // tool: Screw driver set
+ '(Hand Tools) Are pliers (needle nose, channel lock) functional and free from damage?', // tools: pliers
+ '(Hand Tools) Are wrenches (adjustable, socket set) in good working order?',         // tools: pipe wrenches / spanner set
+ '(Measuring Tools) Is the measuring tool calibrated and accurate?',                  // check: calibration stickers valid
+ '(Multimeter) Is the multimeter battery charged and functional?',                    // tool: multimeter + check: batteries
+ '(Multimeter) Is the multimeter calibrated?',                                        // check: calibration stickers valid
+ '(Multimeter) Are the connections and probes intact?',                               // repeat of "probes in good condition"
+ '(Multimeter) Is the display readable?',                                             // repeat of "display and controls"
+ '(Smoke Detector Testers) Is the smoke detector tester functional and calibrated?',  // tool: SOLO kit + check: calibration
+ '(Smoke Detector Testers) Are the calibration certificates up to date?',             // repeat of section 8 calibration certificates
+ '(Heat Detector Testers) Is the heat detector tester in good working condition?',    // tools: SOLO heat container / batteries
+ '(Heat Detector Testers) Are the thermal sensors intact and undamaged?',             // tool: SOLO heat container condition
+ '(Heat Detector Testers) Is the calibration certificate valid and up to date?',      // repeat of section 8 calibration certificates
+ '(Ladders) Are ladders secure, with no visible damage or wear?',                     // tool: ladder + check: ladder tag/locks/rungs
+ '(Power Tools) Are the power tools operational (battery or corded)?',                // tools: P category condition
+ '(Toolboxes and Storage) Is the toolbox secure, clean, and organized?',              // check: tool box clean & organized
+ '(Toolboxes and Storage) Are all necessary tools present and accounted for?',        // per-tool Req / Found / Missing
+ '(Toolboxes and Storage) Are tools stored in proper compartments to avoid damage?'   // check: tool box clean & organized
+];
+function tlNormQ(s){ return String(s||'').toLowerCase().replace(/\s+/g,' ').trim(); }
+const TL_DUP_SET=new Set(TL_DUP_Q.map(tlNormQ));
+function tlMergeQuestions(stages){
+  const out=[];
+  (stages||[]).forEach(function(st){
+    const secs=[];
+    (st.secs||[]).forEach(function(sec){
+      const items=(sec.items||[]).filter(function(it){ return !TL_DUP_SET.has(tlNormQ(it[0])); });
+      if(items.length) secs.push({en:sec.en,ar:sec.ar,sys:sec.sys||'',items:items});
+    });
+    if(secs.length) out.push({en:st.en,ar:st.ar,secs:secs});
+  });
+  return out;
+}
+function tlToolsTemplate(id){
+  const ts=CFG.templates||[];
+  return ts.find(function(x){return x.id===id && x.kind==='tools';}) || ts.find(function(x){return x.kind==='tools';}) || null;
+}
 
 function tlNewTool(id,name,ar,cat,custom){
   return {id:id,name:name,ar:ar||'',cat:cat||'H',req:1,found:'',brand:'',brandOther:'',approved:'',serial:'',serialNA:false,cond:'',remarks:'',custom:!!custom};
@@ -2540,6 +2594,16 @@ function renderToolsReport(){
     '</div></div>';
   }
   h+='<div class="card"><h3>'+(ar?'فحوصات عامة':'General Checks')+' <small></small></h3><div class="body" id="tlChecks">'+tlChecksHTML()+'</div></div>';
+  if(TPL.length){
+    QNUM=buildQNumbers();
+    h+='<div class="stage">'+(ar?'أسئلة الفحص الإضافية — Additional Inspection Checks':'Additional Inspection Checks — أسئلة الفحص الإضافية')+'</div>';
+    TPL.forEach(function(st,si){ st.secs.forEach(function(sec,ci){
+      h+='<div class="secGroup" data-stage="'+si+'" data-sys="">';
+      h+='<div class="sec">'+(sec._letter?'<span class="secLetter">'+sec._letter+'</span> ':'')+esc(sec.en)+' / '+esc(sec.ar)+'</div>';
+      sec.items.forEach(function(it,ii){ h+=itemHTML(st,sec,it,si,ci,ii); });
+      h+='</div>';
+    }); });
+  }
   h+='<div class="card"><h3>'+(ar?'النتيجة':'Result')+' <small></small></h3><div class="body" id="tlResult">'+tlResultHTML()+'</div></div>';
   h+='<div class="card"><h3>'+t('site_notes')+' <small></small></h3><div class="body"><textarea id="f_notes" rows="2" placeholder="'+(ar?'ملاحظات عامة':'General notes')+'">'+esc(f.notes||'')+'</textarea></div></div>';
   h+='<div class="card"><h3>'+t('photos')+' <small></small></h3><div class="body"><div class="photos" id="ph"></div><p class="note">'+(ar?'أضف صور العدد في نهاية التقرير — تُختم بالتاريخ والموقع.':'Add tool photos at the end of the report — stamped with time and location.')+'</p></div></div>';
@@ -2552,8 +2616,10 @@ function renderToolsReport(){
     h+='<footer class="sb"><div class="footInfo"><span class="pct" id="pct">0/0</span><span class="saveStat" id="saveStat"></span></div><button class="btn ghost" onclick="saveCur(true)">'+t('save')+'</button><button class="btn" id="sub" onclick="doSubmit()">'+t('submit_pdf')+'</button></footer>';
   }
   h+='<div class="toast" id="toast"></div><input id="cam" type="file" accept="image/*" capture="environment" class="hidden" onchange="onPhoto(event)">';
+  h+='<input id="qcam" type="file" accept="image/*" capture="environment" class="hidden" onchange="onQPhoto(event)">';
   $('app').innerHTML=h; window.scrollTo(0,0);
   onProj();
+  restoreAnswers();
   renderPhotos(); initSig(); upd(true);
   if(ro){
     const wrap=document.querySelector('.wrap.rlocked');
@@ -2720,6 +2786,10 @@ async function tlSubmit(){
     }
   }
   for(const c of TL_CHECKS){ if(!(T.checks&&T.checks[c[0]])){ go('tlChecks',(ar?'أكمل الفحوصات العامة: ':'Complete general checks: ')+(ar?c[2]:c[1])); return; } }
+  const rules=CUR.rules||CFG.rules||{}; let miss=null;
+  TPL.forEach(function(st,si){ st.secs.forEach(function(sec,ci){ if(!secActive(sec))return; sec.items.forEach(function(it,ii){
+    const key=kk(si,ci,ii); if(!miss && rules.allItems!==false && itemRequired(it) && !isAnswered(answers[key])) miss=key; }); }); });
+  if(miss){ go('it_'+miss,ar?'أكمل أسئلة الفحص الإضافية':'Complete the additional inspection checks'); return; }
   if(!T.result){ go('tlResult',ar?'اختر النتيجة':'Select the result'); return; }
   if(T.result!=='accepted' && !String(T.corrective||'').trim()){ go('tlResult',ar?'اكتب الإجراء التصحيحي':'Enter the corrective action'); return; }
   if(!CFG.recipient){ openSet(); toast(ar?'أضف إيميل المستلم في الإعدادات':'Add the recipient email in Settings'); return; }
@@ -2763,6 +2833,19 @@ function buildToolsReport(f){
       '<td>'+(tt.serialNA?'N/A':esc(tt.serial||'—'))+'</td><td class="c">'+mk(tt.cond==='good')+'</td><td class="c">'+mk(tt.cond==='dmg')+'</td><td class="c">'+mk(tt.cond==='miss')+'</td><td>'+esc(tt.remarks||'')+'</td></tr>';
   }).join('');
   const chk=TL_CHECKS.map(function(cq){ const v=(T.checks||{})[cq[0]]||''; return '<tr><td><b>'+esc(cq[1])+'</b><div class="ar">'+esc(cq[2])+'</div></td><td class="c">'+mk(v==='yes')+'</td><td class="c">'+mk(v==='no')+'</td><td class="c">'+mk(v==='na')+'</td></tr>'; }).join('');
+  let qrows='';
+  TPL.forEach(function(st,si){ st.secs.forEach(function(sec,ci){
+    qrows+='<tr><td colspan="3" class="qs">'+(sec._letter?sec._letter+'. ':'')+esc(sec.en)+' — '+esc(sec.ar)+'</td></tr>';
+    sec.items.forEach(function(it,ii){
+      const key=kk(si,ci,ii), a=answers[key]||{}, d=answerDisplay(a,it);
+      let ex='';
+      if(a.finding) ex+='<div class="ar">Finding: '+esc(a.finding)+'</div>';
+      if(a.action) ex+='<div class="ar">Action: '+esc(a.action)+'</div>';
+      if(a.remark) ex+='<div class="ar">↳ '+esc(a.remark)+'</div>';
+      if(a.photo) ex+='<div><img src="'+a.photo+'" style="height:70px;border-radius:5px;border:1px solid #ddd;margin-top:4px"></div>';
+      qrows+='<tr><td class="c">'+esc((QNUM&&QNUM[key])||'')+'</td><td><b>'+esc(it[0])+'</b><div class="ar">'+esc(it[1])+'</div>'+ex+'</td><td class="c st-'+esc(d.cl||'')+'">'+esc(d.txt)+'</td></tr>';
+    });
+  }); });
   const res=TL_RESULTS.map(function(r){ return '<div class="rb'+(T.result===r[0]?' on rs-'+r[0]:'')+'"><span class="box">'+(T.result===r[0]?'✓':'')+'</span>'+r[1]+' — '+r[2]+'</div>'; }).join('');
   const pics=(photos||[]).map(function(p){ return '<div class="ph"><img src="'+p.dataUrl+'"><div class="pcap">'+esc(p.time||'')+'</div></div>'; }).join('');
   const info=[['Date / التاريخ',f.date],['Time / الوقت',f.time],['Project / المشروع',f.project],['Team No. / رقم الفريق',f.teamNo],['Team Leader / قائد الفريق',f.leader],['Location / Vehicle',f.vehicle],['Inspected by / المفتش',f.by||SESSION.name],['Report No.',CUR.refNo||'']]
@@ -2776,7 +2859,7 @@ function buildToolsReport(f){
     '.kp{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.k{border-radius:9px;padding:9px;text-align:center;color:#fff}.k b{display:block;font-size:20px}.k span{font-size:10px}'+
     'table{width:100%;border-collapse:collapse;font-size:10.5px}th{background:'+NAVY+';color:#fff;padding:6px 5px;font-size:9.5px;text-align:start}td{border-bottom:1px solid #e8eaf2;padding:5px;vertical-align:top}td.c{text-align:center}'+
     '.ar{font-size:9.5px;color:#6B7186}.mk{color:'+NAVY+';font-size:13px}.y{background:#1B8A3A;color:#fff;border-radius:4px;padding:1px 6px;font-weight:800}.n{background:#C0392B;color:#fff;border-radius:4px;padding:1px 6px;font-weight:800}'+
-    'tr.rd td{background:#FFF4E5}tr.rm td{background:#FDECEA}.rb{border:1.5px solid #e3e6f0;border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:12px;display:flex;gap:8px;align-items:center}.rb .box{width:16px;height:16px;border:1.5px solid #999;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:11px}'+
+    'tr.rd td{background:#FFF4E5}tr.rm td{background:#FDECEA}td.qs{background:#F1F3F9;font-weight:800;color:'+NAVY+'}td.st-ok{color:#1B8A3A;font-weight:800}td.st-no{color:#C0392B;font-weight:800}td.st-na{color:#6B7186}.rb{border:1.5px solid #e3e6f0;border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:12px;display:flex;gap:8px;align-items:center}.rb .box{width:16px;height:16px;border:1.5px solid #999;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:11px}'+
     '.rb.on{font-weight:800}.rb.rs-accepted{border-color:#1B8A3A;background:#EAF7EE}.rb.rs-remarks{border-color:#D4A017;background:#FFF8E1}.rb.rs-rejected{border-color:#C0392B;background:#FDECEA}'+
     '.wd{border:1px solid #e3e6f0;border-radius:8px;padding:9px;font-size:12px;white-space:pre-wrap}.pics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.ph img{width:100%;border-radius:8px;border:1px solid #ddd}.pcap{font-size:9.5px;color:#888}'+
     '.sg{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:10px}.sgb{border:1px solid #e3e6f0;border-radius:9px;padding:10px;min-height:90px;font-size:11px}.sgb img{max-height:60px;display:block;margin-top:6px}'+
@@ -2797,6 +2880,7 @@ function buildToolsReport(f){
     '<div class="h2"><span>Tools &amp; Equipment</span><span>العدد والأدوات</span></div><div class="tbw"><table><tr><th>#</th><th>Tool / العدة</th><th>Cat.</th><th>Req.</th><th>Found</th><th>Brand</th><th>Appr.</th><th>Serial No.</th><th>Good</th><th>Dmg.</th><th>Miss.</th><th>Remarks</th></tr>'+rows+'</table></div>'+
     '<div class="note">Key: H = Hand tool · P = Power tool · T = Test equipment · L = Ladder · Approved brand: Y = Yes, N = No</div>'+
     '<div class="h2"><span>General Checks</span><span>فحوصات عامة</span></div><table><tr><th>Item</th><th>Yes</th><th>No</th><th>N/A</th></tr>'+chk+'</table>'+
+    (qrows?'<div class="h2"><span>Additional Inspection Checks</span><span>أسئلة الفحص الإضافية</span></div><table><tr><th>#</th><th>Item / البند</th><th>Status</th></tr>'+qrows+'</table>':'')+
     '<div class="h2"><span>Result</span><span style="color:'+resCol+'">'+esc(resTx[1])+' — '+esc(resTx[2])+'</span></div>'+res+
     ((T.result&&T.result!=='accepted')?'<div class="h2"><span>Corrective action / Target date</span><span>الإجراء التصحيحي / التاريخ المستهدف</span></div><div class="wd">'+esc(T.corrective||'—')+'\n\nTarget date / التاريخ المستهدف: '+esc(T.target||'—')+'</div>':'')+
     (f.notes?'<div class="h2"><span>Notes</span><span>ملاحظات</span></div><div class="wd">'+esc(f.notes)+'</div>':'')+
